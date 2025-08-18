@@ -332,12 +332,14 @@
         const now=performance.now();
         if(now-last<9) return;
         last=now;
-        const d=speed>1?0.012:0.018;
+        const d=speed>1?0.01:0.018;
         const o=c.createOscillator();
-        o.type='square';
-        o.frequency.value=800+(Math.random()*200-100);
+        o.type='triangle';
+        const start=2000+(Math.random()*400-200);
+        o.frequency.setValueAtTime(start,c.currentTime);
+        o.frequency.exponentialRampToValueAtTime(start*0.45,c.currentTime+d);
         const g=c.createGain();
-        g.gain.setValueAtTime(0.04,c.currentTime);
+        g.gain.setValueAtTime(0.05,c.currentTime);
         g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
         o.connect(g).connect(c.destination);
         o.start();
@@ -345,12 +347,16 @@
         const n=c.createBufferSource();
         const buffer=c.createBuffer(1,c.sampleRate*d,c.sampleRate);
         const data=buffer.getChannelData(0);
-        for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.25;
+        for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.1;
         const nf=c.createBiquadFilter();
-        nf.type='highpass';
-        nf.frequency.value=1000;
+        nf.type='bandpass';
+        nf.frequency.value=2200;
+        nf.Q.value=8;
+        const ng=c.createGain();
+        ng.gain.setValueAtTime(0.03,c.currentTime);
+        ng.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
         n.buffer=buffer;
-        n.connect(nf).connect(c.destination);
+        n.connect(nf).connect(ng).connect(c.destination);
         n.start();
         n.stop(c.currentTime+d);
       }
@@ -375,7 +381,21 @@
         n.start();
         n.stop(c.currentTime+0.25);
       }
-      return {beep, tick, setEnabled, unlock, buzz};
+      function whine(){
+        if(!enabled||!unlocked) return;
+        const c=getCtx();
+        const o=c.createOscillator();
+        const g=c.createGain();
+        o.type='sine';
+        o.frequency.value=15000;
+        g.gain.setValueAtTime(0.0001,c.currentTime);
+        g.gain.linearRampToValueAtTime(0.04,c.currentTime+0.05);
+        g.gain.exponentialRampToValueAtTime(0.00001,c.currentTime+1.2);
+        o.connect(g).connect(c.destination);
+        o.start();
+        o.stop(c.currentTime+1.2);
+      }
+      return {beep, tick, setEnabled, unlock, buzz, whine};
     })();
 
     function randHex(n){ return Array.from({length:n},()=>Math.floor(Math.random()*16).toString(16)).join('').toUpperCase(); }
@@ -443,6 +463,7 @@
       bootBtn.style.display='none';
       Beeper.unlock();
       Beeper.buzz();
+      Beeper.whine();
       typeBoot();
     });
 

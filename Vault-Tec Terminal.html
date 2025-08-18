@@ -98,6 +98,42 @@
     .overlay .body{flex:1; overflow:hidden; padding:8px}
     .overlay .scroll{height:100%; overflow:auto}
 
+    /* Command line */
+    #cmdline{
+      position:absolute;
+      left:var(--pad);
+      right:var(--pad);
+      bottom:var(--pad);
+      display:none;
+      border-top:1px solid currentColor;
+      padding:4px 6px;
+      gap:6px;
+      align-items:center;
+    }
+    #cmdline .prompt{margin-right:6px}
+    #cmdline input{
+      flex:1;
+      background:transparent;
+      border:none;
+      color:inherit;
+      font:inherit;
+      outline:none;
+    }
+
+    /* Boot button */
+    #bootBtn{
+      position:absolute;
+      bottom:8px;
+      right:8px;
+      padding:4px 8px;
+      font-size:12px;
+      color:#fff;
+      background:#a00000;
+      border:1px solid currentColor;
+      cursor:pointer;
+    }
+    #bootBtn.hidden{display:none}
+
     @media (max-width: 900px){ #ui{grid-template-columns:1fr} #sidebar{border-right:none; border-bottom:1px solid currentColor; margin-bottom:10px; padding-bottom:10px} }
   </style>
 </head>
@@ -259,6 +295,8 @@
           </main>
         </section>
 
+        <div id="cmdline"><span class="prompt">&gt;</span><input id="cmdInput" autocomplete="off" /></div>
+
         <!-- DIAGNOSTICS OVERLAY -->
         <section id="diagOverlay" class="overlay" aria-hidden="true">
           <div class="head dim">
@@ -274,6 +312,7 @@
           </div>
         </section>
       </div>
+      <button id="bootBtn">[ CLICK TO POWER ON TERMINAL ]</button>
     </div>
   </div>
 
@@ -287,8 +326,56 @@
       addEventListener('keydown', unlock, {once:true});
       function setEnabled(v){ enabled=v; }
       function beep(freq=800, dur=0.04){ if(!enabled||!unlocked) return; const c=getCtx(); const o=c.createOscillator(); const g=c.createGain(); o.type='square'; o.frequency.value=freq; g.gain.setValueAtTime(0.05,c.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur); o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+dur); }
-      function tick(speed=1){ if(!enabled||!unlocked) return; const c=getCtx(); const now=performance.now(); if(now-last<9) return; last=now; const o=c.createOscillator(); const g=c.createGain(); o.type='square'; o.frequency.value=780+(Math.random()*140-70); const d=speed>1?0.012:0.018; g.gain.setValueAtTime(0.04,c.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d); o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+d); }
-      return {beep, tick, setEnabled};
+      function tick(speed=1){
+        if(!enabled||!unlocked) return;
+        const c=getCtx();
+        const now=performance.now();
+        if(now-last<9) return;
+        last=now;
+        const d=speed>1?0.012:0.018;
+        const o=c.createOscillator();
+        o.type='square';
+        o.frequency.value=800+(Math.random()*200-100);
+        const g=c.createGain();
+        g.gain.setValueAtTime(0.04,c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
+        o.connect(g).connect(c.destination);
+        o.start();
+        o.stop(c.currentTime+d);
+        const n=c.createBufferSource();
+        const buffer=c.createBuffer(1,c.sampleRate*d,c.sampleRate);
+        const data=buffer.getChannelData(0);
+        for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.25;
+        const nf=c.createBiquadFilter();
+        nf.type='highpass';
+        nf.frequency.value=1000;
+        n.buffer=buffer;
+        n.connect(nf).connect(c.destination);
+        n.start();
+        n.stop(c.currentTime+d);
+      }
+      function buzz(){
+        if(!enabled||!unlocked) return;
+        const c=getCtx();
+        const o=c.createOscillator();
+        const g=c.createGain();
+        o.type='sawtooth';
+        o.frequency.value=60;
+        g.gain.setValueAtTime(0.1,c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.25);
+        o.connect(g).connect(c.destination);
+        o.start();
+        o.stop(c.currentTime+0.25);
+        const n=c.createBufferSource();
+        const buffer=c.createBuffer(1,c.sampleRate*0.25,c.sampleRate);
+        const data=buffer.getChannelData(0);
+        for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.2;
+        n.buffer=buffer;
+        n.connect(g);
+        n.start();
+        n.stop(c.currentTime+0.25);
+      }
+      return {beep, tick, setEnabled, unlock, buzz};
     })();
 
     function randHex(n){ return Array.from({length:n},()=>Math.floor(Math.random()*16).toString(16)).join('').toUpperCase(); }
@@ -298,6 +385,9 @@
     const bootText = document.getElementById('bootText');
     const bootScroll = document.getElementById('bootScroll');
     const ui = document.getElementById('ui');
+    const cmdline = document.getElementById('cmdline');
+    const cmdInput = document.getElementById('cmdInput');
+    const bootBtn = document.getElementById('bootBtn');
 
     const bootLines = [
       'Initializing VAULT-TEC BIOS... [OK]',
@@ -337,10 +427,27 @@
       }
     }
 
-    function finishBoot(){ bootDone = true; Beeper.beep(600, .08); setTimeout(()=>{ boot.style.display='none'; ui.style.display='grid'; }, 420); }
+    function finishBoot(){
+      bootDone = true;
+      bootBtn.style.display='none';
+      Beeper.beep(600, .08);
+      setTimeout(()=>{
+        boot.style.display='none';
+        ui.style.display='grid';
+        cmdline.style.display='flex';
+        cmdInput.focus();
+      }, 420);
+    }
 
-    addEventListener('keydown', (e)=>{ if(e.code==='Space'){ accel=true; } if(e.key==='Enter' && !bootDone){ finishBoot(); } });
-    setTimeout(typeBoot, 300);
+    bootBtn.addEventListener('click', ()=>{
+      bootBtn.style.display='none';
+      Beeper.unlock();
+      Beeper.buzz();
+      typeBoot();
+    });
+
+    addEventListener('keydown', (e)=>{ if(e.code==='Space' && document.activeElement!==cmdInput){ accel=true; } if(e.key==='Enter' && !bootDone){ finishBoot(); } });
+    addEventListener('keyup', (e)=>{ if(e.code==='Space' && document.activeElement!==cmdInput){ accel=false; } });
 
     // ===== Menu / Nav =====
     const menuBtns = [...document.querySelectorAll('.menu button')];
@@ -348,12 +455,39 @@
     let idx = 0;
     function showPanel(id){ panels.forEach(p=> p.style.display = (p.id===id)?'block':'none'); menuBtns.forEach(b=> b.classList.toggle('active', b.dataset.target===id)); Beeper.beep(760, .03); }
     menuBtns.forEach((b,i)=> b.addEventListener('click', ()=>{ idx=i; showPanel(b.dataset.target); }));
+    document.querySelectorAll('button').forEach(btn=> btn.addEventListener('mouseenter', ()=>Beeper.beep(520,.02)));
     addEventListener('keydown', (e)=>{
-      if(ui.style.display!=='grid') return;
+      if(ui.style.display!=='grid' || document.activeElement===cmdInput) return;
       if(e.key==='ArrowDown'){ idx = Math.min(menuBtns.length-1, idx+1); menuBtns[idx].focus(); Beeper.beep(520,.02); }
       else if(e.key==='ArrowUp'){ idx = Math.max(0, idx-1); menuBtns[idx].focus(); Beeper.beep(520,.02); }
       else if(e.key==='Enter'){ menuBtns[idx].click(); }
       else if(e.key.toLowerCase()==='m'){ menuBtns[idx].focus(); }
+    });
+
+    const cmdMap = {
+      status:'panel-status',
+      systems:'panel-controls',
+      controls:'panel-controls',
+      security:'panel-security',
+      directives:'panel-directives',
+      lore:'panel-lore',
+      diagnostics:'panel-diagnostics',
+      settings:'panel-settings'
+    };
+    cmdInput.addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){
+        const cmd = cmdInput.value.trim().toLowerCase();
+        const target = cmdMap[cmd];
+        if(target){
+          showPanel(target);
+          idx = menuBtns.findIndex(b=> b.dataset.target===target);
+        } else if(cmd){
+          Beeper.beep(220,.14);
+        }
+        cmdInput.value='';
+      } else if(e.key.length===1 && e.key !== ' '){
+        Beeper.tick();
+      }
     });
 
     // ===== Systems Control =====

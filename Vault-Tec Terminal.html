@@ -26,7 +26,10 @@
     /* TERMINAL SHELL */
     .shell{position:relative;height:100%;display:grid;place-items:center}
     .bezel{
-      position:relative; width: 96vw; height: 92vh; /* fill most of the screen */
+      /* fixed viewport similar to Fallout terminals (approx 80x24 chars) */
+      position:relative;
+      width: calc(80ch + 2*var(--pad));
+      height: calc(24 * 1.15em + 2*var(--pad));
       border: 2px solid currentColor; padding: var(--pad); overflow:hidden;
       border-radius: 12px; box-shadow: inset 0 0 80px rgba(120,255,140,.08), 0 0 30px rgba(120,255,140,.1);
     }
@@ -57,7 +60,13 @@
     .glow{text-shadow:0 0 8px rgba(150,255,150,.45)}
 
     /* TERMINAL TEXT AREA */
-    .term{position:relative; width:100%; height:100%; overflow:hidden}
+    .term{
+      /* constrain text area to classic 80x24 characters */
+      position:relative;
+      width:80ch;
+      height:calc(24 * 1.15em);
+      overflow:hidden;
+    }
     .row{white-space:pre; font-variant-ligatures:none}
 
     /* Cursor */

@@ -80,9 +80,10 @@
     #bootScroll{height:100%; overflow:auto}
 
     /* UI */
-    #ui{position:absolute; inset:0; display:none; grid-template-columns: 280px 1fr; gap:14px}
-    #sidebar{border-right:1px solid currentColor; padding-right:10px; overflow:auto}
-    #content{overflow:auto}
+    #ui{position:absolute; inset:0; display:none}
+    .menu{overflow:auto; height:100%}
+    .panel{display:none; overflow:auto; height:100%}
+    .back{display:block; margin-top:10px}
 
     .menu h3{margin:0 0 8px 0; font-size:14px}
     button{font:inherit; color:inherit; background:transparent; border:none; padding:0; cursor:pointer}
@@ -146,7 +147,6 @@
     }
     #bootBtn.hidden{display:none}
 
-    @media (max-width: 900px){ #ui{grid-template-columns:1fr} #sidebar{border-right:none; border-bottom:1px solid currentColor; margin-bottom:10px; padding-bottom:10px} }
   </style>
 </head>
 <body>
@@ -171,9 +171,8 @@
         </section>
 
         <!-- MAIN UI -->
-        <section id="ui">
-          <aside id="sidebar">
-            <div class="menu">
+          <section id="ui">
+            <div id="mainMenu" class="menu">
               <h3>MAIN MENU</h3>
               <button class="active" data-target="panel-status">Vault Status</button>
               <button data-target="panel-controls">Systems Control</button>
@@ -182,24 +181,24 @@
               <button data-target="panel-lore">Repository: Lore</button>
               <button data-target="panel-diagnostics">Diagnostics</button>
               <button data-target="panel-settings">Terminal Settings</button>
+              <div class="dim" style="margin-top:10px">[↑/↓] Navigate  [Enter] Select</div>
             </div>
-            <div class="dim" style="margin-top:10px">[↑/↓] Navigate  [Enter] Select  [M] Menu</div>
-          </aside>
-          <main id="content">
-            <section id="panel-status" class="panel" style="display:block">
+
+            <section id="panel-status" class="panel">
               <h2 class="glow">VAULT STATUS</h2>
               <pre class="listing">
-Subsystem           State       Details
-Power Grid          <span class="status-ok">ONLINE</span>      Fusion core output nominal (83%).
-Water Purification  <span class="status-warn">SUBOPTIMAL</span> Filter bed fouling at 21%. Backwash recommended.
-Atmospheric         <span class="status-ok">GREEN</span>       CO2 scrubbers cycling; O2 at 20.8%.
-Food Hydroponics    <span class="status-warn">LOW</span>        Nutrient A shortfall. Substitute algae slurry authorized.
-Exterior Door       <span class="status-bad">LOCKED</span>     Access restricted by Directive 73-B.
+ Subsystem           State       Details
+ Power Grid          <span class="status-ok">ONLINE</span>      Fusion core output nominal (83%).
+ Water Purification  <span class="status-warn">SUBOPTIMAL</span> Filter bed fouling at 21%. Backwash recommended.
+ Atmospheric         <span class="status-ok">GREEN</span>       CO2 scrubbers cycling; O2 at 20.8%.
+ Food Hydroponics    <span class="status-warn">LOW</span>        Nutrient A shortfall. Substitute algae slurry authorized.
+ Exterior Door       <span class="status-bad">LOCKED</span>     Access restricted by Directive 73-B.
               </pre>
               <p class="dim">Tip: From Systems Control, reroute noncritical lighting to Purification to clear backlog faster.</p>
+              <button class="back">[RETURN]</button>
             </section>
 
-            <section id="panel-controls" class="panel" style="display:none">
+            <section id="panel-controls" class="panel">
               <h2 class="glow">SYSTEMS CONTROL</h2>
               <div class="frame" style="margin-bottom:10px">
                 <strong>Power Routing</strong>
@@ -219,9 +218,10 @@ Exterior Door       <span class="status-bad">LOCKED</span>     Access restricted
                   <div id="doorMsg" class="dim" style="margin-top:6px">Status: LOCKED by Overseer policy.</div>
                 </div>
               </div>
+              <button class="back">[RETURN]</button>
             </section>
 
-            <section id="panel-security" class="panel" style="display:none">
+            <section id="panel-security" class="panel">
               <h2 class="glow">SECURITY LOGS</h2>
               <ul>
                 <li>[021.10.23 03:14] Patrol shift β reports scratching from Service Tunnel C. Rodents? (Ticket #C-119)</li>
@@ -231,9 +231,10 @@ Exterior Door       <span class="status-bad">LOCKED</span>     Access restricted
                 <li>[021.10.24 02:26] Camera 7 flicker coincident with seismic microburst. Structural integrity uncompromised.</li>
               </ul>
               <p class="dim">Note: Export detailed logs with command LOG/EXPORT (not available in demo).</p>
+              <button class="back">[RETURN]</button>
             </section>
 
-            <section id="panel-directives" class="panel" style="display:none">
+            <section id="panel-directives" class="panel">
               <h2 class="glow">OVERSEER DIRECTIVES</h2>
               <ol>
                 <li>Maintain Door Lock Protocol 73-B until external radiation index &lt; 5 rads/hr sustained 30 days.</li>
@@ -242,9 +243,10 @@ Exterior Door       <span class="status-bad">LOCKED</span>     Access restricted
                 <li>Prohibit unscheduled excursions to Prospector's Bluff observation deck. Reports of auditory phenomena pending review.</li>
               </ol>
               <p class="dim">Signed, Overseer REYES • Auth Sig: OVR-73B-F1C</p>
+              <button class="back">[RETURN]</button>
             </section>
 
-            <section id="panel-lore" class="panel" style="display:none">
+            <section id="panel-lore" class="panel">
               <h2 class="glow">REPOSITORY: LORE</h2>
               <details open>
                 <summary><strong>VT-88c Terminal Lineage</strong></summary>
@@ -262,28 +264,29 @@ Exterior Door       <span class="status-bad">LOCKED</span>     Access restricted
                 <summary><strong>Food Substitute: Algae Slurry A-17</strong></summary>
                 <p>High-protein emergency ration. Side effects include vivid dreams and a metallic aftertaste. Overseers recommend pepper or dried citrus peel.</p>
               </details>
+              <button class="back">[RETURN]</button>
             </section>
 
-            <section id="panel-diagnostics" class="panel" style="display:none">
+            <section id="panel-diagnostics" class="panel">
               <h2 class="glow">DIAGNOSTICS</h2>
               <div class="frame" style="margin-bottom:10px">
                 <strong>Device Map</strong>
                 <pre class="listing">
-Addr     Device               Status
-0x0010   Water Pump A         <span class="status-ok">OK</span>
-0x0011   CO2 Scrubber B       <span class="status-ok">OK</span>
-0x0200   Hydroponics Feeder   <span class="status-warn">LOW</span>
-0x0300   Door Lock Relay      <span class="status-bad">LOCKED</span>
+ Addr     Device               Status
+ 0x0010   Water Pump A         <span class="status-ok">OK</span>
+ 0x0011   CO2 Scrubber B       <span class="status-ok">OK</span>
+ 0x0200   Hydroponics Feeder   <span class="status-warn">LOW</span>
+ 0x0300   Door Lock Relay      <span class="status-bad">LOCKED</span>
                 </pre>
               </div>
               <div class="frame" style="margin-bottom:10px">
                 <strong>Memory Map</strong>
                 <pre class="listing">
-Range         Region       Notes
-0x0000-0x1FFF Kernel       FO/1.2
-0x2000-0x3FFF Drivers      IO, VDU, KBD
-0x4000-0x7FFF User Space   Terminal UI
-0x8000-0x8FFF VRAM         Monochrome buffer
+ Range         Region       Notes
+ 0x0000-0x1FFF Kernel       FO/1.2
+ 0x2000-0x3FFF Drivers      IO, VDU, KBD
+ 0x4000-0x7FFF User Space   Terminal UI
+ 0x8000-0x8FFF VRAM         Monochrome buffer
                 </pre>
               </div>
               <div class="frame">
@@ -293,9 +296,10 @@ Range         Region       Notes
                 <button id="btnAnomaly" style="margin-left:6px">[INJECT ANOMALY]</button>
                 <div id="diagHint" class="dim" style="margin-top:6px">Press <b>Space</b> to accelerate, <b>Enter</b> to dismiss when finished.</div>
               </div>
+              <button class="back">[RETURN]</button>
             </section>
 
-            <section id="panel-settings" class="panel" style="display:none">
+            <section id="panel-settings" class="panel">
               <h2 class="glow">TERMINAL SETTINGS</h2>
               <div class="frame">
                 <label><input type="checkbox" id="amberToggle"/> Amber monochrome</label><br/>
@@ -303,9 +307,9 @@ Range         Region       Notes
                 <label><input type="checkbox" id="sweepToggle" checked/> Vertical sweep highlight</label>
               </div>
               <p class="dim">Preferences persist for this session only.</p>
+              <button class="back">[RETURN]</button>
             </section>
-          </main>
-        </section>
+          </section>
 
         <div id="cmdline"><span class="prompt">&gt;</span><input id="cmdInput" autocomplete="off" /></div>
 
@@ -459,17 +463,18 @@ Range         Region       Notes
       }
     }
 
-    function finishBoot(){
-      bootDone = true;
-      bootBtn.style.display='none';
-      Beeper.beep(600, .08);
-      setTimeout(()=>{
-        boot.style.display='none';
-        ui.style.display='grid';
-        cmdline.style.display='flex';
-        cmdInput.focus();
-      }, 420);
-    }
+      function finishBoot(){
+        bootDone = true;
+        bootBtn.style.display='none';
+        Beeper.beep(600, .08);
+        setTimeout(()=>{
+          boot.style.display='none';
+          ui.style.display='block';
+          cmdline.style.display='flex';
+          showMenu();
+          cmdInput.focus();
+        }, 420);
+      }
 
     bootBtn.addEventListener('click', ()=>{
       bootBtn.style.display='none';
@@ -482,20 +487,39 @@ Range         Region       Notes
     addEventListener('keydown', (e)=>{ if(e.code==='Space' && document.activeElement!==cmdInput){ accel=true; } if(e.key==='Enter' && !bootDone){ finishBoot(); } });
     addEventListener('keyup', (e)=>{ if(e.code==='Space' && document.activeElement!==cmdInput){ accel=false; } });
 
-    // ===== Menu / Nav =====
-    const menuBtns = [...document.querySelectorAll('.menu button')];
-    const panels = [...document.querySelectorAll('#content .panel')];
-    let idx = 0;
-    function showPanel(id){ panels.forEach(p=> p.style.display = (p.id===id)?'block':'none'); menuBtns.forEach(b=> b.classList.toggle('active', b.dataset.target===id)); Beeper.beep(760, .03); }
-    menuBtns.forEach((b,i)=> b.addEventListener('click', ()=>{ idx=i; showPanel(b.dataset.target); }));
-    document.querySelectorAll('button').forEach(btn=> btn.addEventListener('mouseenter', ()=>Beeper.beep(520,.02)));
-    addEventListener('keydown', (e)=>{
-      if(ui.style.display!=='grid' || document.activeElement===cmdInput) return;
-      if(e.key==='ArrowDown'){ idx = Math.min(menuBtns.length-1, idx+1); menuBtns[idx].focus(); Beeper.beep(520,.02); }
-      else if(e.key==='ArrowUp'){ idx = Math.max(0, idx-1); menuBtns[idx].focus(); Beeper.beep(520,.02); }
-      else if(e.key==='Enter'){ menuBtns[idx].click(); }
-      else if(e.key.toLowerCase()==='m'){ menuBtns[idx].focus(); }
-    });
+      // ===== Menu / Nav =====
+      const menu = document.getElementById('mainMenu');
+      const menuBtns = [...menu.querySelectorAll('button[data-target]')];
+      const panels = [...document.querySelectorAll('#ui .panel')];
+      const backBtns = [...document.querySelectorAll('.back')];
+      let idx = 0;
+      function showMenu(){
+        menu.style.display='block';
+        panels.forEach(p=> p.style.display='none');
+        idx = 0;
+        menuBtns.forEach((b,i)=> b.classList.toggle('active', i===idx));
+        menuBtns[idx].focus();
+        Beeper.beep(760, .03);
+      }
+      function showPanel(id){
+        menu.style.display='none';
+        panels.forEach(p=> p.style.display = (p.id===id)?'block':'none');
+        Beeper.beep(760, .03);
+      }
+      menuBtns.forEach((b,i)=> b.addEventListener('click', ()=>{ idx=i; showPanel(b.dataset.target); }));
+      backBtns.forEach(btn=> btn.addEventListener('click', showMenu));
+      document.querySelectorAll('button').forEach(btn=> btn.addEventListener('mouseenter', ()=>Beeper.beep(520,.02)));
+      function highlight(){ menuBtns.forEach((b,i)=> b.classList.toggle('active', i===idx)); menuBtns[idx].focus(); Beeper.beep(520,.02); }
+      addEventListener('keydown', (e)=>{
+        if(document.activeElement===cmdInput || ui.style.display==='none') return;
+        if(menu.style.display!=='none'){
+          if(e.key==='ArrowDown'){ idx = (idx+1)%menuBtns.length; highlight(); }
+          else if(e.key==='ArrowUp'){ idx = (idx-1+menuBtns.length)%menuBtns.length; highlight(); }
+          else if(e.key==='Enter'){ menuBtns[idx].click(); }
+        } else {
+          if(e.key.toLowerCase()==='m'){ showMenu(); }
+        }
+      });
 
     const cmdMap = {
       status:'panel-status',

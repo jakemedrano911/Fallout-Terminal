@@ -85,11 +85,14 @@
     #content{overflow:auto}
 
     .menu h3{margin:0 0 8px 0; font-size:14px}
-    .menu button{display:block; width:100%; text-align:left; padding:8px 10px; margin:6px 0; font:inherit; color:inherit; background:transparent; border:1px solid currentColor; cursor:pointer}
-    .menu button:hover,.menu button.active{background:rgba(150,255,150,.08)}
+    button{font:inherit; color:inherit; background:transparent; border:none; padding:0; cursor:pointer}
+    button:hover{color:var(--accent)}
+    .menu button{display:block; width:100%; text-align:left; margin:2px 0}
+    .menu button::before{content:"> "; color:var(--accent); opacity:0}
+    .menu button:hover::before,.menu button.active::before{opacity:1}
+    .menu button:hover,.menu button.active{color:var(--accent)}
 
-    .table{width:100%; border-collapse:collapse}
-    .table th,.table td{border:1px solid currentColor; padding:6px; text-align:left}
+    .listing{white-space:pre; font-variant-ligatures:none; margin:6px 0}
     .status-ok{color:#7fffb0}.status-warn{color:#ffe27f}.status-bad{color:#ff9f9f}
 
     /* Amber mode */
@@ -185,14 +188,14 @@
           <main id="content">
             <section id="panel-status" class="panel" style="display:block">
               <h2 class="glow">VAULT STATUS</h2>
-              <table class="table">
-                <tr><th>Subsystem</th><th>State</th><th>Details</th></tr>
-                <tr><td>Power Grid</td><td class="status-ok">ONLINE</td><td>Fusion core output nominal (83%).</td></tr>
-                <tr><td>Water Purification</td><td class="status-warn">SUBOPTIMAL</td><td>Filter bed fouling at 21%. Backwash recommended.</td></tr>
-                <tr><td>Atmospheric</td><td class="status-ok">GREEN</td><td>CO2 scrubbers cycling; O2 at 20.8%.</td></tr>
-                <tr><td>Food Hydroponics</td><td class="status-warn">LOW</td><td>Nutrient A shortfall. Substitute algae slurry authorized.</td></tr>
-                <tr><td>Exterior Door</td><td class="status-bad">LOCKED</td><td>Access restricted by Directive 73-B.</td></tr>
-              </table>
+              <pre class="listing">
+Subsystem           State       Details
+Power Grid          <span class="status-ok">ONLINE</span>      Fusion core output nominal (83%).
+Water Purification  <span class="status-warn">SUBOPTIMAL</span> Filter bed fouling at 21%. Backwash recommended.
+Atmospheric         <span class="status-ok">GREEN</span>       CO2 scrubbers cycling; O2 at 20.8%.
+Food Hydroponics    <span class="status-warn">LOW</span>        Nutrient A shortfall. Substitute algae slurry authorized.
+Exterior Door       <span class="status-bad">LOCKED</span>     Access restricted by Directive 73-B.
+              </pre>
               <p class="dim">Tip: From Systems Control, reroute noncritical lighting to Purification to clear backlog faster.</p>
             </section>
 
@@ -205,14 +208,14 @@
                   <label><input type="range" id="sliderHydro" min="10" max="50" value="25" /> Hydroponics Allocation (<span id="valHydro">25</span>%)</label><br/>
                   <label><input type="range" id="sliderOther" min="0" max="80" value="30" /> Other Systems (<span id="valOther">30</span>%)</label>
                   <div class="dim">Total must remain ≤ 100%. Excess will be trimmed automatically.</div>
-                  <button id="applyPower" style="margin-top:8px">Apply Routing</button>
+                  <button id="applyPower" style="margin-top:8px">[APPLY ROUTING]</button>
                   <div id="powerMsg" class="accent" style="margin-top:6px"></div>
                 </div>
               </div>
               <div class="frame">
                 <strong>Exterior Door</strong>
                 <div style="margin-top:6px">
-                  <button id="requestOpen">Request Unlock (73-B)</button>
+                  <button id="requestOpen">[REQUEST UNLOCK 73-B]</button>
                   <div id="doorMsg" class="dim" style="margin-top:6px">Status: LOCKED by Overseer policy.</div>
                 </div>
               </div>
@@ -265,29 +268,29 @@
               <h2 class="glow">DIAGNOSTICS</h2>
               <div class="frame" style="margin-bottom:10px">
                 <strong>Device Map</strong>
-                <table class="table" style="margin-top:6px">
-                  <tr><th>Addr</th><th>Device</th><th>Status</th></tr>
-                  <tr><td>0x0010</td><td>Water Pump A</td><td class="status-ok">OK</td></tr>
-                  <tr><td>0x0011</td><td>CO2 Scrubber B</td><td class="status-ok">OK</td></tr>
-                  <tr><td>0x0200</td><td>Hydroponics Feeder</td><td class="status-warn">LOW</td></tr>
-                  <tr><td>0x0300</td><td>Door Lock Relay</td><td class="status-bad">LOCKED</td></tr>
-                </table>
+                <pre class="listing">
+Addr     Device               Status
+0x0010   Water Pump A         <span class="status-ok">OK</span>
+0x0011   CO2 Scrubber B       <span class="status-ok">OK</span>
+0x0200   Hydroponics Feeder   <span class="status-warn">LOW</span>
+0x0300   Door Lock Relay      <span class="status-bad">LOCKED</span>
+                </pre>
               </div>
               <div class="frame" style="margin-bottom:10px">
                 <strong>Memory Map</strong>
-                <table class="table" style="margin-top:6px">
-                  <tr><th>Range</th><th>Region</th><th>Notes</th></tr>
-                  <tr><td>0x0000–0x1FFF</td><td>Kernel</td><td>FO/1.2</td></tr>
-                  <tr><td>0x2000–0x3FFF</td><td>Drivers</td><td>IO, VDU, KBD</td></tr>
-                  <tr><td>0x4000–0x7FFF</td><td>User Space</td><td>Terminal UI</td></tr>
-                  <tr><td>0x8000–0x8FFF</td><td>VRAM</td><td>Monochrome buffer</td></tr>
-                </table>
+                <pre class="listing">
+Range         Region       Notes
+0x0000-0x1FFF Kernel       FO/1.2
+0x2000-0x3FFF Drivers      IO, VDU, KBD
+0x4000-0x7FFF User Space   Terminal UI
+0x8000-0x8FFF VRAM         Monochrome buffer
+                </pre>
               </div>
               <div class="frame">
                 <strong>Run POST/Diagnostics</strong>
                 <p class="dim">Simulates a vertical boot scroll you can trigger mid-session.</p>
-                <button id="btnRunPOST">Run Diagnostics Now</button>
-                <button id="btnAnomaly" style="margin-left:6px">Inject Anomaly</button>
+                <button id="btnRunPOST">[RUN DIAGNOSTICS]</button>
+                <button id="btnAnomaly" style="margin-left:6px">[INJECT ANOMALY]</button>
                 <div id="diagHint" class="dim" style="margin-top:6px">Press <b>Space</b> to accelerate, <b>Enter</b> to dismiss when finished.</div>
               </div>
             </section>

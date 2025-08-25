@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VAULT-TEC VT-88c TERMINAL</title>
+  <style>
+    @font-face{
+      font-family: 'Fixedsys Excelsior';
+      src: local('Fixedsys Excelsior 3.01'), url('fonts/FixedsysExcelsior301.woff') format('woff');
+    }
+    :root{
+      --bg:#041204;           /* deep green CRT */
+      --fg:#9aff9a;           /* phosphor green */
+      --dim:#3e7f3e;
+      --accent:#caffca;
+      --amber:#ffd18a;
+      --amber-dim:#a2763a;
+      --pad:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;background:var(--bg);color:var(--fg);
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+      letter-spacing:.25px; line-height:1.15; overflow:hidden;
+      font-size: clamp(12px, 1.7vh, 18px); /* scale up on big screens */
+    }
+
+    /* TERMINAL SHELL */
+    .shell{position:relative;height:100%;display:grid;place-items:center}
+    .bezel{
+      position:relative; width: 96vw; height: 92vh; /* fill most of the screen */
+      border: 2px solid currentColor; padding: var(--pad); overflow:hidden;
+      border-radius: 12px; box-shadow: inset 0 0 80px rgba(120,255,140,.08), 0 0 30px rgba(120,255,140,.1);
+    }
+    .bezel::before{ /* scanlines */
+      content:""; position:absolute; inset:0; pointer-events:none;
+      background: repeating-linear-gradient( to bottom, rgba(255,255,255,.03) 0 2px, transparent 2px 4px );
+      mix-blend-mode:overlay; opacity:.45
+    }
+    .bezel::after{ /* vignette */
+      content:""; position:absolute; inset:0; pointer-events:none;
+      box-shadow: inset 0 0 120px rgba(0,0,0,.65), inset 0 0 24px rgba(0,0,0,.45);
+    }
+
+    /* SWEEP BAR (vertical running highlight) */
+    .sweep{position:absolute; inset:0; pointer-events:none; opacity:.18;}
+    .sweep::before{
+      content:""; position:absolute; left:0; right:0; height:22%; top:-22%;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,.25) 55%, transparent 100%);
+      animation: sweepDown 2.8s linear infinite;
+      filter: blur(1px);
+    }
+    @keyframes sweepDown{ 0%{transform: translateY(0)} 100%{transform: translateY(145%)} }
+
+    .crt{position:relative; width:100%; height:100%; color:var(--fg)}
+    .frame{border:1px solid currentColor; padding:10px}
+    .dim{color:var(--dim)}
+    .accent{color:var(--accent)}
+    .glow{text-shadow:0 0 8px rgba(150,255,150,.45)}
+
+    /* TERMINAL TEXT AREA */
+    .term{position:relative; width:100%; height:100%; overflow:hidden}
+    .row{white-space:pre; font-variant-ligatures:none}
+
+    /* Cursor */
+    .cursor{ display:inline-block; width:.62ch; height:1.15em; vertical-align:baseline; background: currentColor; animation: blink .85s steps(1,end) infinite }
+    @keyframes blink{50%{opacity:0}}
+
+    /* Boot */
+    #boot{position:absolute; inset:0; display:flex; flex-direction:column}
+    #bootHeader{display:flex; justify-content:space-between; gap:8px}
+    #bootBody{flex:1; overflow:hidden; margin-top:6px}
+    #bootScroll{height:100%; overflow:auto}
+
+    /* UI */
+    #ui{position:absolute; inset:0; display:none; grid-template-columns: 280px 1fr; gap:14px}
+    #sidebar{border-right:1px solid currentColor; padding-right:10px; overflow:auto}
+    #content{overflow:auto}
+
+    .menu h3{margin:0 0 8px 0; font-size:14px}
+    .menu button{display:block; width:100%; text-align:left; padding:8px 10px; margin:6px 0; font:inherit; color:inherit; background:transparent; border:1px solid currentColor; cursor:pointer}
+    .menu button:hover,.menu button.active{background:rgba(150,255,150,.08)}
+
+    .table{width:100%; border-collapse:collapse}
+    .table th,.table td{border:1px solid currentColor; padding:6px; text-align:left}
+    .status-ok{color:#7fffb0}.status-warn{color:#ffe27f}.status-bad{color:#ff9f9f}
+
+    /* Amber mode */
+    .amber{color:var(--amber)}
+    .amber .dim{color:var(--amber-dim)}
+
+    /* Smooth scroll shadow hint */
+    .shadowTop, .shadowBot{position:absolute; left:0; right:0; height:24px; pointer-events:none}
+    .shadowTop{top:0; background: linear-gradient(to bottom, rgba(0,0,0,.65), transparent)}
+    .shadowBot{bottom:0; background: linear-gradient(to top, rgba(0,0,0,.65), transparent)}
+
+    /* Diagnostics overlay */
+    .overlay{position:absolute; inset:var(--pad); background: rgba(4,18,4,.96); border:1px solid currentColor; display:none; flex-direction:column}
+    .overlay .head{display:flex; justify-content:space-between; gap:8px; padding:6px 8px; border-bottom:1px solid currentColor}
+    .overlay .body{flex:1; overflow:hidden; padding:8px}
+    .overlay .scroll{height:100%; overflow:auto}
+
+    /* Command line */
+    #cmdline{
+      position:absolute;
+      left:var(--pad);
+      right:var(--pad);
+      bottom:var(--pad);
+      display:none;
+      border-top:1px solid currentColor;
+      padding:4px 6px;
+      gap:6px;
+      align-items:center;
+    }
+    #cmdline .prompt{margin-right:6px}
+    #cmdline input{
+      flex:1;
+      background:transparent;
+      border:none;
+      color:inherit;
+      font:inherit;
+      outline:none;
+    }
+
+    /* Boot button */
+    #bootBtn{
+      position:absolute;
+      bottom:8px;
+      right:8px;
+      padding:4px 8px;
+      font-size:12px;
+      color:#fff;
+      background:#a00000;
+      border:1px solid currentColor;
+      cursor:pointer;
+    }
+    #bootBtn.hidden{display:none}
+
+    @media (max-width: 900px){ #ui{grid-template-columns:1fr} #sidebar{border-right:none; border-bottom:1px solid currentColor; margin-bottom:10px; padding-bottom:10px} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="bezel">
+      <div class="sweep"></div>
+      <div class="crt">
+        <!-- BOOT SEQUENCE -->
+        <section id="boot" aria-live="polite" aria-atomic="false">
+          <div id="bootHeader" class="dim">
+            <div>RobCo BIOS VT-88c • Kernel FO/1.2 • SERIAL 000-VAULT-111</div>
+            <div><span class="glow">VAULT-TEC</span> Industries</div>
+          </div>
+          <div id="bootBody" class="term frame">
+            <div class="shadowTop"></div>
+            <div id="bootScroll">
+              <div id="bootText"></div>
+            </div>
+            <div class="shadowBot"></div>
+          </div>
+          <div class="dim">Press <b>Space</b> to accelerate • <b>Enter</b> to skip</div>
+        </section>
+
+        <!-- MAIN UI -->
+        <section id="ui">
+          <aside id="sidebar">
+            <div class="menu">
+              <h3>MAIN MENU</h3>
+              <button class="active" data-target="panel-status">Vault Status</button>
+              <button data-target="panel-controls">Systems Control</button>
+              <button data-target="panel-security">Security Logs</button>
+              <button data-target="panel-directives">Overseer Directives</button>
+              <button data-target="panel-lore">Repository: Lore</button>
+              <button data-target="panel-diagnostics">Diagnostics</button>
+              <button data-target="panel-settings">Terminal Settings</button>
+            </div>
+            <div class="dim" style="margin-top:10px">[↑/↓] Navigate  [Enter] Select  [M] Menu</div>
+          </aside>
+          <main id="content">
+            <section id="panel-status" class="panel" style="display:block">
+              <h2 class="glow">VAULT STATUS</h2>
+              <table class="table">
+                <tr><th>Subsystem</th><th>State</th><th>Details</th></tr>
+                <tr><td>Power Grid</td><td class="status-ok">ONLINE</td><td>Fusion core output nominal (83%).</td></tr>
+                <tr><td>Water Purification</td><td class="status-warn">SUBOPTIMAL</td><td>Filter bed fouling at 21%. Backwash recommended.</td></tr>
+                <tr><td>Atmospheric</td><td class="status-ok">GREEN</td><td>CO2 scrubbers cycling; O2 at 20.8%.</td></tr>
+                <tr><td>Food Hydroponics</td><td class="status-warn">LOW</td><td>Nutrient A shortfall. Substitute algae slurry authorized.</td></tr>
+                <tr><td>Exterior Door</td><td class="status-bad">LOCKED</td><td>Access restricted by Directive 73-B.</td></tr>
+              </table>
+              <p class="dim">Tip: From Systems Control, reroute noncritical lighting to Purification to clear backlog faster.</p>
+            </section>
+
+            <section id="panel-controls" class="panel" style="display:none">
+              <h2 class="glow">SYSTEMS CONTROL</h2>
+              <div class="frame" style="margin-bottom:10px">
+                <strong>Power Routing</strong>
+                <div style="margin-top:6px">
+                  <label><input type="range" id="sliderPurif" min="10" max="50" value="25" /> Water Purification Allocation (<span id="valPurif">25</span>%)</label><br/>
+                  <label><input type="range" id="sliderHydro" min="10" max="50" value="25" /> Hydroponics Allocation (<span id="valHydro">25</span>%)</label><br/>
+                  <label><input type="range" id="sliderOther" min="0" max="80" value="30" /> Other Systems (<span id="valOther">30</span>%)</label>
+                  <div class="dim">Total must remain ≤ 100%. Excess will be trimmed automatically.</div>
+                  <button id="applyPower" style="margin-top:8px">Apply Routing</button>
+                  <div id="powerMsg" class="accent" style="margin-top:6px"></div>
+                </div>
+              </div>
+              <div class="frame">
+                <strong>Exterior Door</strong>
+                <div style="margin-top:6px">
+                  <button id="requestOpen">Request Unlock (73-B)</button>
+                  <div id="doorMsg" class="dim" style="margin-top:6px">Status: LOCKED by Overseer policy.</div>
+                </div>
+              </div>
+            </section>
+
+            <section id="panel-security" class="panel" style="display:none">
+              <h2 class="glow">SECURITY LOGS</h2>
+              <ul>
+                <li>[021.10.23 03:14] Patrol shift β reports scratching from Service Tunnel C. Rodents? (Ticket #C-119)</li>
+                <li>[021.10.23 03:41] Audio anomaly—choral resonance near hydroponics sump. No source located.</li>
+                <li>[021.10.23 06:55] Door 3R attempted access by <em>NULL USER</em>. Event quarantined.</li>
+                <li>[021.10.24 01:09] Observation: subjects in Dormitory 2 exhibit synchronous dreaming per EEG.</li>
+                <li>[021.10.24 02:26] Camera 7 flicker coincident with seismic microburst. Structural integrity uncompromised.</li>
+              </ul>
+              <p class="dim">Note: Export detailed logs with command LOG/EXPORT (not available in demo).</p>
+            </section>
+
+            <section id="panel-directives" class="panel" style="display:none">
+              <h2 class="glow">OVERSEER DIRECTIVES</h2>
+              <ol>
+                <li>Maintain Door Lock Protocol 73-B until external radiation index &lt; 5 rads/hr sustained 30 days.</li>
+                <li>Rotate hydroponic crop C-3 (tubers) to replace C-1 (leafy) by 20% to mitigate nutrient shortfall.</li>
+                <li>Initiate morale program "Game Night" to address cohesion drift (see Appendix J).</li>
+                <li>Prohibit unscheduled excursions to Prospector's Bluff observation deck. Reports of auditory phenomena pending review.</li>
+              </ol>
+              <p class="dim">Signed, Overseer REYES • Auth Sig: OVR-73B-F1C</p>
+            </section>
+
+            <section id="panel-lore" class="panel" style="display:none">
+              <h2 class="glow">REPOSITORY: LORE</h2>
+              <details open>
+                <summary><strong>VT-88c Terminal Lineage</strong></summary>
+                <p>Standard pre-war terminal with reinforced chassis and anti-corrosion lacquer. Popular in mining shelters where dust abrasion compromised earlier cathode models.</p>
+              </details>
+              <details>
+                <summary><strong>Vault 73-B: Founding Notes</strong></summary>
+                <p>Constructed beside an old mission ruin beneath a hangman's oak. Vault-Tec selected the site for deep aquifer access and stable bedrock; folklore was deemed a non-factor.</p>
+              </details>
+              <details>
+                <summary><strong>Incident: "Lamentations" Echo</strong></summary>
+                <p>Acoustic surveys recorded low-frequency laments through flood tunnels after heavy rainfall. Official cause listed as wind resonance; unofficial notes suggest the sound followed personnel back to the dormitories.</p>
+              </details>
+              <details>
+                <summary><strong>Food Substitute: Algae Slurry A-17</strong></summary>
+                <p>High-protein emergency ration. Side effects include vivid dreams and a metallic aftertaste. Overseers recommend pepper or dried citrus peel.</p>
+              </details>
+            </section>
+
+            <section id="panel-diagnostics" class="panel" style="display:none">
+              <h2 class="glow">DIAGNOSTICS</h2>
+              <div class="frame" style="margin-bottom:10px">
+                <strong>Device Map</strong>
+                <table class="table" style="margin-top:6px">
+                  <tr><th>Addr</th><th>Device</th><th>Status</th></tr>
+                  <tr><td>0x0010</td><td>Water Pump A</td><td class="status-ok">OK</td></tr>
+                  <tr><td>0x0011</td><td>CO2 Scrubber B</td><td class="status-ok">OK</td></tr>
+                  <tr><td>0x0200</td><td>Hydroponics Feeder</td><td class="status-warn">LOW</td></tr>
+                  <tr><td>0x0300</td><td>Door Lock Relay</td><td class="status-bad">LOCKED</td></tr>
+                </table>
+              </div>
+              <div class="frame" style="margin-bottom:10px">
+                <strong>Memory Map</strong>
+                <table class="table" style="margin-top:6px">
+                  <tr><th>Range</th><th>Region</th><th>Notes</th></tr>
+                  <tr><td>0x0000–0x1FFF</td><td>Kernel</td><td>FO/1.2</td></tr>
+                  <tr><td>0x2000–0x3FFF</td><td>Drivers</td><td>IO, VDU, KBD</td></tr>
+                  <tr><td>0x4000–0x7FFF</td><td>User Space</td><td>Terminal UI</td></tr>
+                  <tr><td>0x8000–0x8FFF</td><td>VRAM</td><td>Monochrome buffer</td></tr>
+                </table>
+              </div>
+              <div class="frame">
+                <strong>Run POST/Diagnostics</strong>
+                <p class="dim">Simulates a vertical boot scroll you can trigger mid-session.</p>
+                <button id="btnRunPOST">Run Diagnostics Now</button>
+                <button id="btnAnomaly" style="margin-left:6px">Inject Anomaly</button>
+                <div id="diagHint" class="dim" style="margin-top:6px">Press <b>Space</b> to accelerate, <b>Enter</b> to dismiss when finished.</div>
+              </div>
+            </section>
+
+            <section id="panel-settings" class="panel" style="display:none">
+              <h2 class="glow">TERMINAL SETTINGS</h2>
+              <div class="frame">
+                <label><input type="checkbox" id="amberToggle"/> Amber monochrome</label><br/>
+                <label><input type="checkbox" id="soundToggle" checked/> Enable beeps</label><br/>
+                <label><input type="checkbox" id="sweepToggle" checked/> Vertical sweep highlight</label>
+              </div>
+              <p class="dim">Preferences persist for this session only.</p>
+            </section>
+          </main>
+        </section>
+
+        <div id="cmdline"><span class="prompt">&gt;</span><input id="cmdInput" autocomplete="off" /></div>
+
+        <!-- DIAGNOSTICS OVERLAY -->
+        <section id="diagOverlay" class="overlay" aria-hidden="true">
+          <div class="head dim">
+            <div>Diagnostics Console • VT-88c</div>
+            <div>Press <b>Enter</b> to close</div>
+          </div>
+          <div class="body term frame" style="margin:8px">
+            <div class="shadowTop"></div>
+            <div id="diagScroll" class="scroll">
+              <div id="diagText"></div>
+            </div>
+            <div class="shadowBot"></div>
+          </div>
+        </section>
+      </div>
+      <button id="bootBtn">[ CLICK TO POWER ON TERMINAL ]</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== Utility & Audio =====
+    const Beeper = (()=>{
+      let ctx; let enabled = true; let unlocked = false; let last = 0;
+      function getCtx(){ if(!ctx){ ctx=new (window.AudioContext||window.webkitAudioContext)(); } if(ctx.state==='suspended'){ ctx.resume(); } return ctx; }
+      function unlock(){ try{ getCtx(); unlocked = true; }catch(e){} }
+      addEventListener('pointerdown', unlock, {once:true});
+      addEventListener('keydown', unlock, {once:true});
+      function setEnabled(v){ enabled=v; }
+      function beep(freq=800, dur=0.04){ if(!enabled||!unlocked) return; const c=getCtx(); const o=c.createOscillator(); const g=c.createGain(); o.type='square'; o.frequency.value=freq; g.gain.setValueAtTime(0.05,c.currentTime); g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+dur); o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+dur); }
+      function tick(speed=1){
+        if(!enabled||!unlocked) return;
+        const c=getCtx();
+        const now=performance.now();
+        if(now-last<9) return;
+        last=now;
+        const d=speed>1?0.01:0.018;
+        const o=c.createOscillator();
+        o.type='triangle';
+        const start=2000+(Math.random()*400-200);
+        o.frequency.setValueAtTime(start,c.currentTime);
+        o.frequency.exponentialRampToValueAtTime(start*0.45,c.currentTime+d);
+        const g=c.createGain();
+        g.gain.setValueAtTime(0.05,c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
+        o.connect(g).connect(c.destination);
+        o.start();
+        o.stop(c.currentTime+d);
+        const n=c.createBufferSource();
+        const buffer=c.createBuffer(1,c.sampleRate*d,c.sampleRate);
+        const data=buffer.getChannelData(0);
+        for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.1;
+        const nf=c.createBiquadFilter();
+        nf.type='bandpass';
+        nf.frequency.value=2200;
+        nf.Q.value=8;
+        const ng=c.createGain();
+        ng.gain.setValueAtTime(0.03,c.currentTime);
+        ng.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+d);
+        n.buffer=buffer;
+        n.connect(nf).connect(ng).connect(c.destination);
+        n.start();
+        n.stop(c.currentTime+d);
+      }
+      function buzz(){
+        if(!enabled||!unlocked) return;
+        const c=getCtx();
+        const o=c.createOscillator();
+        const g=c.createGain();
+        o.type='sawtooth';
+        o.frequency.value=60;
+        g.gain.setValueAtTime(0.1,c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001,c.currentTime+0.25);
+        o.connect(g).connect(c.destination);
+        o.start();
+        o.stop(c.currentTime+0.25);
+        const n=c.createBufferSource();
+        const buffer=c.createBuffer(1,c.sampleRate*0.25,c.sampleRate);
+        const data=buffer.getChannelData(0);
+        for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*0.2;
+        n.buffer=buffer;
+        n.connect(g);
+        n.start();
+        n.stop(c.currentTime+0.25);
+      }
+      function whine(){
+        if(!enabled||!unlocked) return;
+        const c=getCtx();
+        const o=c.createOscillator();
+        const g=c.createGain();
+        o.type='sine';
+        o.frequency.value=15000;
+        g.gain.setValueAtTime(0.0001,c.currentTime);
+        g.gain.linearRampToValueAtTime(0.04,c.currentTime+0.05);
+        g.gain.exponentialRampToValueAtTime(0.00001,c.currentTime+1.2);
+        o.connect(g).connect(c.destination);
+        o.start();
+        o.stop(c.currentTime+1.2);
+      }
+      return {beep, tick, setEnabled, unlock, buzz, whine};
+    })();
+
+    function randHex(n){ return Array.from({length:n},()=>Math.floor(Math.random()*16).toString(16)).join('').toUpperCase(); }
+
+    // ===== Boot (vertical type-on) =====
+    const boot = document.getElementById('boot');
+    const bootText = document.getElementById('bootText');
+    const bootScroll = document.getElementById('bootScroll');
+    const ui = document.getElementById('ui');
+    const cmdline = document.getElementById('cmdline');
+    const cmdInput = document.getElementById('cmdInput');
+    const bootBtn = document.getElementById('bootBtn');
+
+    const bootLines = [
+      'Initializing VAULT-TEC BIOS... [OK]',
+      'Checking base memory: 64KB...128KB...256KB...512KB... [OK]',
+      'Detecting peripherals: KBD[OK] VDU[OK] PRN[—]',
+      'Mounting system image FO/1.2... [OK]',
+      'Entropy pool: sufficient',
+      'Starting services: POWER | WATER | AIR | SECURITY',
+      'Loading Overseer policies (73-B)... [OK]',
+      'Decrypting local archives... [OK]',
+      'Sealing exterior door routines... [LOCKED]',
+      'Self-test: video scanlines... [OK]',
+      'Handing off to user-space...'
+    ];
+
+    let l=0, c=0, accel=false, bootDone=false;
+
+    function appendBootChar(ch){
+      if(c===0){ const row=document.createElement('div'); row.className='row'; row.setAttribute('data-row', String(l)); bootText.appendChild(row); }
+      const row = bootText.lastElementChild; row.textContent += ch; bootScroll.scrollTop = bootScroll.scrollHeight;
+    }
+
+    function typeBoot(){
+      if(bootDone) return;
+      const line = bootLines[l] || '';
+      const speed = accel ? 6 : 16; // smaller=faster
+      if(c < line.length){
+        appendBootChar(line[c]); c++;
+        if(line[c-1] !== ' ') Beeper.tick(accel?1.5:1);
+        setTimeout(typeBoot, speed);
+      } else {
+        const tail = ' 0x' + randHex(4) + ':' + randHex(4);
+        appendBootChar(tail); appendBootChar('\n');
+        l++; c=0;
+        if(l < bootLines.length){ setTimeout(typeBoot, accel ? 120 : 360); }
+        else { finishBoot(); }
+      }
+    }
+
+    function finishBoot(){
+      bootDone = true;
+      bootBtn.style.display='none';
+      Beeper.beep(600, .08);
+      setTimeout(()=>{
+        boot.style.display='none';
+        ui.style.display='grid';
+        cmdline.style.display='flex';
+        cmdInput.focus();
+      }, 420);
+    }
+
+    bootBtn.addEventListener('click', ()=>{
+      bootBtn.style.display='none';
+      Beeper.unlock();
+      Beeper.buzz();
+      Beeper.whine();
+      typeBoot();
+    });
+
+    addEventListener('keydown', (e)=>{ if(e.code==='Space' && document.activeElement!==cmdInput){ accel=true; } if(e.key==='Enter' && !bootDone){ finishBoot(); } });
+    addEventListener('keyup', (e)=>{ if(e.code==='Space' && document.activeElement!==cmdInput){ accel=false; } });
+
+    // ===== Menu / Nav =====
+    const menuBtns = [...document.querySelectorAll('.menu button')];
+    const panels = [...document.querySelectorAll('#content .panel')];
+    let idx = 0;
+    function showPanel(id){ panels.forEach(p=> p.style.display = (p.id===id)?'block':'none'); menuBtns.forEach(b=> b.classList.toggle('active', b.dataset.target===id)); Beeper.beep(760, .03); }
+    menuBtns.forEach((b,i)=> b.addEventListener('click', ()=>{ idx=i; showPanel(b.dataset.target); }));
+    document.querySelectorAll('button').forEach(btn=> btn.addEventListener('mouseenter', ()=>Beeper.beep(520,.02)));
+    addEventListener('keydown', (e)=>{
+      if(ui.style.display!=='grid' || document.activeElement===cmdInput) return;
+      if(e.key==='ArrowDown'){ idx = Math.min(menuBtns.length-1, idx+1); menuBtns[idx].focus(); Beeper.beep(520,.02); }
+      else if(e.key==='ArrowUp'){ idx = Math.max(0, idx-1); menuBtns[idx].focus(); Beeper.beep(520,.02); }
+      else if(e.key==='Enter'){ menuBtns[idx].click(); }
+      else if(e.key.toLowerCase()==='m'){ menuBtns[idx].focus(); }
+    });
+
+    const cmdMap = {
+      status:'panel-status',
+      systems:'panel-controls',
+      controls:'panel-controls',
+      security:'panel-security',
+      directives:'panel-directives',
+      lore:'panel-lore',
+      diagnostics:'panel-diagnostics',
+      settings:'panel-settings'
+    };
+    cmdInput.addEventListener('keydown', e=>{
+      if(e.key === 'Enter'){
+        const cmd = cmdInput.value.trim().toLowerCase();
+        const target = cmdMap[cmd];
+        if(target){
+          showPanel(target);
+          idx = menuBtns.findIndex(b=> b.dataset.target===target);
+        } else if(cmd){
+          Beeper.beep(220,.14);
+        }
+        cmdInput.value='';
+      } else if(e.key.length===1 && e.key !== ' '){
+        Beeper.tick();
+      }
+    });
+
+    // ===== Systems Control =====
+    const purif = document.getElementById('sliderPurif');
+    const hydro = document.getElementById('sliderHydro');
+    const other = document.getElementById('sliderOther');
+    const vPur = document.getElementById('valPurif');
+    const vHyd = document.getElementById('valHydro');
+    const vOth = document.getElementById('valOther');
+    const apply = document.getElementById('applyPower');
+    const msg = document.getElementById('powerMsg');
+
+    function reflect(){ if(vPur) vPur.textContent = purif.value; if(vHyd) vHyd.textContent = hydro.value; if(vOth) vOth.textContent = other.value; }
+    [purif,hydro,other].forEach(el=> el && el.addEventListener('input', reflect)); reflect();
+
+    apply && apply.addEventListener('click', ()=>{
+      let total = +purif.value + +hydro.value + +other.value;
+      if(total>100){ const excess = total-100; other.value = Math.max(0, +other.value - excess); reflect(); total = +purif.value + +hydro.value + +other.value; }
+      msg.textContent = `Routing applied. Total ${total}% • Purif ${purif.value}% • Hydro ${hydro.value}% • Other ${other.value}%`;
+      msg.className='accent'; Beeper.beep(640, .05);
+    });
+
+    // Door
+    const doorBtn = document.getElementById('requestOpen');
+    const doorMsg = document.getElementById('doorMsg');
+    doorBtn && doorBtn.addEventListener('click', ()=>{
+      const reasons = ['Reason: External index high','Reason: Policy 73-B','Reason: Unknown anomaly'];
+      const r = reasons[Math.floor(Math.random()*reasons.length)];
+      doorMsg.textContent = `Unlock denied. ${r}. Override requires Overseer biometric.`;
+      doorMsg.className = 'status-bad'; Beeper.beep(220, .14);
+    });
+
+    // ===== Settings =====
+    const amberToggle = document.getElementById('amberToggle');
+    const soundToggle = document.getElementById('soundToggle');
+    const sweepToggle = document.getElementById('sweepToggle');
+    amberToggle && amberToggle.addEventListener('change', e=>{ document.querySelector('.bezel').classList.toggle('amber', e.target.checked); });
+    soundToggle && soundToggle.addEventListener('change', e=> Beeper.setEnabled(e.target.checked));
+    sweepToggle && sweepToggle.addEventListener('change', e=>{ document.querySelector('.sweep').style.display = e.target.checked ? 'block' : 'none'; });
+
+    // ===== Diagnostics Overlay =====
+    const diagOverlay = document.getElementById('diagOverlay');
+    const diagText = document.getElementById('diagText');
+    const diagScroll = document.getElementById('diagScroll');
+    const btnRunPOST = document.getElementById('btnRunPOST');
+    const btnAnomaly = document.getElementById('btnAnomaly');
+
+    let dL=0, dC=0, diagAccel=false, diagDone=false, diagRunning=false;
+
+    const baseDiagLines = [
+      'POST v2.3 — Power-On Self Test',
+      'RAM CHECK: 0000-1FFF… OK  2000-3FFF… OK  4000-7FFF… OK',
+      'VDU: MONOCHROME BUFFER… OK',
+      'KBD: PS/2… OK',
+      'IO BUS: 2 DEVICES ONLINE',
+      'MOUNTING SERVICES: POWER WATER AIR SECURITY… OK',
+      'DEVICE PUMP-A (0x0010)… OK',
+      'DEVICE SCRUBBER-B (0x0011)… OK',
+      'DEVICE HYDRO-FEEDER (0x0200)… LOW FLOW',
+      'DEVICE DOOR-RELAY (0x0300)… LOCKED',
+      'HASH SELF-CHECK… OK',
+      'READY.'
+    ];
+    const anomalyLines = [
+      '*** WARNING: Anomalous Audio Signature DETECTED',
+      'SOURCE: Flood Tunnel • FREQ: 18 Hz • PHASE-LOCK: TRUE',
+      'EFFECT: Synchrony in Dormitory EEG (Δ 0.7 Hz)',
+      'ACTION: Flagging Overseer — Policy 73-B HOLD'
+    ];
+
+    function openDiag(lines){
+      diagOverlay.style.display='flex'; diagOverlay.setAttribute('aria-hidden','false');
+      diagText.textContent=''; diagRunning=true; diagDone=false; diagAccel=false; dL=0; dC=0;
+      runDiag(lines);
+    }
+    function appendDiagChar(ch){ if(dC===0){ const row=document.createElement('div'); row.className='row'; diagText.appendChild(row); } const row=diagText.lastElementChild; row.textContent += ch; diagScroll.scrollTop = diagScroll.scrollHeight; }
+
+    function runDiag(lines){
+      if(!diagRunning) return;
+      const line = lines[dL] || '';
+      const speed = diagAccel ? 5 : 14;
+      if(dC < line.length){ appendDiagChar(line[dC]); dC++; if(line[dC-1] !== ' ') Beeper.tick(diagAccel?1.5:1); setTimeout(()=>runDiag(lines), speed); }
+      else { const tail=' 0x'+randHex(4)+':'+randHex(4); appendDiagChar(tail); appendDiagChar('\n'); dL++; dC=0; if(dL < lines.length){ setTimeout(()=>runDiag(lines), diagAccel?100:320); } else { diagDone=true; Beeper.beep(600,.08); } }
+    }
+
+    function closeDiag(){ diagRunning=false; diagOverlay.style.display='none'; diagOverlay.setAttribute('aria-hidden','true'); }
+
+    btnRunPOST && btnRunPOST.addEventListener('click', ()=> openDiag(baseDiagLines));
+    btnAnomaly && btnAnomaly.addEventListener('click', ()=> openDiag(baseDiagLines.concat(anomalyLines)));
+
+    addEventListener('keydown', (e)=>{
+      if(diagOverlay.style.display==='flex'){
+        if(e.code==='Space'){ diagAccel=true; }
+        if(e.key==='Enter' && diagDone){ closeDiag(); }
+        if(['Space','Enter'].includes(e.code||e.key)) e.stopPropagation();
+      }
+    }, true);
+  </script>
+</body>
+</html>

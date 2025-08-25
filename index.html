@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vault-Tec Terminal</title>
+  <style>
+    @font-face {
+      font-family: 'Fixedsys Excelsior';
+      src: url('FixedsysExcelsior.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg: #041204;
+      --fg: #9aff9a;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'Fixedsys Excelsior', 'Fixedsys', monospace;
+      height: 100vh;
+    }
+
+    #crt {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    #crt::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.03) 0 2px,
+        transparent 2px 4px
+      );
+      mix-blend-mode: overlay;
+      pointer-events: none;
+    }
+
+    #crt::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.7);
+      pointer-events: none;
+    }
+
+    #screen {
+      position: absolute;
+      inset: 0;
+      padding: 20px;
+      white-space: pre-wrap;
+      overflow: auto;
+      outline: none;
+      caret-color: transparent;
+    }
+
+    #cursor {
+      position: absolute;
+      width: 0.6ch;
+      height: 1em;
+      background: var(--fg);
+      animation: blink 1s steps(1, end) infinite;
+      pointer-events: none;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="crt">
+    <div id="screen" contenteditable="true" spellcheck="false"></div>
+    <div id="cursor"></div>
+  </div>
+  <script>
+    const screen = document.getElementById('screen');
+    const cursor = document.getElementById('cursor');
+
+    function updateCursor() {
+      const sel = window.getSelection();
+      if (!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      range.collapse(true);
+      const rect = range.getBoundingClientRect();
+      const sRect = screen.getBoundingClientRect();
+      cursor.style.top = rect.top - sRect.top + 'px';
+      cursor.style.left = rect.left - sRect.left + 'px';
+    }
+
+    screen.addEventListener('input', updateCursor);
+    screen.addEventListener('keyup', updateCursor);
+    screen.addEventListener('mouseup', updateCursor);
+    screen.addEventListener('focus', updateCursor);
+
+    screen.focus();
+    updateCursor();
+  </script>
+</body>
+</html>

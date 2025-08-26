@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RobCo Engineering Division Database</title>
+<title>RobCo Corporate Employee Access Terminal</title>
 <style>
   body{
     margin:0;
@@ -60,100 +60,109 @@
 const headerLines=[
 "ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
 "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
-"-Server 12-",
+"-Headquarters Mainframe 3A-",
 "",
-"Welcome to the RobCo Engineering Division Database!",
-"How may I assist you this fine day?",
+"Welcome to the RobCo Corporate Employee Access Terminal!",
 "____________________________________________________",
-""
+"",
 ];
 
 const screens={
   menu:[
-    {text:"> Protectron Schematics",screen:"protectron"},
-    {text:"> Mr. Handy Service Records",screen:"handy"},
-    {text:"> Assaultron Combat Models",screen:"assaultron"},
-    {text:"> Securitron Systems Control",screen:"securitron"},
-    {text:"> Experimental Robotics Files",screen:"experimental"},
-    {text:"> Terminal Hacking Simulation",screen:"hack"},
-    "",
+    {text:"> Corporate Announcements",screen:"announcements"},
+    {text:"> Human Resources Reports",screen:"hr"},
+    {text:"> Cafeteria Menu",screen:"cafeteria"},
+    {text:"> Engineering Incident Log",screen:"incident"},
+    {text:"> Executive Memoranda",screen:"memos"},
     "",
     "> _"
   ],
-  protectron:[
-    "== PROTECTRON SCHEMATICS ==",
+  announcements:[
+    "== CORPORATE ANNOUNCEMENTS ==",
     "",
-    "Model: PRC-66b",
-    "Design: Bipedal, steel-alloy frame",
-    "Power Supply: Standard fission battery pack",
-    "Primary Functions: Civil service, law enforcement, light labor",
-    "Weapon Systems: Integrated laser emitter (calibrated for crowd control)",
+    "• RobCo has surpassed quarterly earnings expectations — thanks in part to ",
+    "  “voluntary” staff reductions. Fewer employees means more profit!",
     "",
-    "WARNING: Protectron AI routines exhibit limited situational awareness.",
-    "Recommend close oversight when deployed in mixed civilian environments.",
+    "• Reminder: All employees are required to smile at visiting shareholders. ",
+    "  Failure to display appropriate dental enthusiasm will result in corrective retraining.",
     "",
+    "• The lobby statue of Mr. Handy will be refurbished after its ",
+    "  “malfunctioning flamethrower” incident last week. ",
+    "",
+    "End of Announcements.",
     {text:"> RETURN",screen:"menu"}
   ],
-  handy:[
-    "== MR. HANDY SERVICE RECORDS ==",
+  hr:[
+    "== HUMAN RESOURCES REPORTS ==",
     "",
-    "Unit: MH-13A",
-    "Last Maintenance: 07/15/2076",
-    "Notes: Coolant leak in upper thruster assembly. Patched with epoxy resin.",
-    "Armament: Circular saw, extendable manipulator arms, standard flame nozzle",
-    "Service Log: Unit has been reassigned to Vault facilities for sanitation and meal preparation.",
+    "07/03/2076: Employee #221 filed complaint regarding unsafe working conditions ",
+    "             in Robotics Testing. Resolution: Complaint “misplaced” in filing system. ",
     "",
-    "CAUTION: Mr. Handy flame module should NOT be operated in enclosed living quarters.",
+    "07/07/2076: Four interns reported missing after a prototype Securitron test. ",
+    "             Payroll savings recorded. ",
     "",
+    "07/10/2076: Employee #334 suggested forming a labor union. ",
+    "             Corrective measure: immediate promotion to “Field Tester.” ",
+    "             (Field remains undisclosed.)",
+    "",
+    "All reports considered closed. Remember: RobCo cares™.",
     {text:"> RETURN",screen:"menu"}
   ],
-  assaultron:[
-    "== ASSAULTRON COMBAT MODELS ==",
+  cafeteria:[
+    "== CAFETERIA MENU ==",
     "",
-    "Model: ATX-03",
-    "Chassis: Lightweight, high-speed framework",
-    "Power Supply: Enclave-enhanced microfusion cell",
-    "Primary Armament: Integrated face-mounted laser array",
-    "Secondary Armament: Retractable claw appendages",
-    "Performance: Field trials confirm 95% neutralization efficiency against armed combatants.",
+    "Today’s Entrées:",
+    "• Salisbury Steak (reconstituted, now with *real* beef flavoring)",
+    "• Mac & Cheese (made with 63% cheese-like product)",
+    "• Radroach-on-a-Stick (Chef says they’re “nutrient rich”)",
+    "• Mystery Stew (exact ingredients pending autopsy results)",
     "",
-    "NOTE: Operators advised to maintain line-of-sight at all times.",
-    "Unit will prioritize nearest hostile target without hesitation.",
+    "Note: Due to cost-cutting, utensils are available on a ",
+    "“bring-your-own” basis. Corporate thanks you for your flexibility.",
     "",
+    "Bon Appetit!",
     {text:"> RETURN",screen:"menu"}
   ],
-  securitron:[
-    "== SECURITRON SYSTEMS CONTROL ==",
+  incident:[
+    "== ENGINEERING INCIDENT LOG ==",
     "",
-    "Model: Series VII Securitron",
-    "Current OS Build: 4.23b",
-    "Weapon Systems: 9mm submachinegun, onboard grenade launcher, riot baton",
-    "Patrol Pattern: Auto-routed grid cycle",
-    "Override Protocol: Requires Overseer clearance code (SEC-PRIME)",
+    "06/29/2076: Prototype Protectron unit “accidentally” welded an employee ",
+    "             inside the breakroom fridge. Productivity unaffected. ",
     "",
-    "Systems stable. Last crash report: NONE.",
-    "All Securitron units in storage. Awaiting deployment order.",
+    "07/02/2076: Assembly Line C reported a catastrophic coolant leak. ",
+    "             Workers instructed to breathe shallowly and “stay positive.” ",
     "",
+    "07/09/2076: Mr. Gibbons attempted to “ride” a Mr. Handy down the freight elevator. ",
+    "             Elevator repairs estimated at 14,000 caps. Mr. Gibbons estimated at zero. ",
+    "",
+    "End of Report.",
     {text:"> RETURN",screen:"menu"}
   ],
-  experimental:[
-    "== EXPERIMENTAL ROBOTICS FILES ==",
+  memos:[
+    "== EXECUTIVE MEMORANDA ==",
     "",
-    "File: X9-Blackbird Initiative",
-    "Contents: Prototype stealth reconnaissance platform",
-    "Status: [REDACTED]",
-    "Notes: Cloaking field unstable. High energy draw. Prolonged use risks catastrophic cell failure.",
+    "TO: All Department Heads",
+    "FROM: Corporate Office of Efficiency",
+    "DATE: 07/15/2076",
     "",
-    "File: Project REX",
-    "Contents: Experimental human-robot neural integration",
-    "Status: SUSPENDED",
-    "Notes: Overseer authorization required. Do not disseminate.",
+    "Team,",
     "",
-    "Unauthorized access to experimental files will result in TERMINATION OF CONTRACT.",
+    "• Effective immediately, all chairs have been removed from the engineering floor. ",
+    "  Standing boosts circulation and, more importantly, output. ",
+    "",
+    "• Paychecks will now be distributed in the form of RobCo Scrip, ",
+    "  redeemable only at the company commissary. ",
+    "  (Note: Commissary has doubled prices accordingly.)",
+    "",
+    "• The phrase “work-life balance” is banned from corporate correspondence. ",
+    "  Employees are reminded that “work” is life. ",
+    "",
+    "Signed,",
+    "— RobCo Management Team",
+    "P.S. Remember: Robots don’t complain, and neither should you.",
     "",
     {text:"> RETURN",screen:"menu"}
   ]
-  hack:[]
 };
 
 const header=document.getElementById('header');
@@ -180,7 +189,6 @@ async function init(){
 }
 
 async function showScreen(name){
-  if(name==='hack') return startHack();
   typing=true;
   content.innerHTML='';
   currentOptions=[];
@@ -211,100 +219,6 @@ async function showScreen(name){
     last.innerHTML='&gt; <span class="cursor">█</span>';
   }
   typing=false;
-}
-
-async function startHack(){
-  typing=true;
-  content.innerHTML='';
-  currentOptions=[];
-  selected=-1;
-  const title=document.createElement('div');
-  content.appendChild(title);
-  await typeText(title,'== HACKING INTERFACE ==');
-  const blank=document.createElement('div');
-  content.appendChild(blank);
-  await typeText(blank,'');
-  const words=["ROBOTIC","MACHINE","NUCLEAR","TARGETS","SYSTEMS","ENIGMAS"];
-  const secret=words[Math.floor(Math.random()*words.length)];
-  let attempts=4;
-  const attemptDiv=document.createElement('div');
-  content.appendChild(attemptDiv);
-  await typeText(attemptDiv,`Attempts Remaining: ${attempts}`);
-  for(const w of words){
-    const div=document.createElement('div');
-    div.className='option';
-    div.tabIndex=0;
-    content.appendChild(div);
-    await typeText(div,w);
-    div.addEventListener('click',()=>guess(w));
-    div.addEventListener('mouseenter',()=>{
-      if(selected>=0){
-        currentOptions[selected].classList.remove('selected');
-        selected=-1;
-      }
-    });
-    currentOptions.push(div);
-  }
-  const feedback=document.createElement('div');
-  content.appendChild(feedback);
-  typing=false;
-
-  async function guess(w){
-    if(typing) return;
-    typing=true;
-    const like=likeness(w,secret);
-    feedback.textContent='';
-    await typeText(feedback,w===secret?"ACCESS GRANTED":`Entry denied. Likeness: ${like}`);
-    if(w===secret){
-      currentOptions.forEach(o=>o.classList.remove('option'));
-      currentOptions=[];
-      const ret=document.createElement('div');
-      ret.className='option';
-      ret.tabIndex=0;
-      content.appendChild(ret);
-      await typeText(ret,"> RETURN");
-      ret.addEventListener('click',()=>showScreen('menu'));
-      ret.addEventListener('mouseenter',()=>{
-        if(selected>=0){
-          currentOptions[selected].classList.remove('selected');
-          selected=-1;
-        }
-      });
-      currentOptions.push(ret);
-      typing=false;
-      return;
-    }
-    attempts--;
-    attemptDiv.textContent='';
-    await typeText(attemptDiv,`Attempts Remaining: ${attempts}`);
-    if(attempts<=0){
-      currentOptions.forEach(o=>o.classList.remove('option'));
-      currentOptions=[];
-      const lock=document.createElement('div');
-      content.appendChild(lock);
-      await typeText(lock,"TERMINAL LOCKED");
-      const ret=document.createElement('div');
-      ret.className='option';
-      ret.tabIndex=0;
-      content.appendChild(ret);
-      await typeText(ret,"> RETURN");
-      ret.addEventListener('click',()=>showScreen('menu'));
-      ret.addEventListener('mouseenter',()=>{
-        if(selected>=0){
-          currentOptions[selected].classList.remove('selected');
-          selected=-1;
-        }
-      });
-      currentOptions.push(ret);
-    }
-    typing=false;
-  }
-}
-
-function likeness(a,b){
-  let cnt=0;
-  for(let i=0;i<a.length;i++) if(a[i]===b[i]) cnt++;
-  return cnt;
 }
 
 document.addEventListener('keydown',e=>{

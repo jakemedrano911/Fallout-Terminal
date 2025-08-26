@@ -17,122 +17,201 @@
     align-items:center;
     height:100vh;
   }
-  .screen{display:none; white-space:pre-wrap; max-width:800px;}
-  .screen.active{display:block;}
-  .link{cursor:pointer;}
-  .link:hover{text-decoration:underline;}
+  #terminal{
+    width:80vw;
+    height:80vh;
+  }
+  #header, #content{
+    white-space:pre-wrap;
+  }
+  .option{
+    display:block;
+    width:100%;
+    cursor:pointer;
+  }
+  .option:hover, .option:focus, .option.selected{
+    background:#00aa00;
+    color:#041204;
+  }
   .cursor{display:inline-block; animation:blink 1s steps(1,end) infinite;}
   @keyframes blink{50%{opacity:0;}}
 </style>
 </head>
 <body>
-<div id="menu" class="screen active">
-ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM
-COPYRIGHT 2075-2077 ROBCO INDUSTRIES
--Server 12-
-
-Welcome to the RobCo Engineering Division Database!
-How may I assist you this fine day?
-____________________________________________________
-
-&gt; <span class="link" data-screen="protectron">Protectron Schematics</span>
-&gt; <span class="link" data-screen="handy">Mr. Handy Service Records</span>
-&gt; <span class="link" data-screen="assaultron">Assaultron Combat Models</span>
-&gt; <span class="link" data-screen="securitron">Securitron Systems Control</span>
-&gt; <span class="link" data-screen="experimental">Experimental Robotics Files</span>
-
-
-&gt; <span class="cursor">_</span>
+<div id="terminal">
+  <div id="header"></div>
+  <div id="content"></div>
 </div>
-
-<div id="protectron" class="screen">
-== PROTECTRON SCHEMATICS ==
-
-Model: PRC-66b
-Design: Bipedal, steel-alloy frame
-Power Supply: Standard fission battery pack
-Primary Functions: Civil service, law enforcement, light labor
-Weapon Systems: Integrated laser emitter (calibrated for crowd control)
-
-WARNING: Protectron AI routines exhibit limited situational awareness.
-Recommend close oversight when deployed in mixed civilian environments.
-
-&gt; <span class="link" data-screen="menu">RETURN</span>
-</div>
-
-<div id="handy" class="screen">
-== MR. HANDY SERVICE RECORDS ==
-
-Unit: MH-13A
-Last Maintenance: 07/15/2076
-Notes: Coolant leak in upper thruster assembly. Patched with epoxy resin.
-Armament: Circular saw, extendable manipulator arms, standard flame nozzle
-Service Log: Unit has been reassigned to Vault facilities for sanitation and meal preparation.
-
-CAUTION: Mr. Handy flame module should NOT be operated in enclosed living quarters.
-
-&gt; <span class="link" data-screen="menu">RETURN</span>
-</div>
-
-<div id="assaultron" class="screen">
-== ASSAULTRON COMBAT MODELS ==
-
-Model: ATX-03
-Chassis: Lightweight, high-speed framework
-Power Supply: Enclave-enhanced microfusion cell
-Primary Armament: Integrated face-mounted laser array
-Secondary Armament: Retractable claw appendages
-Performance: Field trials confirm 95% neutralization efficiency against armed combatants.
-
-NOTE: Operators advised to maintain line-of-sight at all times.
-Unit will prioritize nearest hostile target without hesitation.
-
-&gt; <span class="link" data-screen="menu">RETURN</span>
-</div>
-
-<div id="securitron" class="screen">
-== SECURITRON SYSTEMS CONTROL ==
-
-Model: Series VII Securitron
-Current OS Build: 4.23b
-Weapon Systems: 9mm submachinegun, onboard grenade launcher, riot baton
-Patrol Pattern: Auto-routed grid cycle
-Override Protocol: Requires Overseer clearance code (SEC-PRIME)
-
-Systems stable. Last crash report: NONE.
-All Securitron units in storage. Awaiting deployment order.
-
-&gt; <span class="link" data-screen="menu">RETURN</span>
-</div>
-
-<div id="experimental" class="screen">
-== EXPERIMENTAL ROBOTICS FILES ==
-
-File: X9-Blackbird Initiative
-Contents: Prototype stealth reconnaissance platform
-Status: [REDACTED]
-Notes: Cloaking field unstable. High energy draw. Prolonged use risks catastrophic cell failure.
-
-File: Project REX
-Contents: Experimental human-robot neural integration
-Status: SUSPENDED
-Notes: Overseer authorization required. Do not disseminate.
-
-Unauthorized access to experimental files will result in TERMINATION OF CONTRACT.
-
-&gt; <span class="link" data-screen="menu">RETURN</span>
-</div>
-
 <script>
-  document.querySelectorAll('.link').forEach(function(el){
-    el.addEventListener('click', function(){
-      var target = this.getAttribute('data-screen');
-      document.querySelectorAll('.screen').forEach(function(s){
-        s.classList.remove('active');
-      });
-      document.getElementById(target).classList.add('active');
-    });
-  });
+const headerLines=[
+"ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
+"COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
+"-Server 12-",
+"",
+"Welcome to the RobCo Engineering Division Database!",
+"How may I assist you this fine day?",
+"____________________________________________________",
+""
+];
+
+const screens={
+  menu:[
+    {text:"> Protectron Schematics",screen:"protectron"},
+    {text:"> Mr. Handy Service Records",screen:"handy"},
+    {text:"> Assaultron Combat Models",screen:"assaultron"},
+    {text:"> Securitron Systems Control",screen:"securitron"},
+    {text:"> Experimental Robotics Files",screen:"experimental"},
+    "",
+    "",
+    "> _"
+  ],
+  protectron:[
+    "== PROTECTRON SCHEMATICS ==",
+    "",
+    "Model: PRC-66b",
+    "Design: Bipedal, steel-alloy frame",
+    "Power Supply: Standard fission battery pack",
+    "Primary Functions: Civil service, law enforcement, light labor",
+    "Weapon Systems: Integrated laser emitter (calibrated for crowd control)",
+    "",
+    "WARNING: Protectron AI routines exhibit limited situational awareness.",
+    "Recommend close oversight when deployed in mixed civilian environments.",
+    "",
+    {text:"> RETURN",screen:"menu"}
+  ],
+  handy:[
+    "== MR. HANDY SERVICE RECORDS ==",
+    "",
+    "Unit: MH-13A",
+    "Last Maintenance: 07/15/2076",
+    "Notes: Coolant leak in upper thruster assembly. Patched with epoxy resin.",
+    "Armament: Circular saw, extendable manipulator arms, standard flame nozzle",
+    "Service Log: Unit has been reassigned to Vault facilities for sanitation and meal preparation.",
+    "",
+    "CAUTION: Mr. Handy flame module should NOT be operated in enclosed living quarters.",
+    "",
+    {text:"> RETURN",screen:"menu"}
+  ],
+  assaultron:[
+    "== ASSAULTRON COMBAT MODELS ==",
+    "",
+    "Model: ATX-03",
+    "Chassis: Lightweight, high-speed framework",
+    "Power Supply: Enclave-enhanced microfusion cell",
+    "Primary Armament: Integrated face-mounted laser array",
+    "Secondary Armament: Retractable claw appendages",
+    "Performance: Field trials confirm 95% neutralization efficiency against armed combatants.",
+    "",
+    "NOTE: Operators advised to maintain line-of-sight at all times.",
+    "Unit will prioritize nearest hostile target without hesitation.",
+    "",
+    {text:"> RETURN",screen:"menu"}
+  ],
+  securitron:[
+    "== SECURITRON SYSTEMS CONTROL ==",
+    "",
+    "Model: Series VII Securitron",
+    "Current OS Build: 4.23b",
+    "Weapon Systems: 9mm submachinegun, onboard grenade launcher, riot baton",
+    "Patrol Pattern: Auto-routed grid cycle",
+    "Override Protocol: Requires Overseer clearance code (SEC-PRIME)",
+    "",
+    "Systems stable. Last crash report: NONE.",
+    "All Securitron units in storage. Awaiting deployment order.",
+    "",
+    {text:"> RETURN",screen:"menu"}
+  ],
+  experimental:[
+    "== EXPERIMENTAL ROBOTICS FILES ==",
+    "",
+    "File: X9-Blackbird Initiative",
+    "Contents: Prototype stealth reconnaissance platform",
+    "Status: [REDACTED]",
+    "Notes: Cloaking field unstable. High energy draw. Prolonged use risks catastrophic cell failure.",
+    "",
+    "File: Project REX",
+    "Contents: Experimental human-robot neural integration",
+    "Status: SUSPENDED",
+    "Notes: Overseer authorization required. Do not disseminate.",
+    "",
+    "Unauthorized access to experimental files will result in TERMINATION OF CONTRACT.",
+    "",
+    {text:"> RETURN",screen:"menu"}
+  ]
+};
+
+const header=document.getElementById('header');
+const content=document.getElementById('content');
+let currentOptions=[];
+let selected=0;
+let typing=false;
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function typeText(el,text){
+  for(let ch of text){
+    el.textContent+=ch;
+    await sleep(20);
+  }
+  el.textContent+='\n';
+}
+
+async function init(){
+  for(const line of headerLines){
+    await typeText(header,line);
+  }
+  showScreen('menu');
+}
+
+async function showScreen(name){
+  typing=true;
+  content.innerHTML='';
+  currentOptions=[];
+  selected=0;
+  for(const line of screens[name]){
+    if(typeof line==='object'){
+      const div=document.createElement('div');
+      div.className='option';
+      div.tabIndex=0;
+      content.appendChild(div);
+      await typeText(div,line.text);
+      div.addEventListener('click',()=>showScreen(line.screen));
+      currentOptions.push(div);
+    }else{
+      const div=document.createElement('div');
+      content.appendChild(div);
+      await typeText(div,line);
+    }
+  }
+  const last=content.lastChild;
+  if(last && last.textContent.trim()==='> _'){
+    last.innerHTML='&gt; <span class="cursor">_</span>';
+  }
+  typing=false;
+  if(currentOptions.length){
+    currentOptions[0].classList.add('selected');
+    currentOptions[0].focus();
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  if(typing || !currentOptions.length) return;
+  if(e.key==='ArrowDown'){
+    currentOptions[selected].classList.remove('selected');
+    selected=(selected+1)%currentOptions.length;
+    currentOptions[selected].classList.add('selected');
+    currentOptions[selected].focus();
+  }else if(e.key==='ArrowUp'){
+    currentOptions[selected].classList.remove('selected');
+    selected=(selected-1+currentOptions.length)%currentOptions.length;
+    currentOptions[selected].classList.add('selected');
+    currentOptions[selected].focus();
+  }else if(e.key==='Enter'){
+    currentOptions[selected].click();
+  }
+});
+
+init();
 </script>
 </body>
 </html>

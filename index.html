@@ -10,6 +10,7 @@
     background:#041204;
     color:#9aff9a;
     font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-size:24px;
     letter-spacing:.25px;
     line-height:1.2;
     display:flex;
@@ -74,6 +75,7 @@ const screens={
     {text:"> Assaultron Combat Models",screen:"assaultron"},
     {text:"> Securitron Systems Control",screen:"securitron"},
     {text:"> Experimental Robotics Files",screen:"experimental"},
+    {text:"> Terminal Hacking Simulation",screen:"hack"},
     "",
     "",
     "> _"
@@ -151,6 +153,7 @@ const screens={
     "",
     {text:"> RETURN",screen:"menu"}
   ]
+  hack:[]
 };
 
 const header=document.getElementById('header');
@@ -177,6 +180,7 @@ async function init(){
 }
 
 async function showScreen(name){
+  if(name==='hack') return startHack();
   typing=true;
   content.innerHTML='';
   currentOptions=[];
@@ -207,6 +211,100 @@ async function showScreen(name){
     last.innerHTML='&gt; <span class="cursor">█</span>';
   }
   typing=false;
+}
+
+async function startHack(){
+  typing=true;
+  content.innerHTML='';
+  currentOptions=[];
+  selected=-1;
+  const title=document.createElement('div');
+  content.appendChild(title);
+  await typeText(title,'== HACKING INTERFACE ==');
+  const blank=document.createElement('div');
+  content.appendChild(blank);
+  await typeText(blank,'');
+  const words=["ROBOTIC","MACHINE","NUCLEAR","TARGETS","SYSTEMS","ENIGMAS"];
+  const secret=words[Math.floor(Math.random()*words.length)];
+  let attempts=4;
+  const attemptDiv=document.createElement('div');
+  content.appendChild(attemptDiv);
+  await typeText(attemptDiv,`Attempts Remaining: ${attempts}`);
+  for(const w of words){
+    const div=document.createElement('div');
+    div.className='option';
+    div.tabIndex=0;
+    content.appendChild(div);
+    await typeText(div,w);
+    div.addEventListener('click',()=>guess(w));
+    div.addEventListener('mouseenter',()=>{
+      if(selected>=0){
+        currentOptions[selected].classList.remove('selected');
+        selected=-1;
+      }
+    });
+    currentOptions.push(div);
+  }
+  const feedback=document.createElement('div');
+  content.appendChild(feedback);
+  typing=false;
+
+  async function guess(w){
+    if(typing) return;
+    typing=true;
+    const like=likeness(w,secret);
+    feedback.textContent='';
+    await typeText(feedback,w===secret?"ACCESS GRANTED":`Entry denied. Likeness: ${like}`);
+    if(w===secret){
+      currentOptions.forEach(o=>o.classList.remove('option'));
+      currentOptions=[];
+      const ret=document.createElement('div');
+      ret.className='option';
+      ret.tabIndex=0;
+      content.appendChild(ret);
+      await typeText(ret,"> RETURN");
+      ret.addEventListener('click',()=>showScreen('menu'));
+      ret.addEventListener('mouseenter',()=>{
+        if(selected>=0){
+          currentOptions[selected].classList.remove('selected');
+          selected=-1;
+        }
+      });
+      currentOptions.push(ret);
+      typing=false;
+      return;
+    }
+    attempts--;
+    attemptDiv.textContent='';
+    await typeText(attemptDiv,`Attempts Remaining: ${attempts}`);
+    if(attempts<=0){
+      currentOptions.forEach(o=>o.classList.remove('option'));
+      currentOptions=[];
+      const lock=document.createElement('div');
+      content.appendChild(lock);
+      await typeText(lock,"TERMINAL LOCKED");
+      const ret=document.createElement('div');
+      ret.className='option';
+      ret.tabIndex=0;
+      content.appendChild(ret);
+      await typeText(ret,"> RETURN");
+      ret.addEventListener('click',()=>showScreen('menu'));
+      ret.addEventListener('mouseenter',()=>{
+        if(selected>=0){
+          currentOptions[selected].classList.remove('selected');
+          selected=-1;
+        }
+      });
+      currentOptions.push(ret);
+    }
+    typing=false;
+  }
+}
+
+function likeness(a,b){
+  let cnt=0;
+  for(let i=0;i<a.length;i++) if(a[i]===b[i]) cnt++;
+  return cnt;
 }
 
 document.addEventListener('keydown',e=>{

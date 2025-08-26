@@ -18,8 +18,21 @@
     height:100vh;
   }
   #terminal{
+    position:relative;
     width:80vw;
     height:80vh;
+  }
+  #terminal::after{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      rgba(0,0,0,0.15) 0px,
+      rgba(0,0,0,0.15) 1px,
+      transparent 1px,
+      transparent 2px
+    );
   }
   #header, #content{
     white-space:pre-wrap;
@@ -143,7 +156,7 @@ const screens={
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 let currentOptions=[];
-let selected=0;
+let selected=-1;
 let typing=false;
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -151,7 +164,7 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function typeText(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    await sleep(20);
+    await sleep(17);
   }
   el.textContent+='\n';
 }
@@ -167,7 +180,7 @@ async function showScreen(name){
   typing=true;
   content.innerHTML='';
   currentOptions=[];
-  selected=0;
+  selected=-1;
   for(const line of screens[name]){
     if(typeof line==='object'){
       const div=document.createElement('div');
@@ -176,6 +189,12 @@ async function showScreen(name){
       content.appendChild(div);
       await typeText(div,line.text);
       div.addEventListener('click',()=>showScreen(line.screen));
+      div.addEventListener('mouseenter',()=>{
+        if(selected>=0){
+          currentOptions[selected].classList.remove('selected');
+          selected=-1;
+        }
+      });
       currentOptions.push(div);
     }else{
       const div=document.createElement('div');
@@ -185,28 +204,24 @@ async function showScreen(name){
   }
   const last=content.lastChild;
   if(last && last.textContent.trim()==='> _'){
-    last.innerHTML='&gt; <span class="cursor">_</span>';
+    last.innerHTML='&gt; <span class="cursor">█</span>';
   }
   typing=false;
-  if(currentOptions.length){
-    currentOptions[0].classList.add('selected');
-    currentOptions[0].focus();
-  }
 }
 
 document.addEventListener('keydown',e=>{
   if(typing || !currentOptions.length) return;
   if(e.key==='ArrowDown'){
-    currentOptions[selected].classList.remove('selected');
-    selected=(selected+1)%currentOptions.length;
+    if(selected>=0) currentOptions[selected].classList.remove('selected');
+    selected=selected<0?0:(selected+1)%currentOptions.length;
     currentOptions[selected].classList.add('selected');
     currentOptions[selected].focus();
   }else if(e.key==='ArrowUp'){
-    currentOptions[selected].classList.remove('selected');
-    selected=(selected-1+currentOptions.length)%currentOptions.length;
+    if(selected>=0) currentOptions[selected].classList.remove('selected');
+    selected=selected<0?currentOptions.length-1:(selected-1+currentOptions.length)%currentOptions.length;
     currentOptions[selected].classList.add('selected');
     currentOptions[selected].focus();
-  }else if(e.key==='Enter'){
+  }else if(e.key==='Enter' && selected>=0){
     currentOptions[selected].click();
   }
 });

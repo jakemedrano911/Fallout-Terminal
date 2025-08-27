@@ -20,8 +20,14 @@
   }
   #terminal{
     position:relative;
-    width:80vw;
-    height:80vh;
+    width:40vw;
+    height:40vh;
+    border:4px solid #00aa00;
+    box-sizing:border-box;
+    padding:10px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
   }
   #terminal::after{
     content:"";
@@ -37,6 +43,10 @@
   }
   #header, #content{
     white-space:pre-wrap;
+  }
+  #content{
+    flex:1;
+    overflow:hidden;
   }
   .option{
     display:block;
@@ -159,18 +169,21 @@ const content=document.getElementById('content');
 let currentOptions=[];
 let selected=-1;
 let typing=false;
+let baseDelay=10;
+let speed=1;
 
-  const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  audioCtx.resume();
-  function playSelectSound(){
-  const osc=audioCtx.createOscillator();
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+audioCtx.resume();
+function playSelectSound(){
+  const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.03,audioCtx.sampleRate);
+  const data=buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/10);
+  const src=audioCtx.createBufferSource();
+  src.buffer=buffer;
   const gain=audioCtx.createGain();
-  osc.type='square';
-  osc.frequency.value=800;
-  gain.gain.value=0.1;
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime+0.1);
+  gain.gain.value=0.05;
+  src.connect(gain).connect(audioCtx.destination);
+  src.start();
 }
 function playTypeSound(){
   const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.02,audioCtx.sampleRate);
@@ -192,10 +205,37 @@ async function typeText(el,text){
   for(let ch of text){
     el.textContent+=ch;
     playTypeSound();
-    await sleep(15);
+    const delay=speed===Infinity?0:baseDelay/speed;
+    if(delay>0) await sleep(delay);
   }
   el.textContent+='\n';
 }
+
+function waitForContinue(){
+  return new Promise(res=>{
+    function handler(e){
+      if(e.type==='keydown'&&(e.key===' '||e.key==='Enter')){cleanup();}
+      else if(e.type==='mousedown'&&e.button===0){cleanup();}
+    }
+    function cleanup(){
+      document.removeEventListener('keydown',handler);
+      document.removeEventListener('mousedown',handler);
+      res();
+    }
+    document.addEventListener('keydown',handler);
+    document.addEventListener('mousedown',handler);
+  });
+}
+
+document.addEventListener('mousedown',e=>{
+  if(!typing) return;
+  if(e.button===0) speed=1.5;
+});
+document.addEventListener('keydown',e=>{
+  if(!typing) return;
+  if(e.key===' ') speed=1.5;
+  else if(e.key==='Enter') speed=Infinity;
+});
 
 async function init(){
   for(const line of headerLines){
@@ -205,37 +245,61 @@ async function init(){
 }
 
 async function showScreen(name){
-  typing=true;
   content.innerHTML='';
   currentOptions=[];
   selected=-1;
-  for(const line of screens[name]){
-    if(typeof line==='object'){
-      const div=document.createElement('div');
-      div.className='option';
-      div.tabIndex=0;
-      content.appendChild(div);
-      await typeText(div,line.text);
-      div.addEventListener('click',()=>showScreen(line.screen));
-      div.addEventListener('mouseenter',()=>{
-        if(selected>=0){
-          currentOptions[selected].classList.remove('selected');
-          selected=-1;
-        }
-        playSelectSound();
-      });
-      currentOptions.push(div);
-    }else{
+  const lines=screens[name];
+  let i=0;
+  while(i<lines.length){
+    speed=1;
+    typing=true;
+    while(i<lines.length){
+      const line=lines[i];
       const div=document.createElement('div');
       content.appendChild(div);
-      await typeText(div,line);
+      if(typeof line==='object'){
+        div.className='option';
+        div.tabIndex=0;
+        await typeText(div,line.text);
+        div.addEventListener('click',()=>showScreen(line.screen));
+        div.addEventListener('mouseenter',()=>{
+          if(selected>=0){
+            currentOptions[selected].classList.remove('selected');
+            selected=-1;
+          }
+          playSelectSound();
+        });
+        currentOptions.push(div);
+      }else{
+        await typeText(div,line);
+      }
+      if(content.scrollHeight>content.clientHeight){
+        content.removeChild(div);
+        if(typeof line==='object') currentOptions.pop();
+        typing=false;
+        await waitForContinue();
+        content.innerHTML='';
+        currentOptions=[];
+        selected=-1;
+        break;
+      }else{
+        i++;
+      }
+    }
+    if(typing){
+      typing=false;
+      if(i<lines.length){
+        await waitForContinue();
+        content.innerHTML='';
+        currentOptions=[];
+        selected=-1;
+      }
     }
   }
   const last=content.lastChild;
   if(last && last.textContent.trim()==='> _'){
     last.innerHTML='&gt; <span class="cursor">█</span>';
   }
-  typing=false;
 }
 
 document.addEventListener('keydown',e=>{

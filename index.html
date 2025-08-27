@@ -20,8 +20,8 @@
   }
   #terminal{
     position:relative;
-    width:40vw;
-    height:40vh;
+    width:80vw;
+    height:60vh;
     border:4px solid #00aa00;
     box-sizing:border-box;
     padding:10px;
@@ -174,6 +174,19 @@ let speed=1;
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 audioCtx.resume();
+let humStarted=false;
+function ensureHum(){
+  if(humStarted) return;
+  const osc=audioCtx.createOscillator();
+  osc.type='sawtooth';
+  osc.frequency.value=10000;
+  const gain=audioCtx.createGain();
+  gain.gain.value=0.002;
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start();
+  humStarted=true;
+}
+
 function playSelectSound(){
   const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.03,audioCtx.sampleRate);
   const data=buffer.getChannelData(0);
@@ -196,8 +209,8 @@ function playTypeSound(){
   src.connect(gain).connect(audioCtx.destination);
   src.start();
 }
-document.addEventListener('click',()=>audioCtx.resume(),{once:true});
-document.addEventListener('keydown',()=>audioCtx.resume(),{once:true});
+document.addEventListener('click',()=>{audioCtx.resume();ensureHum();},{once:true});
+document.addEventListener('keydown',()=>{audioCtx.resume();ensureHum();},{once:true});
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 

@@ -66,6 +66,25 @@
     font-size:20px;
     cursor:pointer;
   }
+  #volume-controls{
+    position:absolute;
+    bottom:-20px;
+    left:0;
+    right:60px;
+    display:none;
+    justify-content:space-around;
+    align-items:center;
+    color:#7aff7a;
+  }
+  #volume-controls label{
+    font-size:12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  #volume-controls input[type=range]{
+    width:60px;
+  }
   #terminal::after{
     content:"";
     position:absolute;
@@ -109,6 +128,12 @@
     <div id="header"></div>
     <div id="content"></div>
     <div id="input"></div>
+  </div>
+  <div id="volume-controls">
+    <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
+    <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
+    <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
+    <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
   </div>
   <button id="power-button" aria-label="Power">&#x23FB;</button>
 </div>
@@ -223,6 +248,23 @@ let speed=1;
 let inputText="";
 let screenHistory=[];
 
+const volumeControls=document.getElementById('volume-controls');
+const humSlider=document.getElementById('hum-volume');
+const scrollSlider=document.getElementById('scroll-volume');
+const focusSlider=document.getElementById('focus-volume');
+const selectSlider=document.getElementById('select-volume');
+
+let humVolume=humSlider.value/10;
+let scrollVolume=scrollSlider.value/10;
+let focusVolume=focusSlider.value/10;
+let selectVolume=selectSlider.value/10;
+let fanHumAudio;
+
+humSlider.addEventListener('input',()=>{humVolume=humSlider.value/10;if(fanHumAudio)fanHumAudio.volume=humVolume;});
+scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;});
+focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
+selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
+
 function updateInput(){
   input.innerHTML='&gt; '+inputText+'<span class="cursor">█</span>';
 }
@@ -247,7 +289,7 @@ function playScrollSound(){
   const src=audioCtx.createBufferSource();
   src.buffer=scrollBuffer;
   const gain=audioCtx.createGain();
-  gain.gain.value=0.5;
+  gain.gain.value=scrollVolume;
   src.connect(gain).connect(audioCtx.destination);
   src.start();
   scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs);
@@ -275,19 +317,41 @@ function stopScrollSound(){
   scrollTimeout=null;
 }
 
+function startFanHum(){
+  fanHumAudio=new Audio('Terminal 3/fanhum_lp.wav');
+  fanHumAudio.loop=true;
+  fanHumAudio.volume=humVolume;
+  fanHumAudio.play();
+}
+
 function playFocusSound(){
   const audio=new Audio('Terminal 3/menu/menu_focus.wav');
+  audio.volume=focusVolume;
   audio.play();
 }
 
-function playEnterSound(){
+function playSelectSound(){
   const files=[
-    'Terminal 3/enter/charenter_01.wav',
-    'Terminal 3/enter/charenter_02.wav',
-    'Terminal 3/enter/charenter_03.wav'
+    'Terminal 4/HDD/HDD1/HDD101.wav',
+    'Terminal 4/HDD/HDD1/HDD102.wav',
+    'Terminal 4/HDD/HDD1/HDD103.wav',
+    'Terminal 4/HDD/HDD1/HDD104.wav',
+    'Terminal 4/HDD/HDD1/HDD105.wav',
+    'Terminal 4/HDD/HDD1/HDD106.wav',
+    'Terminal 4/HDD/HDD1/HDD107.wav',
+    'Terminal 4/HDD/HDD1/HDD108.wav',
+    'Terminal 4/HDD/HDD1/HDD109.wav',
+    'Terminal 4/HDD/HDD1/HDD110.wav',
+    'Terminal 4/HDD/HDD1/HDD111.wav',
+    'Terminal 4/HDD/HDD1/HDD112.wav',
+    'Terminal 4/HDD/HDD1/HDD113.wav',
+    'Terminal 4/HDD/HDD1/HDD114.wav',
+    'Terminal 4/HDD/HDD1/HDD115.wav'
   ];
   const src=files[Math.floor(Math.random()*files.length)];
-  new Audio(src).play();
+  const audio=new Audio(src);
+  audio.volume=selectVolume;
+  audio.play();
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -357,7 +421,7 @@ async function showScreen(name){
         div.className='option';
         div.tabIndex=0;
         await typeText(div,line.text);
-        div.addEventListener('click',()=>{playEnterSound();showScreen(line.screen);});
+        div.addEventListener('click',()=>{playSelectSound();showScreen(line.screen);});
         div.addEventListener('mouseenter',()=>{
           if(selected>=0){
             currentOptions[selected].classList.remove('selected');
@@ -439,6 +503,8 @@ powerButton.addEventListener('click',async()=>{
   powerButton.style.display='none';
   powerScreen.style.display='none';
   terminal.classList.add('powered');
+  volumeControls.style.display='flex';
+  startFanHum();
   loadScrollSound().then(init);
 });
 </script>

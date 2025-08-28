@@ -74,17 +74,61 @@
     right:60px;
     display:none;
     justify-content:space-around;
-    align-items:center;
+    align-items:flex-end;
     color:#7aff7a;
   }
-  #volume-controls label{
-    font-size:12px;
+  .knob{
+    position:relative;
+    width:60px;
+    height:80px;
     display:flex;
     flex-direction:column;
     align-items:center;
   }
-  #volume-controls input[type=range]{
-    width:60px;
+  .knob .dial{
+    position:relative;
+    width:50px;
+    height:50px;
+    border-radius:50%;
+    background:radial-gradient(#eee,#999);
+    border:2px solid #666;
+  }
+  .knob .dial .pointer{
+    position:absolute;
+    width:2px;
+    height:20px;
+    background:#333;
+    top:5px;
+    left:50%;
+    transform-origin:bottom center;
+    transform:rotate(-135deg);
+  }
+  .knob input[type=range]{
+    position:absolute;
+    top:0;
+    left:0;
+    width:50px;
+    height:50px;
+    opacity:0;
+    cursor:pointer;
+  }
+  .knob .numbers{
+    position:absolute;
+    top:0;
+    left:0;
+    width:50px;
+    height:50px;
+    pointer-events:none;
+  }
+  .knob .numbers span{
+    position:absolute;
+    font-size:8px;
+    color:#7aff7a;
+    transform:translate(-50%,-50%);
+  }
+  .knob .title{
+    margin-top:55px;
+    font-size:12px;
   }
   #terminal::after{
     content:"";
@@ -131,10 +175,26 @@
     <div id="input"></div>
   </div>
   <div id="volume-controls">
-    <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
-    <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
-    <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
-    <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
+    <div class="knob">
+      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
+      <input type="range" min="1" max="10" value="2" id="hum-volume">
+      <div class="title">Hum</div>
+    </div>
+    <div class="knob">
+      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
+      <input type="range" min="1" max="10" value="5" id="scroll-volume">
+      <div class="title">Scroll</div>
+    </div>
+    <div class="knob">
+      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
+      <input type="range" min="1" max="10" value="5" id="focus-volume">
+      <div class="title">Focus</div>
+    </div>
+    <div class="knob">
+      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
+      <input type="range" min="1" max="10" value="5" id="select-volume">
+      <div class="title">Select</div>
+    </div>
   </div>
   <button id="power-button" aria-label="Power">&#x23FB;</button>
 </div>
@@ -255,6 +315,32 @@ const humSlider=document.getElementById('hum-volume');
 const scrollSlider=document.getElementById('scroll-volume');
 const focusSlider=document.getElementById('focus-volume');
 const selectSlider=document.getElementById('select-volume');
+
+function setupKnob(slider){
+  const knob=slider.parentElement;
+  const pointer=knob.querySelector('.pointer');
+  const numbers=knob.querySelector('.numbers');
+  for(let i=1;i<=10;i++){
+    const span=document.createElement('span');
+    span.textContent=i;
+    const angle=-135+(i-1)*30;
+    const rad=23;
+    span.style.left=25+rad*Math.cos(angle*Math.PI/180)+"px";
+    span.style.top=25+rad*Math.sin(angle*Math.PI/180)+"px";
+    numbers.appendChild(span);
+  }
+  const update=()=>{
+    const angle=-135+(slider.value-1)*30;
+    pointer.style.transform=`rotate(${angle}deg)`;
+  };
+  slider.addEventListener('input',update);
+  update();
+}
+
+setupKnob(humSlider);
+setupKnob(scrollSlider);
+setupKnob(focusSlider);
+setupKnob(selectSlider);
 
 let humVolume=humSlider.value/10;
 let scrollVolume=scrollSlider.value/10;

@@ -13,7 +13,7 @@
   }
   body{
     margin:0;
-    background:#041204;
+    background:#000;
     color:#9aff9a;
     font-family:"Fixedsys Excelsior","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:24px;
@@ -32,8 +32,20 @@
     box-sizing:border-box;
     padding:10px;
     overflow:hidden;
-    display:flex;
+    display:none;
     flex-direction:column;
+    background:#041204;
+  }
+  #power-button{
+    position:fixed;
+    bottom:20px;
+    left:20px;
+    background:red;
+    color:#fff;
+    border:none;
+    padding:10px 20px;
+    font-size:16px;
+    cursor:pointer;
   }
   #terminal::after{
     content:"";
@@ -77,6 +89,7 @@
   <div id="content"></div>
   <div id="input"></div>
 </div>
+<button id="power-button">POWER</button>
 <script>
 const headerLines=[
 "ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
@@ -174,6 +187,8 @@ const screens={
   ]
 };
 
+const terminal=document.getElementById('terminal');
+const powerButton=document.getElementById('power-button');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
@@ -191,7 +206,6 @@ function updateInput(){
 updateInput();
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-audioCtx.resume();
 
 let scrollBuffer;
 let scrollTimeout;
@@ -249,8 +263,6 @@ function playSelectSound(){
   src.connect(gain).connect(audioCtx.destination);
   src.start();
 }
-document.addEventListener('click',()=>audioCtx.resume(),{once:true});
-document.addEventListener('keydown',()=>audioCtx.resume(),{once:true});
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
@@ -394,7 +406,14 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-loadScrollSound().then(init);
+powerButton.addEventListener('click',async()=>{
+  await audioCtx.resume();
+  const powerSound=new Audio('Terminal 3/poweron.mp3');
+  powerSound.play();
+  terminal.style.display='flex';
+  powerButton.style.display='none';
+  loadScrollSound().then(init);
+});
 </script>
 </body>
 </html>

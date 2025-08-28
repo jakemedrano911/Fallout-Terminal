@@ -198,17 +198,20 @@ let scrollTimeout;
 let lastScrollTime=0;
 const scrollIntervalMs=750;
 
-fetch('Terminal 3/charscroll_lp.wav')
-  .then(r=>r.arrayBuffer())
-  .then(b=>audioCtx.decodeAudioData(b))
-  .then(buf=>scrollBuffer=buf);
+async function loadScrollSound(){
+  const res=await fetch('Terminal 3/charscroll_lp.wav');
+  const buf=await res.arrayBuffer();
+  scrollBuffer=await audioCtx.decodeAudioData(buf);
+}
 
 function playScrollSound(){
   if(!scrollBuffer) return;
   lastScrollTime=Date.now();
   const src=audioCtx.createBufferSource();
   src.buffer=scrollBuffer;
-  src.connect(audioCtx.destination);
+  const gain=audioCtx.createGain();
+  gain.gain.value=0.5;
+  src.connect(gain).connect(audioCtx.destination);
   src.start();
   scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs);
 }
@@ -391,7 +394,7 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-init();
+loadScrollSound().then(init);
 </script>
 </body>
 </html>

@@ -181,6 +181,32 @@ let speed=1;
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 audioCtx.resume();
 
+let scrollBuffer;
+let scrollInterval;
+
+fetch('Terminal 3/charscroll_lp.wav')
+  .then(r=>r.arrayBuffer())
+  .then(b=>audioCtx.decodeAudioData(b))
+  .then(buf=>scrollBuffer=buf);
+
+function playScrollSound(){
+  if(!scrollBuffer) return;
+  const src=audioCtx.createBufferSource();
+  src.buffer=scrollBuffer;
+  src.connect(audioCtx.destination);
+  src.start();
+}
+function startScrollSound(){
+  if(scrollInterval) return;
+  playScrollSound();
+  scrollInterval=setInterval(playScrollSound,750);
+}
+function stopScrollSound(){
+  if(!scrollInterval) return;
+  clearInterval(scrollInterval);
+  scrollInterval=null;
+}
+
 function playSelectSound(){
   const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.03,audioCtx.sampleRate);
   const data=buffer.getChannelData(0);
@@ -209,12 +235,14 @@ document.addEventListener('keydown',()=>audioCtx.resume(),{once:true});
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 async function typeText(el,text){
+  startScrollSound();
   for(let ch of text){
     el.textContent+=ch;
     playTypeSound();
     const delay=speed===Infinity?0:baseDelay/speed;
     if(delay>0) await sleep(delay);
   }
+  stopScrollSound();
   el.textContent+='\n';
 }
 

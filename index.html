@@ -54,6 +54,10 @@
     flex:1;
     overflow:hidden;
   }
+  #input{
+    white-space:pre-wrap;
+    min-height:1.2em;
+  }
   .option{
     display:block;
     width:100%;
@@ -71,6 +75,7 @@
 <div id="terminal">
   <div id="header"></div>
   <div id="content"></div>
+  <div id="input"></div>
 </div>
 <script>
 const headerLines=[
@@ -92,8 +97,7 @@ const screens={
     {text:"> Securitron Systems Control",screen:"securitron"},
     {text:"> Experimental Robotics Files",screen:"experimental"},
     "",
-    "",
-    "> _"
+    ""
   ],
   protectron:[
     "== PROTECTRON SCHEMATICS ==",
@@ -172,11 +176,19 @@ const screens={
 
 const header=document.getElementById('header');
 const content=document.getElementById('content');
+const input=document.getElementById('input');
 let currentOptions=[];
 let selected=-1;
 let typing=false;
 let baseDelay=10;
 let speed=1;
+let inputText="";
+let screenHistory=[];
+
+function updateInput(){
+  input.innerHTML='&gt; '+inputText+'<span class="cursor">█</span>';
+}
+updateInput();
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 audioCtx.resume();
@@ -184,7 +196,7 @@ audioCtx.resume();
 let scrollBuffer;
 let scrollTimeout;
 let lastScrollTime=0;
-const scrollIntervalMs=1500;
+const scrollIntervalMs=750;
 
 fetch('Terminal 3/charscroll_lp.wav')
   .then(r=>r.arrayBuffer())
@@ -207,6 +219,14 @@ function startScrollSound(){
     playScrollSound();
   }else{
     scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs-elapsed);
+  }
+}
+
+function goBack(){
+  if(screenHistory.length>1){
+    screenHistory.pop();
+    const prev=screenHistory.pop();
+    showScreen(prev);
   }
 }
 function stopScrollSound(){
@@ -276,6 +296,9 @@ async function init(){
 }
 
 async function showScreen(name){
+  screenHistory.push(name);
+  inputText='';
+  updateInput();
   content.innerHTML='';
   currentOptions=[];
   selected=-1;
@@ -330,10 +353,6 @@ async function showScreen(name){
       }
     }
   }
-  const last=content.lastChild;
-  if(last && last.textContent.trim()==='> _'){
-    last.innerHTML='&gt; <span class="cursor">█</span>';
-  }
 }
 
 document.addEventListener('keydown',e=>{
@@ -352,6 +371,23 @@ document.addEventListener('keydown',e=>{
     playSelectSound();
   }else if(e.key==='Enter' && selected>=0){
     currentOptions[selected].click();
+  }
+});
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){
+    e.preventDefault();
+    if(!typing) goBack();
+    return;
+  }
+  if(typing) return;
+  if(e.key==='Backspace'){
+    inputText=inputText.slice(0,-1);
+    updateInput();
+    e.preventDefault();
+  }else if(e.key.length===1 && !e.ctrlKey && !e.metaKey){
+    inputText+=e.key;
+    updateInput();
   }
 });
 

@@ -232,13 +232,11 @@ document.addEventListener('keydown',()=>audioCtx.resume(),{once:true});
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 async function typeText(el,text){
-  startScrollSound();
   for(let ch of text){
     el.textContent+=ch;
     const delay=speed===Infinity?0:baseDelay/speed;
     if(delay>0) await sleep(delay);
   }
-  stopScrollSound();
   el.textContent+='\n';
 }
 
@@ -269,9 +267,11 @@ document.addEventListener('keydown',e=>{
 });
 
 async function init(){
+  startScrollSound();
   for(const line of headerLines){
     await typeText(header,line);
   }
+  stopScrollSound();
   showScreen('menu');
 }
 
@@ -284,6 +284,7 @@ async function showScreen(name){
   while(i<lines.length){
     speed=1;
     typing=true;
+    startScrollSound();
     while(i<lines.length){
       const line=lines[i];
       const div=document.createElement('div');
@@ -308,6 +309,7 @@ async function showScreen(name){
         content.removeChild(div);
         if(typeof line==='object') currentOptions.pop();
         typing=false;
+        stopScrollSound();
         await waitForContinue();
         content.innerHTML='';
         currentOptions=[];
@@ -319,6 +321,7 @@ async function showScreen(name){
     }
     if(typing){
       typing=false;
+      stopScrollSound();
       if(i<lines.length){
         await waitForContinue();
         content.innerHTML='';

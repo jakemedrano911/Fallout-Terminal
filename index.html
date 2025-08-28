@@ -7,7 +7,8 @@
 <style>
   @font-face{
     font-family:"Fixedsys Excelsior";
-    src:local("Fixedsys Excelsior 3.01"), local("Fixedsys Excelsior"), local("FixedsysExcelsior");
+    src:url("fonts/FixedsysExcelsior.ttf") format("truetype"),
+        local("Fixedsys Excelsior 3.01"), local("Fixedsys Excelsior"), local("FixedsysExcelsior");
     font-weight:normal;
     font-style:normal;
   }
@@ -53,18 +54,55 @@
   #terminal.powered{
     display:flex;
   }
-  #power-button{
+  #power-container{
     position:absolute;
     bottom:-20px;
     right:-20px;
+    display:flex;
+    align-items:center;
+  }
+  #power-container span{
+    color:#7aff7a;
+    margin-right:5px;
+  }
+  #power-button{
     background:#b3410e;
     color:#fff;
-    border:none;
+    border:2px solid #008800;
     width:40px;
     height:40px;
     border-radius:0;
     font-size:20px;
     cursor:pointer;
+  }
+  #audio-menu{
+    position:absolute;
+    bottom:-20px;
+    left:-20px;
+    display:none;
+  }
+  #audio-toggle{
+    background:#b3410e;
+    color:#fff;
+    border:2px solid #008800;
+    cursor:pointer;
+    margin-bottom:5px;
+  }
+  #volume-controls{
+    display:none;
+    background:#041204;
+    border:2px solid #008800;
+    color:#7aff7a;
+    padding:5px;
+  }
+  #volume-controls label{
+    display:flex;
+    align-items:center;
+    font-size:12px;
+    margin-right:10px;
+  }
+  #volume-controls input[type=range]{
+    margin-left:5px;
   }
   #terminal::after{
     content:"";
@@ -110,7 +148,16 @@
     <div id="content"></div>
     <div id="input"></div>
   </div>
-  <button id="power-button" aria-label="Power">&#x23FB;</button>
+  <div id="audio-menu">
+    <button id="audio-toggle">Audio</button>
+    <div id="volume-controls">
+      <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
+      <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
+      <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
+      <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
+    </div>
+  </div>
+  <div id="power-container"><span>Power</span><button id="power-button" aria-label="Power">&#x23FB;</button></div>
 </div>
 <script>
 const headerLines=[
@@ -222,6 +269,31 @@ let baseDelay=10;
 let speed=1;
 let inputText="";
 let screenHistory=[];
+let skipNextClick=false;
+let powered=false;
+
+const audioMenu=document.getElementById('audio-menu');
+const audioToggle=document.getElementById('audio-toggle');
+const volumeControls=document.getElementById('volume-controls');
+const humSlider=document.getElementById('hum-volume');
+const scrollSlider=document.getElementById('scroll-volume');
+const focusSlider=document.getElementById('focus-volume');
+const selectSlider=document.getElementById('select-volume');
+
+audioToggle.addEventListener('click',()=>{
+  volumeControls.style.display=volumeControls.style.display==='flex'?'none':'flex';
+});
+
+let humVolume=humSlider.value/10;
+let scrollVolume=scrollSlider.value/10;
+let focusVolume=focusSlider.value/10;
+let selectVolume=selectSlider.value/10;
+let fanHumAudio;
+
+humSlider.addEventListener('input',()=>{humVolume=humSlider.value/10;if(fanHumAudio)fanHumAudio.volume=humVolume;});
+scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;});
+focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
+selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
 
 function updateInput(){
   input.innerHTML='&gt; '+inputText+'<span class="cursor">█</span>';
@@ -247,7 +319,7 @@ function playScrollSound(){
   const src=audioCtx.createBufferSource();
   src.buffer=scrollBuffer;
   const gain=audioCtx.createGain();
-  gain.gain.value=0.5;
+  gain.gain.value=scrollVolume;
   src.connect(gain).connect(audioCtx.destination);
   src.start();
   scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs);
@@ -275,19 +347,58 @@ function stopScrollSound(){
   scrollTimeout=null;
 }
 
+function startFanHum(){
+  fanHumAudio=new Audio('Terminal 3/fanhum_lp.wav');
+  fanHumAudio.loop=true;
+  fanHumAudio.volume=humVolume;
+  fanHumAudio.play();
+}
+
+function stopFanHum(){
+  if(fanHumAudio){
+    fanHumAudio.pause();
+    fanHumAudio.currentTime=0;
+    fanHumAudio=null;
+  }
+}
+
 function playFocusSound(){
   const audio=new Audio('Terminal 3/menu/menu_focus.wav');
+  audio.volume=focusVolume;
   audio.play();
 }
 
-function playEnterSound(){
+function playSelectSound(){
   const files=[
+    'Terminal 4/HDD/HDD1/HDD101.wav',
+    'Terminal 4/HDD/HDD1/HDD102.wav',
+    'Terminal 4/HDD/HDD1/HDD103.wav',
+    'Terminal 4/HDD/HDD1/HDD104.wav',
+    'Terminal 4/HDD/HDD1/HDD105.wav',
+    'Terminal 4/HDD/HDD1/HDD106.wav',
+    'Terminal 4/HDD/HDD1/HDD107.wav',
+    'Terminal 4/HDD/HDD1/HDD108.wav',
+    'Terminal 4/HDD/HDD1/HDD109.wav',
+    'Terminal 4/HDD/HDD1/HDD110.wav',
+    'Terminal 4/HDD/HDD1/HDD111.wav',
+    'Terminal 4/HDD/HDD1/HDD112.wav',
+    'Terminal 4/HDD/HDD1/HDD113.wav',
+    'Terminal 4/HDD/HDD1/HDD114.wav',
+    'Terminal 4/HDD/HDD1/HDD115.wav'
+  ];
+  const enterFiles=[
     'Terminal 3/enter/charenter_01.wav',
     'Terminal 3/enter/charenter_02.wav',
     'Terminal 3/enter/charenter_03.wav'
   ];
-  const src=files[Math.floor(Math.random()*files.length)];
-  new Audio(src).play();
+  const hddSrc=files[Math.floor(Math.random()*files.length)];
+  const enterSrc=enterFiles[Math.floor(Math.random()*enterFiles.length)];
+  const hddAudio=new Audio(hddSrc);
+  hddAudio.volume=selectVolume;
+  hddAudio.play();
+  const enterAudio=new Audio(enterSrc);
+  enterAudio.volume=selectVolume;
+  enterAudio.play();
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -319,8 +430,19 @@ function waitForContinue(){
 
 document.addEventListener('mousedown',e=>{
   if(!typing) return;
-  if(e.button===0) speed=1.5;
+  if(e.button===0){
+    speed=Infinity;
+    skipNextClick=true;
+    e.preventDefault();
+  }
 });
+document.addEventListener('click',e=>{
+  if(skipNextClick){
+    e.preventDefault();
+    e.stopPropagation();
+    skipNextClick=false;
+  }
+},true);
 document.addEventListener('keydown',e=>{
   if(!typing) return;
   if(e.key===' ') speed=1.5;
@@ -357,7 +479,7 @@ async function showScreen(name){
         div.className='option';
         div.tabIndex=0;
         await typeText(div,line.text);
-        div.addEventListener('click',()=>{playEnterSound();showScreen(line.screen);});
+        div.addEventListener('click',()=>{playSelectSound();showScreen(line.screen);});
         div.addEventListener('mouseenter',()=>{
           if(selected>=0){
             currentOptions[selected].classList.remove('selected');
@@ -434,12 +556,33 @@ document.addEventListener('keydown',e=>{
 
 powerButton.addEventListener('click',async()=>{
   await audioCtx.resume();
-  const powerSound=new Audio('Terminal 3/poweron.mp3');
-  powerSound.play();
-  powerButton.style.display='none';
-  powerScreen.style.display='none';
-  terminal.classList.add('powered');
-  loadScrollSound().then(init);
+  if(!powered){
+    const powerSound=new Audio('Terminal 3/poweron.mp3');
+    powerSound.play();
+    powerScreen.style.display='none';
+    terminal.classList.add('powered');
+    audioMenu.style.display='block';
+    startFanHum();
+    header.innerHTML='';
+    content.innerHTML='';
+    screenHistory=[];
+    currentOptions=[];
+    selected=-1;
+    inputText='';
+    updateInput();
+    loadScrollSound().then(init);
+    powered=true;
+  }else{
+    const powerSound=new Audio('Terminal 3/poweroff.mp3');
+    powerSound.play();
+    stopFanHum();
+    stopScrollSound();
+    powerScreen.style.display='flex';
+    terminal.classList.remove('powered');
+    audioMenu.style.display='none';
+    volumeControls.style.display='none';
+    powered=false;
+  }
 });
 </script>
 </body>

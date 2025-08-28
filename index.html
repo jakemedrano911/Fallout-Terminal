@@ -54,81 +54,55 @@
   #terminal.powered{
     display:flex;
   }
-  #power-button{
+  #power-container{
     position:absolute;
     bottom:-20px;
     right:-20px;
+    display:flex;
+    align-items:center;
+  }
+  #power-container span{
+    color:#7aff7a;
+    margin-right:5px;
+  }
+  #power-button{
     background:#b3410e;
     color:#fff;
-    border:none;
+    border:2px solid #008800;
     width:40px;
     height:40px;
     border-radius:0;
     font-size:20px;
     cursor:pointer;
   }
-  #volume-controls{
+  #audio-menu{
     position:absolute;
     bottom:-20px;
-    left:0;
-    right:60px;
+    left:-20px;
     display:none;
-    justify-content:space-around;
-    align-items:flex-end;
-    color:#7aff7a;
   }
-  .knob{
-    position:relative;
-    width:60px;
-    height:80px;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-  }
-  .knob .dial{
-    position:relative;
-    width:50px;
-    height:50px;
-    border-radius:50%;
-    background:radial-gradient(#eee,#999);
-    border:2px solid #666;
-  }
-  .knob .dial .pointer{
-    position:absolute;
-    width:2px;
-    height:20px;
-    background:#333;
-    top:5px;
-    left:50%;
-    transform-origin:bottom center;
-    transform:rotate(-135deg);
-  }
-  .knob input[type=range]{
-    position:absolute;
-    top:0;
-    left:0;
-    width:50px;
-    height:50px;
-    opacity:0;
+  #audio-toggle{
+    background:#b3410e;
+    color:#fff;
+    border:2px solid #008800;
     cursor:pointer;
+    margin-bottom:5px;
   }
-  .knob .numbers{
-    position:absolute;
-    top:0;
-    left:0;
-    width:50px;
-    height:50px;
-    pointer-events:none;
-  }
-  .knob .numbers span{
-    position:absolute;
-    font-size:8px;
+  #volume-controls{
+    display:none;
+    background:#041204;
+    border:2px solid #008800;
     color:#7aff7a;
-    transform:translate(-50%,-50%);
+    padding:5px;
   }
-  .knob .title{
-    margin-top:55px;
+  #volume-controls label{
+    display:flex;
+    align-items:center;
     font-size:12px;
+    margin-right:10px;
+  }
+  #volume-controls input[type=range]{
+    margin-left:5px;
   }
   #terminal::after{
     content:"";
@@ -174,29 +148,16 @@
     <div id="content"></div>
     <div id="input"></div>
   </div>
-  <div id="volume-controls">
-    <div class="knob">
-      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
-      <input type="range" min="1" max="10" value="2" id="hum-volume">
-      <div class="title">Hum</div>
-    </div>
-    <div class="knob">
-      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
-      <input type="range" min="1" max="10" value="5" id="scroll-volume">
-      <div class="title">Scroll</div>
-    </div>
-    <div class="knob">
-      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
-      <input type="range" min="1" max="10" value="5" id="focus-volume">
-      <div class="title">Focus</div>
-    </div>
-    <div class="knob">
-      <div class="dial"><div class="pointer"></div><div class="numbers"></div></div>
-      <input type="range" min="1" max="10" value="5" id="select-volume">
-      <div class="title">Select</div>
+  <div id="audio-menu">
+    <button id="audio-toggle">Audio</button>
+    <div id="volume-controls">
+      <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
+      <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
+      <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
+      <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
     </div>
   </div>
-  <button id="power-button" aria-label="Power">&#x23FB;</button>
+  <div id="power-container"><span>Power</span><button id="power-button" aria-label="Power">&#x23FB;</button></div>
 </div>
 <script>
 const headerLines=[
@@ -309,38 +270,19 @@ let speed=1;
 let inputText="";
 let screenHistory=[];
 let skipNextClick=false;
+let powered=false;
 
+const audioMenu=document.getElementById('audio-menu');
+const audioToggle=document.getElementById('audio-toggle');
 const volumeControls=document.getElementById('volume-controls');
 const humSlider=document.getElementById('hum-volume');
 const scrollSlider=document.getElementById('scroll-volume');
 const focusSlider=document.getElementById('focus-volume');
 const selectSlider=document.getElementById('select-volume');
 
-function setupKnob(slider){
-  const knob=slider.parentElement;
-  const pointer=knob.querySelector('.pointer');
-  const numbers=knob.querySelector('.numbers');
-  for(let i=1;i<=10;i++){
-    const span=document.createElement('span');
-    span.textContent=i;
-    const angle=-135+(i-1)*30;
-    const rad=23;
-    span.style.left=25+rad*Math.cos(angle*Math.PI/180)+"px";
-    span.style.top=25+rad*Math.sin(angle*Math.PI/180)+"px";
-    numbers.appendChild(span);
-  }
-  const update=()=>{
-    const angle=-135+(slider.value-1)*30;
-    pointer.style.transform=`rotate(${angle}deg)`;
-  };
-  slider.addEventListener('input',update);
-  update();
-}
-
-setupKnob(humSlider);
-setupKnob(scrollSlider);
-setupKnob(focusSlider);
-setupKnob(selectSlider);
+audioToggle.addEventListener('click',()=>{
+  volumeControls.style.display=volumeControls.style.display==='flex'?'none':'flex';
+});
 
 let humVolume=humSlider.value/10;
 let scrollVolume=scrollSlider.value/10;
@@ -412,6 +354,14 @@ function startFanHum(){
   fanHumAudio.play();
 }
 
+function stopFanHum(){
+  if(fanHumAudio){
+    fanHumAudio.pause();
+    fanHumAudio.currentTime=0;
+    fanHumAudio=null;
+  }
+}
+
 function playFocusSound(){
   const audio=new Audio('Terminal 3/menu/menu_focus.wav');
   audio.volume=focusVolume;
@@ -436,10 +386,19 @@ function playSelectSound(){
     'Terminal 4/HDD/HDD1/HDD114.wav',
     'Terminal 4/HDD/HDD1/HDD115.wav'
   ];
-  const src=files[Math.floor(Math.random()*files.length)];
-  const audio=new Audio(src);
-  audio.volume=selectVolume;
-  audio.play();
+  const enterFiles=[
+    'Terminal 3/enter/charenter_01.wav',
+    'Terminal 3/enter/charenter_02.wav',
+    'Terminal 3/enter/charenter_03.wav'
+  ];
+  const hddSrc=files[Math.floor(Math.random()*files.length)];
+  const enterSrc=enterFiles[Math.floor(Math.random()*enterFiles.length)];
+  const hddAudio=new Audio(hddSrc);
+  hddAudio.volume=selectVolume;
+  hddAudio.play();
+  const enterAudio=new Audio(enterSrc);
+  enterAudio.volume=selectVolume;
+  enterAudio.play();
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -597,14 +556,33 @@ document.addEventListener('keydown',e=>{
 
 powerButton.addEventListener('click',async()=>{
   await audioCtx.resume();
-  const powerSound=new Audio('Terminal 3/poweron.mp3');
-  powerSound.play();
-  powerButton.style.display='none';
-  powerScreen.style.display='none';
-  terminal.classList.add('powered');
-  volumeControls.style.display='flex';
-  startFanHum();
-  loadScrollSound().then(init);
+  if(!powered){
+    const powerSound=new Audio('Terminal 3/poweron.mp3');
+    powerSound.play();
+    powerScreen.style.display='none';
+    terminal.classList.add('powered');
+    audioMenu.style.display='block';
+    startFanHum();
+    header.innerHTML='';
+    content.innerHTML='';
+    screenHistory=[];
+    currentOptions=[];
+    selected=-1;
+    inputText='';
+    updateInput();
+    loadScrollSound().then(init);
+    powered=true;
+  }else{
+    const powerSound=new Audio('Terminal 3/poweroff.mp3');
+    powerSound.play();
+    stopFanHum();
+    stopScrollSound();
+    powerScreen.style.display='flex';
+    terminal.classList.remove('powered');
+    audioMenu.style.display='none';
+    volumeControls.style.display='none';
+    powered=false;
+  }
 });
 </script>
 </body>

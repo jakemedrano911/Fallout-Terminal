@@ -13,7 +13,7 @@
   }
   body{
     margin:0;
-    background:#041204;
+    background:#000;
     color:#9aff9a;
     font-family:"Fixedsys Excelsior","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:24px;
@@ -23,6 +23,9 @@
     justify-content:center;
     align-items:center;
     height:100vh;
+  }
+  #terminal-wrapper{
+    position:relative;
   }
   #terminal{
     position:relative;
@@ -34,6 +37,20 @@
     overflow:hidden;
     display:flex;
     flex-direction:column;
+    background:#041204;
+  }
+  #power-button{
+    position:absolute;
+    bottom:-20px;
+    right:-20px;
+    background:red;
+    color:#fff;
+    border:none;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    font-size:20px;
+    cursor:pointer;
   }
   #terminal::after{
     content:"";
@@ -72,10 +89,13 @@
 </style>
 </head>
 <body>
-<div id="terminal">
-  <div id="header"></div>
-  <div id="content"></div>
-  <div id="input"></div>
+<div id="terminal-wrapper">
+  <div id="terminal">
+    <div id="header"></div>
+    <div id="content"></div>
+    <div id="input"></div>
+  </div>
+  <button id="power-button" aria-label="Power">&#x23FB;</button>
 </div>
 <script>
 const headerLines=[
@@ -174,6 +194,8 @@ const screens={
   ]
 };
 
+const terminal=document.getElementById('terminal');
+const powerButton=document.getElementById('power-button');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
@@ -191,7 +213,6 @@ function updateInput(){
 updateInput();
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-audioCtx.resume();
 
 let scrollBuffer;
 let scrollTimeout;
@@ -249,8 +270,6 @@ function playSelectSound(){
   src.connect(gain).connect(audioCtx.destination);
   src.start();
 }
-document.addEventListener('click',()=>audioCtx.resume(),{once:true});
-document.addEventListener('keydown',()=>audioCtx.resume(),{once:true});
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
@@ -394,7 +413,13 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-loadScrollSound().then(init);
+powerButton.addEventListener('click',async()=>{
+  await audioCtx.resume();
+  const powerSound=new Audio('Terminal 3/poweron.mp3');
+  powerSound.play();
+  powerButton.style.display='none';
+  loadScrollSound().then(init);
+});
 </script>
 </body>
 </html>

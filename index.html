@@ -54,6 +54,10 @@
     flex:1;
     overflow:hidden;
   }
+  #input{
+    white-space:pre-wrap;
+    min-height:1.2em;
+  }
   .option{
     display:block;
     width:100%;
@@ -71,6 +75,7 @@
 <div id="terminal">
   <div id="header"></div>
   <div id="content"></div>
+  <div id="input"></div>
 </div>
 <script>
 const headerLines=[
@@ -92,8 +97,7 @@ const screens={
     {text:"> Securitron Systems Control",screen:"securitron"},
     {text:"> Experimental Robotics Files",screen:"experimental"},
     "",
-    "",
-    "> _"
+    ""
   ],
   protectron:[
     "== PROTECTRON SCHEMATICS ==",
@@ -172,14 +176,67 @@ const screens={
 
 const header=document.getElementById('header');
 const content=document.getElementById('content');
+const input=document.getElementById('input');
 let currentOptions=[];
 let selected=-1;
 let typing=false;
 let baseDelay=10;
 let speed=1;
+let inputText="";
+let screenHistory=[];
+
+function updateInput(){
+  input.innerHTML='&gt; '+inputText+'<span class="cursor">█</span>';
+}
+updateInput();
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 audioCtx.resume();
+
+let scrollBuffer;
+let scrollTimeout;
+let lastScrollTime=0;
+const scrollIntervalMs=750;
+
+async function loadScrollSound(){
+  const res=await fetch('Terminal 3/charscroll_lp.wav');
+  const buf=await res.arrayBuffer();
+  scrollBuffer=await audioCtx.decodeAudioData(buf);
+}
+
+function playScrollSound(){
+  if(!scrollBuffer) return;
+  lastScrollTime=Date.now();
+  const src=audioCtx.createBufferSource();
+  src.buffer=scrollBuffer;
+  const gain=audioCtx.createGain();
+  gain.gain.value=0.5;
+  src.connect(gain).connect(audioCtx.destination);
+  src.start();
+  scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs);
+}
+function startScrollSound(){
+  if(scrollTimeout) return;
+  const elapsed=Date.now()-lastScrollTime;
+  if(elapsed>=scrollIntervalMs){
+    playScrollSound();
+  }else{
+    scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs-elapsed);
+  }
+}
+
+function goBack(){
+  if(screenHistory.length>1){
+    screenHistory.pop();
+    const prev=screenHistory.pop();
+    showScreen(prev);
+  }
+}
+function stopScrollSound(){
+  if(!scrollTimeout) return;
+  clearTimeout(scrollTimeout);
+  scrollTimeout=null;
+}
 
 function playSelectSound(){
   const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.03,audioCtx.sampleRate);
@@ -192,17 +249,6 @@ function playSelectSound(){
   src.connect(gain).connect(audioCtx.destination);
   src.start();
 }
-function playTypeSound(){
-  const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.01,audioCtx.sampleRate);
-  const data=buffer.getChannelData(0);
-  for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/5);
-  const src=audioCtx.createBufferSource();
-  src.buffer=buffer;
-  const gain=audioCtx.createGain();
-  gain.gain.value=0.03;
-  src.connect(gain).connect(audioCtx.destination);
-  src.start();
-}
 document.addEventListener('click',()=>audioCtx.resume(),{once:true});
 document.addEventListener('keydown',()=>audioCtx.resume(),{once:true});
 
@@ -211,7 +257,6 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function typeText(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    playTypeSound();
     const delay=speed===Infinity?0:baseDelay/speed;
     if(delay>0) await sleep(delay);
   }
@@ -245,13 +290,18 @@ document.addEventListener('keydown',e=>{
 });
 
 async function init(){
+  startScrollSound();
   for(const line of headerLines){
     await typeText(header,line);
   }
+  stopScrollSound();
   showScreen('menu');
 }
 
 async function showScreen(name){
+  screenHistory.push(name);
+  inputText='';
+  updateInput();
   content.innerHTML='';
   currentOptions=[];
   selected=-1;
@@ -260,6 +310,7 @@ async function showScreen(name){
   while(i<lines.length){
     speed=1;
     typing=true;
+    startScrollSound();
     while(i<lines.length){
       const line=lines[i];
       const div=document.createElement('div');
@@ -284,6 +335,7 @@ async function showScreen(name){
         content.removeChild(div);
         if(typeof line==='object') currentOptions.pop();
         typing=false;
+        stopScrollSound();
         await waitForContinue();
         content.innerHTML='';
         currentOptions=[];
@@ -295,6 +347,7 @@ async function showScreen(name){
     }
     if(typing){
       typing=false;
+      stopScrollSound();
       if(i<lines.length){
         await waitForContinue();
         content.innerHTML='';
@@ -302,10 +355,6 @@ async function showScreen(name){
         selected=-1;
       }
     }
-  }
-  const last=content.lastChild;
-  if(last && last.textContent.trim()==='> _'){
-    last.innerHTML='&gt; <span class="cursor">█</span>';
   }
 }
 
@@ -328,7 +377,24 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-init();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Tab'){
+    e.preventDefault();
+    if(!typing) goBack();
+    return;
+  }
+  if(typing) return;
+  if(e.key==='Backspace'){
+    inputText=inputText.slice(0,-1);
+    updateInput();
+    e.preventDefault();
+  }else if(e.key.length===1 && !e.ctrlKey && !e.metaKey){
+    inputText+=e.key;
+    updateInput();
+  }
+});
+
+loadScrollSound().then(init);
 </script>
 </body>
 </html>

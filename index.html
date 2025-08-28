@@ -182,7 +182,9 @@ const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 audioCtx.resume();
 
 let scrollBuffer;
-let scrollInterval;
+let scrollTimeout;
+let lastScrollTime=0;
+const scrollIntervalMs=1500;
 
 fetch('Terminal 3/charscroll_lp.wav')
   .then(r=>r.arrayBuffer())
@@ -191,20 +193,26 @@ fetch('Terminal 3/charscroll_lp.wav')
 
 function playScrollSound(){
   if(!scrollBuffer) return;
+  lastScrollTime=Date.now();
   const src=audioCtx.createBufferSource();
   src.buffer=scrollBuffer;
   src.connect(audioCtx.destination);
   src.start();
+  scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs);
 }
 function startScrollSound(){
-  if(scrollInterval) return;
-  playScrollSound();
-  scrollInterval=setInterval(playScrollSound,750);
+  if(scrollTimeout) return;
+  const elapsed=Date.now()-lastScrollTime;
+  if(elapsed>=scrollIntervalMs){
+    playScrollSound();
+  }else{
+    scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs-elapsed);
+  }
 }
 function stopScrollSound(){
-  if(!scrollInterval) return;
-  clearInterval(scrollInterval);
-  scrollInterval=null;
+  if(!scrollTimeout) return;
+  clearTimeout(scrollTimeout);
+  scrollTimeout=null;
 }
 
 function playSelectSound(){
@@ -218,17 +226,6 @@ function playSelectSound(){
   src.connect(gain).connect(audioCtx.destination);
   src.start();
 }
-function playTypeSound(){
-  const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.01,audioCtx.sampleRate);
-  const data=buffer.getChannelData(0);
-  for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/5);
-  const src=audioCtx.createBufferSource();
-  src.buffer=buffer;
-  const gain=audioCtx.createGain();
-  gain.gain.value=0.03;
-  src.connect(gain).connect(audioCtx.destination);
-  src.start();
-}
 document.addEventListener('click',()=>audioCtx.resume(),{once:true});
 document.addEventListener('keydown',()=>audioCtx.resume(),{once:true});
 
@@ -238,7 +235,6 @@ async function typeText(el,text){
   startScrollSound();
   for(let ch of text){
     el.textContent+=ch;
-    playTypeSound();
     const delay=speed===Infinity?0:baseDelay/speed;
     if(delay>0) await sleep(delay);
   }

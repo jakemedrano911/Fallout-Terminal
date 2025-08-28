@@ -14,7 +14,7 @@
   body{
     margin:0;
     background:#000;
-    color:#9aff9a;
+    color:#7aff7a;
     font-family:"Fixedsys Excelsior","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:24px;
     letter-spacing:.25px;
@@ -26,29 +26,43 @@
   }
   #terminal-wrapper{
     position:relative;
+    width:44vw;
+    height:64vh;
+  }
+  #power-screen{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    background:#000;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#7aff7a;
   }
   #terminal{
     position:relative;
-    width:44vw;
-    height:64vh;
-    border:4px solid #00aa00;
+    width:100%;
+    height:100%;
+    border:4px solid #008800;
     box-sizing:border-box;
     padding:10px;
     overflow:hidden;
-    display:flex;
+    display:none;
     flex-direction:column;
     background:#041204;
+  }
+  #terminal.powered{
+    display:flex;
   }
   #power-button{
     position:absolute;
     bottom:-20px;
     right:-20px;
-    background:red;
+    background:#b3410e;
     color:#fff;
     border:none;
     width:40px;
     height:40px;
-    border-radius:50%;
+    border-radius:0;
     font-size:20px;
     cursor:pointer;
   }
@@ -81,7 +95,7 @@
     cursor:pointer;
   }
   .option:hover, .option:focus, .option.selected{
-    background:#00aa00;
+    background:#008800;
     color:#041204;
   }
   .cursor{display:inline-block; animation:blink 1s steps(1,end) infinite;}
@@ -90,6 +104,7 @@
 </head>
 <body>
 <div id="terminal-wrapper">
+  <div id="power-screen">POWER OFF - PRESS POWER BUTTON</div>
   <div id="terminal">
     <div id="header"></div>
     <div id="content"></div>
@@ -196,6 +211,7 @@ const screens={
 
 const terminal=document.getElementById('terminal');
 const powerButton=document.getElementById('power-button');
+const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
@@ -259,16 +275,19 @@ function stopScrollSound(){
   scrollTimeout=null;
 }
 
-function playSelectSound(){
-  const buffer=audioCtx.createBuffer(1,audioCtx.sampleRate*0.03,audioCtx.sampleRate);
-  const data=buffer.getChannelData(0);
-  for(let i=0;i<data.length;i++) data[i]=(Math.random()*2-1)*Math.exp(-i/10);
-  const src=audioCtx.createBufferSource();
-  src.buffer=buffer;
-  const gain=audioCtx.createGain();
-  gain.gain.value=0.05;
-  src.connect(gain).connect(audioCtx.destination);
-  src.start();
+function playFocusSound(){
+  const audio=new Audio('Terminal 3/menu/menu_focus.wav');
+  audio.play();
+}
+
+function playEnterSound(){
+  const files=[
+    'Terminal 3/enter/charenter_01.wav',
+    'Terminal 3/enter/charenter_02.wav',
+    'Terminal 3/enter/charenter_03.wav'
+  ];
+  const src=files[Math.floor(Math.random()*files.length)];
+  new Audio(src).play();
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -338,13 +357,13 @@ async function showScreen(name){
         div.className='option';
         div.tabIndex=0;
         await typeText(div,line.text);
-        div.addEventListener('click',()=>showScreen(line.screen));
+        div.addEventListener('click',()=>{playEnterSound();showScreen(line.screen);});
         div.addEventListener('mouseenter',()=>{
           if(selected>=0){
             currentOptions[selected].classList.remove('selected');
             selected=-1;
           }
-          playSelectSound();
+          playFocusSound();
         });
         currentOptions.push(div);
       }else{
@@ -384,13 +403,13 @@ document.addEventListener('keydown',e=>{
     selected=selected<0?0:(selected+1)%currentOptions.length;
     currentOptions[selected].classList.add('selected');
     currentOptions[selected].focus();
-    playSelectSound();
+    playFocusSound();
   }else if(e.key==='ArrowUp'){
     if(selected>=0) currentOptions[selected].classList.remove('selected');
     selected=selected<0?currentOptions.length-1:(selected-1+currentOptions.length)%currentOptions.length;
     currentOptions[selected].classList.add('selected');
     currentOptions[selected].focus();
-    playSelectSound();
+    playFocusSound();
   }else if(e.key==='Enter' && selected>=0){
     currentOptions[selected].click();
   }
@@ -418,6 +437,8 @@ powerButton.addEventListener('click',async()=>{
   const powerSound=new Audio('Terminal 3/poweron.mp3');
   powerSound.play();
   powerButton.style.display='none';
+  powerScreen.style.display='none';
+  terminal.classList.add('powered');
   loadScrollSound().then(init);
 });
 </script>

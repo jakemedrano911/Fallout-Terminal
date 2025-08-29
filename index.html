@@ -25,25 +25,38 @@
     align-items:center;
     height:100vh;
   }
+  /* outer terminal housing */
+  #terminal-case{
+    padding:25px;
+    background:linear-gradient(145deg,#6f7a6e,#2f322d);
+    border-radius:12px;
+    box-shadow:0 15px 40px rgba(0,0,0,0.6),
+               inset 0 4px 8px rgba(255,255,255,0.15),
+               inset 0 -6px 10px rgba(0,0,0,0.5);
+    transform:perspective(800px) rotateX(5deg);
+  }
   #terminal-wrapper{
     position:relative;
     width:44vw;
     height:64vh;
+    background:linear-gradient(180deg,#1d221f,#0d0f0d);
+    border-radius:50%/10%;
+    box-shadow:inset 0 6px 8px rgba(255,255,255,0.1),
+               inset 0 -8px 8px rgba(0,0,0,0.7);
   }
   #power-screen{
     position:absolute;
-    top:0;left:0;right:0;bottom:0;
+    top:20px;left:20px;right:20px;bottom:20px;
     background:#000;
     display:flex;
     justify-content:center;
     align-items:center;
     color:#7aff7a;
-    border-radius:50%/10%;
+    border-radius:inherit;
   }
   #terminal{
-    position:relative;
-    width:100%;
-    height:100%;
+    position:absolute;
+    top:20px;left:20px;right:20px;bottom:20px;
     border:4px solid #008800;
     box-sizing:border-box;
     padding:10px;
@@ -51,7 +64,8 @@
     display:none;
     flex-direction:column;
     background:#041204;
-    border-radius:50%/10%;
+    border-radius:inherit;
+    box-shadow:inset 0 2px 6px rgba(0,0,0,0.9);
   }
   #terminal.powered{
     display:flex;
@@ -149,6 +163,7 @@
 </style>
 </head>
 <body>
+<div id="terminal-case">
 <div id="terminal-wrapper">
   <div id="power-screen">POWER OFF - PRESS POWER BUTTON</div>
   <div id="terminal">
@@ -166,6 +181,7 @@
     </div>
   </div>
   <div id="power-container"><span>Power</span><button id="power-button" aria-label="Power">&#x23FB;</button></div>
+</div>
 </div>
 <script>
 const headerLines=[

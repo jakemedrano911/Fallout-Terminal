@@ -310,9 +310,12 @@ let humVolume=humSlider.value/10;
 let scrollVolume=scrollSlider.value/10;
 let focusVolume=focusSlider.value/10;
 let selectVolume=selectSlider.value/10;
-let fanHumAudio;
+let fanHumBuffer,fanHumSource,fanHumGain;
 
-humSlider.addEventListener('input',()=>{humVolume=humSlider.value/10;if(fanHumAudio)fanHumAudio.volume=humVolume;});
+humSlider.addEventListener('input',()=>{
+  humVolume=humSlider.value/10;
+  if(fanHumGain) fanHumGain.gain.value=humVolume;
+});
 scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;});
 focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
@@ -323,6 +326,9 @@ function updateInput(){
 updateInput();
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+fanHumGain=audioCtx.createGain();
+fanHumGain.gain.value=humVolume;
+fanHumGain.connect(audioCtx.destination);
 
 let scrollBuffer;
 let scrollTimeout;
@@ -369,18 +375,25 @@ function stopScrollSound(){
   scrollTimeout=null;
 }
 
-function startFanHum(){
-  fanHumAudio=new Audio('Terminal 3/fanhum_lp.wav');
-  fanHumAudio.loop=true;
-  fanHumAudio.volume=humVolume;
-  fanHumAudio.play();
+async function startFanHum(){
+  if(!fanHumBuffer){
+    const res=await fetch('Terminal 3/fanhum_lp.wav');
+    const buf=await res.arrayBuffer();
+    fanHumBuffer=await audioCtx.decodeAudioData(buf);
+  }
+  stopFanHum();
+  fanHumSource=audioCtx.createBufferSource();
+  fanHumSource.buffer=fanHumBuffer;
+  fanHumSource.loop=true;
+  fanHumSource.connect(fanHumGain);
+  fanHumSource.start(0);
 }
 
 function stopFanHum(){
-  if(fanHumAudio){
-    fanHumAudio.pause();
-    fanHumAudio.currentTime=0;
-    fanHumAudio=null;
+  if(fanHumSource){
+    fanHumSource.stop();
+    fanHumSource.disconnect();
+    fanHumSource=null;
   }
 }
 

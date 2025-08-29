@@ -147,7 +147,7 @@
     width:100%;
     cursor:pointer;
     padding:0 calc(4px * var(--scale));
-    min-height:max(44px, calc(44px * var(--scale)));
+    min-height:max(32px, calc(32px * var(--scale)));
   }
   .option:hover, .option:focus, .option.selected{
     background:#008800;
@@ -170,10 +170,10 @@
       <button id="audio-toggle" aria-label="Audio">&#x1F50A;</button>
       <span>Audio</span>
       <div id="volume-controls">
-        <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
-        <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
-        <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
-        <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
+        <label>Hum <input type="range" min="0" max="10" value="2" id="hum-volume"></label>
+        <label>Scroll <input type="range" min="0" max="10" value="5" id="scroll-volume"></label>
+        <label>Focus <input type="range" min="0" max="10" value="5" id="focus-volume"></label>
+        <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
       </div>
     </div>
     <div id="power-container">

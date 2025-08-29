@@ -12,23 +12,29 @@
     font-weight:normal;
     font-style:normal;
   }
+  :root{
+    --scale:clamp(0.7, min(100vw,100vh)/600, 2);
+  }
   body{
     margin:0;
     background:#000;
     color:#7aff7a;
     font-family:"Fixedsys Excelsior","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
-    font-size:24px;
-    letter-spacing:.25px;
+    font-size:calc(24px * var(--scale));
+    letter-spacing:calc(.25px * var(--scale));
     line-height:1.2;
     display:flex;
     justify-content:center;
     align-items:center;
-    height:100vh;
+    min-height:100vh;
+    box-sizing:border-box;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   #terminal-wrapper{
     position:relative;
-    width:44vw;
-    height:64vh;
+    aspect-ratio:44/64;
+    width:min(90vw, 90vh * 44 / 64);
+    height:auto;
   }
   #power-screen{
     position:absolute;
@@ -43,67 +49,69 @@
     position:relative;
     width:100%;
     height:100%;
-    border:4px solid #008800;
+    border:calc(4px * var(--scale)) solid #008800;
     box-sizing:border-box;
-    padding:10px;
+    padding:calc(10px * var(--scale));
     overflow:hidden;
     display:none;
     flex-direction:column;
     background:#041204;
-    border-radius:12px;
+    border-radius:calc(12px * var(--scale));
   }
   #terminal.powered{
     display:flex;
   }
   #power-container{
     position:absolute;
-    bottom:-20px;
-    right:-20px;
+    bottom:calc(-20px * var(--scale));
+    right:calc(-20px * var(--scale));
     display:flex;
     align-items:center;
   }
   #power-container span{
     color:#7aff7a;
-    margin-right:5px;
+    margin-right:calc(5px * var(--scale));
   }
   #power-button{
     background:#b3410e;
     color:#fff;
-    border:2px solid #008800;
-    width:40px;
-    height:40px;
+    border:calc(2px * var(--scale)) solid #008800;
+    width:max(44px, calc(40px * var(--scale)));
+    height:max(44px, calc(40px * var(--scale)));
     border-radius:0;
-    font-size:20px;
+    font-size:calc(20px * var(--scale));
     cursor:pointer;
   }
   #audio-menu{
     position:absolute;
-    bottom:-20px;
-    left:-20px;
+    bottom:calc(-20px * var(--scale));
+    left:calc(-20px * var(--scale));
     display:none;
   }
   #audio-toggle{
     background:#b3410e;
     color:#fff;
-    border:2px solid #008800;
+    border:calc(2px * var(--scale)) solid #008800;
     cursor:pointer;
-    margin-bottom:5px;
+    margin-bottom:calc(5px * var(--scale));
+    padding:calc(5px * var(--scale));
+    min-height:44px;
   }
   #volume-controls{
     display:none;
     background:#041204;
-    border:2px solid #008800;
+    border:calc(2px * var(--scale)) solid #008800;
     color:#7aff7a;
-    padding:5px;
+    padding:calc(5px * var(--scale));
   }
   #volume-controls label{
     display:flex;
     align-items:center;
-    font-size:12px;
-    margin-right:10px;
+    font-size:calc(12px * var(--scale));
+    margin-right:calc(10px * var(--scale));
   }
   #volume-controls input[type=range]{
-    margin-left:5px;
+    margin-left:calc(5px * var(--scale));
   }
   #terminal::after{
     content:"";
@@ -128,16 +136,20 @@
   }
   #content{
     flex:1;
-    overflow:hidden;
+    overflow:auto;
+    -webkit-overflow-scrolling:touch;
   }
   #input{
     white-space:pre-wrap;
     min-height:1.2em;
   }
   .option{
-    display:block;
+    display:flex;
+    align-items:center;
     width:100%;
     cursor:pointer;
+    padding:0 calc(4px * var(--scale));
+    min-height:max(44px, calc(44px * var(--scale)));
   }
   .option:hover, .option:focus, .option.selected{
     background:#008800;

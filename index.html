@@ -15,11 +15,13 @@
     --scale:1;
   }
   html{
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
   }
   body{
     margin:0;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
     background:#000;
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
@@ -28,7 +30,7 @@
     line-height:1.2;
     display:flex;
     justify-content:center;
-    align-items:center;
+    align-items:flex-start;
     min-height:100vh;
     box-sizing:border-box;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);

@@ -53,7 +53,7 @@
     height:100%;
     border:calc(4px * var(--scale)) solid #008800;
     box-sizing:border-box;
-    padding:calc(10px * var(--scale));
+    padding:calc(6px * var(--scale));
     overflow:hidden;
     display:none;
     flex-direction:column;
@@ -183,7 +183,16 @@
 </div>
 <script>
 function updateScale(){
-  const scale=Math.min(3,Math.max(0.7,Math.min(window.innerWidth*0.9/600,window.innerHeight*0.9/800)));
+  const scale=Math.min(
+    3,
+    Math.max(
+      0.7,
+      Math.min(
+        window.innerWidth*0.98/600,
+        window.innerHeight*0.98/800
+      )
+    )
+  );
   document.documentElement.style.setProperty('--scale',scale);
 }
 window.addEventListener('resize',updateScale);

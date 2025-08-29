@@ -31,10 +31,8 @@
   }
   #terminal-wrapper{
     position:relative;
-    width:calc(600px * var(--scale));
+    width:calc(800px * var(--scale));
     height:calc(800px * var(--scale));
-    max-width:90vw;
-    max-height:90vh;
   }
   #power-screen{
     position:absolute;
@@ -67,7 +65,7 @@
     right:0;
     display:flex;
     align-items:center;
-    transform:translate(calc(20px * var(--scale)), calc(20px * var(--scale)));
+    transform:translateY(calc(20px * var(--scale)));
   }
   #power-container span{
     color:#7aff7a;
@@ -88,7 +86,7 @@
     bottom:0;
     left:0;
     display:none;
-    transform:translate(calc(-20px * var(--scale)), calc(20px * var(--scale)));
+    transform:translateY(calc(20px * var(--scale)));
   }
   #audio-toggle{
     background:#b3410e;

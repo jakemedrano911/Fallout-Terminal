@@ -27,8 +27,8 @@
   }
   #terminal-wrapper{
     position:relative;
-    width:48vw;
-    height:64vh;
+    width:64vw;
+    height:48vh;
   }
   #power-screen{
     position:absolute;
@@ -50,7 +50,7 @@
     display:none;
     flex-direction:column;
     background:#041204;
-    border-radius:50%/40%;
+    border-radius:15%/12%;
   }
   #terminal.powered{
     display:flex;
@@ -67,14 +67,26 @@
     margin-right:5px;
   }
   #power-button{
-    background:#b3410e;
-    color:#fff;
+    position:relative;
+    width:48px;
+    height:48px;
+    background:#3f3b2e;
     border:2px solid #008800;
-    width:40px;
-    height:40px;
-    border-radius:0;
-    font-size:20px;
+    border-radius:50%;
     cursor:pointer;
+  }
+
+  #power-button::before{
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:60%;
+    height:60%;
+    background:#b3410e;
+    border:2px solid #63300a;
+    border-radius:50%;
   }
   #audio-menu{
     position:absolute;
@@ -164,7 +176,7 @@
       <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
     </div>
   </div>
-  <div id="power-container"><span>Power</span><button id="power-button" aria-label="Power">&#x23FB;</button></div>
+<div id="power-container"><span>Power</span><button id="power-button" aria-label="Power"></button></div>
 </div>
 <script>
 const headerLines=[

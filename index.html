@@ -36,7 +36,7 @@
   #terminal-wrapper{
     position:relative;
     width:calc(800px * var(--scale));
-    height:calc(800px * var(--scale));
+    height:calc(720px * var(--scale));
   }
   #power-screen{
     position:absolute;
@@ -140,8 +140,8 @@
   }
   #content{
     flex:1;
-    overflow:auto;
-    -webkit-overflow-scrolling:touch;
+    overflow:hidden;
+    word-break:break-word;
   }
   #input{
     white-space:pre-wrap;

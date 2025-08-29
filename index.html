@@ -67,20 +67,28 @@
   }
   #controls-container{
     position:absolute;
-    top:calc(100% + (20px * var(--scale)));
     left:calc(100% + (20px * var(--scale)));
+    bottom:0;
     display:flex;
     flex-direction:column;
     align-items:center;
+    justify-content:flex-end;
   }
   #power-container, #audio-menu{
+    position:relative;
     display:flex;
     flex-direction:column;
     align-items:center;
   }
-  #controls-container span{
-    color:#7aff7a;
+  #controls-container span{color:#7aff7a;}
+  #audio-menu span{
     margin-top:calc(5px * var(--scale));
+  }
+  #power-container span{
+    position:absolute;
+    top:calc(100% + (5px * var(--scale)));
+    left:50%;
+    transform:translateX(-50%);
   }
   #power-button, #audio-toggle{
     background:#b3410e;
@@ -92,8 +100,10 @@
     font-size:calc(20px * var(--scale) * 0.9);
     cursor:pointer;
   }
-  #power-container{margin-top:calc(10px * var(--scale));}
-  #audio-menu{display:none;}
+  #audio-menu{
+    display:none;
+    margin-bottom:calc(10px * var(--scale));
+  }
   #volume-controls{
     display:none;
     background:#041204;

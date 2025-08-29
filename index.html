@@ -25,8 +25,8 @@
     background:#000;
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
-    font-size:calc(24px * var(--scale));
-    letter-spacing:calc(.25px * var(--scale));
+    font-size:calc(24px * var(--scale) * 0.9);
+    letter-spacing:calc(.25px * var(--scale) * 0.9);
     line-height:1.2;
     display:flex;
     justify-content:center;
@@ -67,12 +67,11 @@
   }
   #controls-container{
     position:absolute;
-    bottom:0;
-    right:0;
+    top:calc(100% + (20px * var(--scale)));
+    left:calc(100% + (20px * var(--scale)));
     display:flex;
     flex-direction:column;
     align-items:center;
-    transform:translate(calc(20px * var(--scale)), calc(20px * var(--scale)));
   }
   #power-container, #audio-menu{
     display:flex;
@@ -90,7 +89,7 @@
     width:max(44px, calc(40px * var(--scale)));
     height:max(44px, calc(40px * var(--scale)));
     border-radius:0;
-    font-size:calc(20px * var(--scale));
+    font-size:calc(20px * var(--scale) * 0.9);
     cursor:pointer;
   }
   #power-container{margin-top:calc(10px * var(--scale));}
@@ -106,7 +105,7 @@
   #volume-controls label{
     display:flex;
     align-items:center;
-    font-size:calc(12px * var(--scale));
+    font-size:calc(12px * var(--scale) * 0.9);
     margin-right:calc(10px * var(--scale));
   }
   #volume-controls input[type=range]{

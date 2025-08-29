@@ -63,19 +63,25 @@
   #terminal.powered{
     display:flex;
   }
-  #power-container{
+  #controls-container{
     position:absolute;
     bottom:0;
     right:0;
     display:flex;
+    flex-direction:column;
     align-items:center;
-    transform:translateY(calc(20px * var(--scale)));
+    transform:translate(calc(20px * var(--scale)), calc(20px * var(--scale)));
   }
-  #power-container span{
+  #power-container, #audio-menu{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  #controls-container span{
     color:#7aff7a;
-    margin-right:calc(5px * var(--scale));
+    margin-top:calc(5px * var(--scale));
   }
-  #power-button{
+  #power-button, #audio-toggle{
     background:#b3410e;
     color:#fff;
     border:calc(2px * var(--scale)) solid #008800;
@@ -85,28 +91,15 @@
     font-size:calc(20px * var(--scale));
     cursor:pointer;
   }
-  #audio-menu{
-    position:absolute;
-    bottom:0;
-    left:0;
-    display:none;
-    transform:translateY(calc(20px * var(--scale)));
-  }
-  #audio-toggle{
-    background:#b3410e;
-    color:#fff;
-    border:calc(2px * var(--scale)) solid #008800;
-    cursor:pointer;
-    margin-bottom:calc(5px * var(--scale));
-    padding:calc(5px * var(--scale));
-    min-height:44px;
-  }
+  #power-container{margin-top:calc(10px * var(--scale));}
+  #audio-menu{display:none;}
   #volume-controls{
     display:none;
     background:#041204;
     border:calc(2px * var(--scale)) solid #008800;
     color:#7aff7a;
     padding:calc(5px * var(--scale));
+    margin-top:calc(5px * var(--scale));
   }
   #volume-controls label{
     display:flex;
@@ -171,16 +164,22 @@
     <div id="content"></div>
     <div id="input"></div>
   </div>
-  <div id="audio-menu">
-    <button id="audio-toggle">Audio</button>
-    <div id="volume-controls">
-      <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
-      <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
-      <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
-      <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
+  <div id="controls-container">
+    <div id="audio-menu">
+      <button id="audio-toggle" aria-label="Audio">&#x1F50A;</button>
+      <span>Audio</span>
+      <div id="volume-controls">
+        <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
+        <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
+        <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
+        <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
+      </div>
+    </div>
+    <div id="power-container">
+      <button id="power-button" aria-label="Power">&#x23FB;</button>
+      <span>Power</span>
     </div>
   </div>
-  <div id="power-container"><span>Power</span><button id="power-button" aria-label="Power">&#x23FB;</button></div>
 </div>
 <script>
 function updateScale(){
@@ -603,7 +602,7 @@ powerButton.addEventListener('click',async()=>{
     powerSound.play();
     powerScreen.style.display='none';
     terminal.classList.add('powered');
-    audioMenu.style.display='block';
+    audioMenu.style.display='flex';
     startFanHum();
     header.innerHTML='';
     content.innerHTML='';

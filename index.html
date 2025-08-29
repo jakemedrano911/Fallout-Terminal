@@ -32,9 +32,10 @@
   }
   #terminal-wrapper{
     position:relative;
-    aspect-ratio:44/64;
-    width:min(90vw, 90vh * 44 / 64);
-    height:auto;
+    width:44vw;
+    height:64vh;
+    max-width:90vw;
+    max-height:90vh;
   }
   #power-screen{
     position:absolute;
@@ -63,10 +64,11 @@
   }
   #power-container{
     position:absolute;
-    bottom:calc(-20px * var(--scale));
-    right:calc(-20px * var(--scale));
+    bottom:0;
+    right:0;
     display:flex;
     align-items:center;
+    transform:translate(calc(20px * var(--scale)), calc(20px * var(--scale)));
   }
   #power-container span{
     color:#7aff7a;
@@ -84,9 +86,10 @@
   }
   #audio-menu{
     position:absolute;
-    bottom:calc(-20px * var(--scale));
-    left:calc(-20px * var(--scale));
+    bottom:0;
+    left:0;
     display:none;
+    transform:translate(calc(-20px * var(--scale)), calc(20px * var(--scale)));
   }
   #audio-toggle{
     background:#b3410e;

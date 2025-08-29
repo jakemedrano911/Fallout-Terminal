@@ -6,9 +6,9 @@
 <title>RobCo Engineering Division Database</title>
 <style>
   @font-face{
-    font-family:"Fixedsys Excelsior 3.01";
-    src:url("fonts/FixedsysExcelsior.ttf") format("truetype");
-    font-weight:normal;
+    font-family:"FixedsysExcelsior";
+    src:local("Fixedsys Excelsior 3.01"),url("./fonts/FixedsysExcelsior.ttf") format("truetype");
+    font-weight:400;
     font-style:normal;
     font-display:swap;
   }
@@ -16,7 +16,7 @@
     margin:0;
     background:#000;
     color:#7aff7a;
-    font-family:"Fixedsys Excelsior 3.01","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
+    font-family:"FixedsysExcelsior","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:24px;
     letter-spacing:.25px;
     line-height:1.2;
@@ -31,6 +31,8 @@
     max-width:90vw;
     max-height:90vh;
     aspect-ratio:4/3;
+    border-radius:50%/40%;
+    overflow:hidden;
   }
   #power-screen{
     position:absolute;
@@ -47,12 +49,12 @@
     height:100%;
     border:max(4px,0.6vmin) solid #008800;
     box-sizing:border-box;
-    padding:3em 2.5em 4em;
+    padding:4em 3em 5em;
     overflow:hidden;
     display:none;
     flex-direction:column;
     background:#041204;
-    border-radius:20%/15%;
+    border-radius:50%/40%;
   }
   #terminal.powered{
     display:flex;

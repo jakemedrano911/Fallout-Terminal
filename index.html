@@ -32,8 +32,8 @@
   }
   #terminal-wrapper{
     position:relative;
-    width:44vw;
-    height:64vh;
+    width: clamp(300px, calc(600px * var(--scale)), 90vw);
+    height: clamp(400px, calc(800px * var(--scale)), 90vh);
     max-width:90vw;
     max-height:90vh;
   }

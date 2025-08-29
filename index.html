@@ -110,7 +110,9 @@
     position:absolute;
     top:0;left:0;right:0;bottom:0;
     pointer-events:none;
-    background:linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05) 40%, rgba(255,255,255,0) 60%);
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255,255,255,0.25), rgba(255,255,255,0) 60%),
+      linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 60%);
     border-radius:inherit;
   }
   #terminal::after{
@@ -125,6 +127,11 @@
       transparent 2px
     );
     border-radius:inherit;
+    animation: roll 6s linear infinite;
+  }
+  @keyframes roll{
+    from{background-position:0 0;}
+    to{background-position:0 100%;}
   }
   #header, #content{
     white-space:pre-wrap;

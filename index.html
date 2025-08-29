@@ -29,6 +29,18 @@
     position:relative;
     width:44vw;
     height:64vh;
+    border:30px solid #1e1e1e;
+    border-radius:55%/45%;
+    background:radial-gradient(circle at 50% 30%, #333, #111);
+    box-shadow:0 0 30px rgba(0,0,0,0.8);
+  }
+  #terminal-wrapper::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    border-radius:55%/45%;
+    background:radial-gradient(circle at 50% 40%, rgba(255,255,255,0.05), rgba(0,0,0,0.6));
+    pointer-events:none;
   }
   #power-screen{
     position:absolute;
@@ -38,6 +50,8 @@
     justify-content:center;
     align-items:center;
     color:#7aff7a;
+    border-radius:45%/35%;
+    overflow:hidden;
   }
   #terminal{
     position:relative;
@@ -50,7 +64,19 @@
     display:none;
     flex-direction:column;
     background:#041204;
-    border-radius:12px;
+    border-radius:45%/35%;
+    filter:contrast(1.2) saturate(1.4);
+  }
+  #terminal::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    pointer-events:none;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.2), rgba(255,255,255,0) 60%),
+      linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0) 70%);
+    mix-blend-mode:screen;
+    opacity:0.15;
   }
   #terminal.powered{
     display:flex;
@@ -111,17 +137,21 @@
     top:0;left:0;right:0;bottom:0;
     pointer-events:none;
     background:repeating-linear-gradient(
-      rgba(0,0,0,0.15) 0px,
-      rgba(0,0,0,0.15) 1px,
-      transparent 1px,
-      transparent 2px
+      rgba(0,0,0,0.3) 0px,
+      rgba(0,0,0,0.3) 2px,
+      transparent 2px,
+      transparent 4px
     );
     border-radius:inherit;
-    animation: roll 6s linear infinite;
+    animation: roll 3s linear infinite, flicker .15s infinite;
   }
   @keyframes roll{
     from{background-position:0 0;}
     to{background-position:0 100%;}
+  }
+  @keyframes flicker{
+    0%,100%{opacity:.85;}
+    50%{opacity:1;}
   }
   #header, #content{
     white-space:pre-wrap;

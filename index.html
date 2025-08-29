@@ -27,8 +27,15 @@
   }
   #terminal-wrapper{
     position:relative;
-    width:44vw;
-    height:64vh;
+    width:640px;
+    height:480px;
+  }
+
+  @media (max-width: 640px), (max-height: 480px) {
+    #terminal-wrapper{
+      transform: scale(min(calc(100vw / 640px), calc(100vh / 480px)));
+      transform-origin: top left;
+    }
   }
   #power-screen{
     position:absolute;

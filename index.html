@@ -27,7 +27,8 @@
   }
   /* outer terminal housing */
   #terminal-case{
-    padding:25px;
+    position:relative;
+    padding:40px;
     background:linear-gradient(145deg,#6f7a6e,#2f322d);
     border-radius:12px;
     box-shadow:0 15px 40px rgba(0,0,0,0.6),
@@ -37,8 +38,8 @@
   }
   #terminal-wrapper{
     position:relative;
-    width:44vw;
-    height:64vh;
+    width:40vw;
+    height:60vh;
     background:linear-gradient(180deg,#1d221f,#0d0f0d);
     border-radius:50%/10%;
     box-shadow:inset 0 6px 8px rgba(255,255,255,0.1),
@@ -46,7 +47,7 @@
   }
   #power-screen{
     position:absolute;
-    top:20px;left:20px;right:20px;bottom:20px;
+    top:30px;left:30px;right:30px;bottom:30px;
     background:#000;
     display:flex;
     justify-content:center;
@@ -56,7 +57,7 @@
   }
   #terminal{
     position:absolute;
-    top:20px;left:20px;right:20px;bottom:20px;
+    top:30px;left:30px;right:30px;bottom:30px;
     border:4px solid #008800;
     box-sizing:border-box;
     padding:10px;
@@ -120,6 +121,18 @@
   #volume-controls input[type=range]{
     margin-left:5px;
   }
+  .knob{
+    position:absolute;
+    right:-30px;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    background:linear-gradient(145deg,#6f7a6e,#2f322d);
+    box-shadow:0 2px 4px rgba(0,0,0,0.5),
+               inset 0 2px 2px rgba(255,255,255,0.1);
+  }
+  .knob.top{top:25%;}
+  .knob.bottom{bottom:25%;}
   #terminal::after{
     content:"";
     position:absolute;
@@ -182,6 +195,8 @@
   </div>
   <div id="power-container"><span>Power</span><button id="power-button" aria-label="Power">&#x23FB;</button></div>
 </div>
+<div class="knob top"></div>
+<div class="knob bottom"></div>
 </div>
 <script>
 const headerLines=[

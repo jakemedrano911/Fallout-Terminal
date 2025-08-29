@@ -126,12 +126,14 @@
     position:absolute;
     top:0;left:0;right:0;bottom:0;
     pointer-events:none;
+    z-index:1;
     background:repeating-linear-gradient(
       rgba(0,0,0,0.55) 0px,
-      rgba(0,0,0,0.55) 1px,
-      transparent 1px,
-      transparent 2px
+      rgba(0,0,0,0.55) 2px,
+      transparent 2px,
+      transparent 4px
     );
+    mix-blend-mode:multiply;
     border-radius:inherit;
     animation: roll 6s linear infinite;
   }

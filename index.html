@@ -502,9 +502,10 @@ function blockHtml(block){
   let last=0;
   const words=block.words.slice().sort((a,b)=>a.start-b.start);
   for(const w of words){
+    const seg=w.segment||w.word;
     parts.push(escapeHtml(block.chars.slice(last,w.start).join('')));
-    parts.push(`<span class="word" data-word="${w.word}">${w.word}</span>`);
-    last=w.start+w.word.length;
+    parts.push(`<span class="word" data-word="${w.word}">${seg}</span>`);
+    last=w.start+seg.length;
   }
   parts.push(escapeHtml(block.chars.slice(last).join('')));
   return parts.join('');
@@ -544,13 +545,28 @@ function renderHackScreen(){
     blocks.push({addr:(base+i*cols).toString(16).toUpperCase().padStart(4,'0'),chars:arr,words:[]});
   }
   for(const word of hackingData.wordList){
+    const parts=[];
+    for(let i=0;i<word.length;i+=cols) parts.push(word.slice(i,i+cols));
+    const maxLen=parts.reduce((m,p)=>Math.max(m,p.length),0);
     while(true){
-      const idx=Math.floor(Math.random()*total);
-      const block=blocks[idx];
-      const start=Math.floor(Math.random()*(cols-word.length));
-      if(block.words.some(w=>!(start+word.length<=w.start||start>=w.start+w.word.length))) continue;
-      for(let k=0;k<word.length;k++) block.chars[start+k]=word[k];
-      block.words.push({start,word});
+      const col=Math.floor(Math.random()*2);
+      const row=Math.floor(Math.random()*(rows-parts.length+1));
+      const start=Math.floor(Math.random()*(cols-maxLen+1));
+      let ok=true;
+      for(let p=0;p<parts.length;p++){
+        const block=blocks[col*rows+row+p];
+        const seg=parts[p];
+        if(block.words.some(w=>!(start+seg.length<=w.start || start>=w.start+(w.segment||w.word).length))){
+          ok=false;break;
+        }
+      }
+      if(!ok) continue;
+      for(let p=0;p<parts.length;p++){
+        const block=blocks[col*rows+row+p];
+        const seg=parts[p];
+        for(let k=0;k<seg.length;k++) block.chars[start+k]=seg[k];
+        block.words.push({start,word,segment:seg});
+      }
       break;
     }
   }

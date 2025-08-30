@@ -186,18 +186,22 @@
     white-space:pre-wrap;
     min-height:1.2em;
     outline:none;
-    caret-color:transparent;
-  }
-  #hidden-input{
-    position:absolute;
-    opacity:0;
-    pointer-events:none;
-    caret-color:transparent;
-    outline:none;
+    background:transparent;
     border:none;
-    width:0;
-    height:0;
+    color:inherit;
+    font:inherit;
+    letter-spacing:inherit;
+    line-height:inherit;
+    caret-color:transparent;
   }
+  #input::before{
+    content:"> ";
+  }
+  #input::after{
+    content:"\2588";
+    animation:blink 1s steps(1,end) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
   .option{
     display:flex;
     align-items:center;
@@ -210,8 +214,6 @@
     background:#008800;
     color:#041204;
   }
-  .cursor{display:inline-block; animation:blink 1s steps(1,end) infinite;}
-  @keyframes blink{50%{opacity:0;}}
 </style>
 </head>
 <body>
@@ -220,8 +222,7 @@
   <div id="terminal">
     <div id="header"></div>
     <div id="content"></div>
-    <div id="input"></div>
-    <input id="hidden-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div id="input" contenteditable="true"></div>
   </div>
   <div id="controls-container">
     <div id="audio-menu">
@@ -360,7 +361,6 @@ const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
-const hiddenInput=document.getElementById('hidden-input');
 let currentOptions=[];
 let selected=-1;
 let typing=false;
@@ -397,16 +397,10 @@ scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;})
 focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
 
-input.addEventListener('click',()=>hiddenInput.focus());
-hiddenInput.addEventListener('input',()=>{
-  inputText=hiddenInput.value;
-  updateInput();
-});
+input.addEventListener('input',updateInput);
 
 function updateInput(){
-  input.innerHTML='&gt; '+inputText+'<span class="cursor">█</span>';
-  hiddenInput.value=inputText;
-  hiddenInput.setSelectionRange(inputText.length,inputText.length);
+  inputText=input.textContent;
 }
 updateInput();
 
@@ -589,6 +583,7 @@ async function init(){
 async function showScreen(name){
   screenHistory.push(name);
   inputText='';
+  input.textContent='';
   updateInput();
   content.innerHTML='';
   currentOptions=[];
@@ -687,6 +682,7 @@ powerButton.addEventListener('click',async()=>{
     currentOptions=[];
     selected=-1;
     inputText='';
+    input.textContent='';
     updateInput();
     loadScrollSound().then(init);
     powered=true;

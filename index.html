@@ -35,8 +35,8 @@
   }
   #terminal-wrapper{
     position:relative;
-    width:calc(920px * var(--scale));
-    height:calc(540px * var(--scale));
+    width:calc(828px * var(--scale));
+    height:calc(594px * var(--scale));
   }
   #power-screen{
     position:absolute;
@@ -222,19 +222,19 @@
     background:#008800;
     color:#041204;
   }
-  #hack-wrap{display:flex;justify-content:flex-start;width:100%;gap:2ch;}
+  #hack-wrap{display:flex;justify-content:flex-start;align-items:flex-start;width:100%;gap:2ch;}
   #hacking{white-space:pre;font:inherit;flex-shrink:0;}
   #hacking .word{cursor:pointer;}
   #hacking .char:hover,
   #hacking .char.highlight{background:#008800;color:#041204;}
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;align-self:flex-end;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;}
-  #header.hack-header{padding-top:calc(4px * var(--scale));}
-  #header.hack-header #hack-title{margin-bottom:calc(8px * var(--scale));}
+  #header.hack-header{padding-top:calc(8px * var(--scale));padding-bottom:calc(8px * var(--scale));}
+  #header.hack-header #hack-title{margin-bottom:calc(16px * var(--scale));}
   #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
   #terminal.locked #content{opacity:0.2;}
   #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
@@ -271,10 +271,10 @@ function updateScale(){
     3,
     Math.max(
       0.7,
-      Math.min(
-        window.innerWidth*0.98/690,
-        window.innerHeight*0.98/600
-      )*0.93
+        Math.min(
+          window.innerWidth*0.98/621,
+          window.innerHeight*0.98/660
+        )*0.93
     )
   );
   document.documentElement.style.setProperty('--scale',scale);
@@ -406,6 +406,12 @@ const MAX_INPUT_CHARS=64;
 let hackingActive=false;
 let hackingData=null;
 let terminalLocked=false;
+
+function restoreInput(){
+  if(input.parentElement!==terminal){
+    terminal.appendChild(input);
+  }
+}
 
 const audioMenu=document.getElementById('audio-menu');
 const audioToggle=document.getElementById('audio-toggle');
@@ -540,6 +546,7 @@ function renderHackScreen(){
   const messages=document.createElement('div');
   messages.id='hack-messages';
   wrap.appendChild(messages);
+  messages.appendChild(input);
   const rows=17,cols=12,total=rows*2;
   const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
   const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
@@ -934,6 +941,7 @@ async function init(){
 }
 
 async function showIntro(){
+  restoreInput();
   startScrollSound();
   header.innerHTML='';
   content.innerHTML='';
@@ -955,6 +963,7 @@ async function showIntro(){
 }
 
 async function showScreen(name){
+  restoreInput();
   clearResponses();
   screenHistory.push(name);
   inputText='';

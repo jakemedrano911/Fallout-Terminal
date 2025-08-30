@@ -15,23 +15,25 @@
     --scale:1;
   }
   html{
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
   }
   body{
     margin:0;
-    overflow:hidden;
+    overflow-x:hidden;
+    overflow-y:auto;
     background:#000;
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
-    font-size:calc(24px * var(--scale));
-    letter-spacing:calc(.25px * var(--scale));
+    font-size:calc(24px * var(--scale) * 0.9);
+    letter-spacing:calc(.25px * var(--scale) * 0.9);
     line-height:1.2;
     display:flex;
     justify-content:center;
-    align-items:center;
+    align-items:flex-start;
     min-height:100vh;
     box-sizing:border-box;
-    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    padding:calc(env(safe-area-inset-top) + 8px) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   #terminal-wrapper{
     position:relative;
@@ -53,87 +55,124 @@
     height:100%;
     border:calc(4px * var(--scale)) solid #008800;
     box-sizing:border-box;
-    padding:calc(10px * var(--scale));
+    padding:calc(6px * var(--scale));
+    padding-left:calc(6px * var(--scale) + 4ch);
     overflow:hidden;
     display:none;
     flex-direction:column;
     background:#041204;
+    background-image:repeating-linear-gradient(
+      rgba(0,0,0,0.55) 0px,
+      rgba(0,0,0,0.55) 1px,
+      transparent 1px,
+      transparent 4px
+    );
     border-radius:calc(12px * var(--scale));
   }
   #terminal.powered{
     display:flex;
   }
-  #power-container{
+  #controls-container{
     position:absolute;
+    left:calc(100% + (20px * var(--scale)));
     bottom:0;
-    right:0;
     display:flex;
+    flex-direction:column;
     align-items:center;
-    transform:translateY(calc(20px * var(--scale)));
+    justify-content:flex-end;
+  }
+  #power-container, #audio-menu{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  #controls-container span{color:#7aff7a;}
+  #audio-menu span{
+    margin-top:calc(5px * var(--scale));
   }
   #power-container span{
-    color:#7aff7a;
-    margin-right:calc(5px * var(--scale));
+    position:absolute;
+    top:calc(100% + (5px * var(--scale)));
+    left:50%;
+    transform:translateX(-50%);
   }
-  #power-button{
+  #power-button, #audio-toggle{
     background:#b3410e;
     color:#fff;
     border:calc(2px * var(--scale)) solid #008800;
     width:max(44px, calc(40px * var(--scale)));
     height:max(44px, calc(40px * var(--scale)));
     border-radius:0;
-    font-size:calc(20px * var(--scale));
+    font-size:calc(20px * var(--scale) * 0.9);
     cursor:pointer;
   }
   #audio-menu{
-    position:absolute;
-    bottom:0;
-    left:0;
     display:none;
-    transform:translateY(calc(20px * var(--scale)));
-  }
-  #audio-toggle{
-    background:#b3410e;
-    color:#fff;
-    border:calc(2px * var(--scale)) solid #008800;
-    cursor:pointer;
-    margin-bottom:calc(5px * var(--scale));
-    padding:calc(5px * var(--scale));
-    min-height:44px;
+    margin-bottom:calc(10px * var(--scale));
   }
   #volume-controls{
     display:none;
+    flex-direction:column;
+    position:absolute;
+    bottom:calc(100% + (5px * var(--scale)));
+    left:50%;
+    transform:translateX(-50%);
     background:#041204;
     border:calc(2px * var(--scale)) solid #008800;
     color:#7aff7a;
     padding:calc(5px * var(--scale));
+    z-index:1;
   }
   #volume-controls label{
     display:flex;
     align-items:center;
-    font-size:calc(12px * var(--scale));
-    margin-right:calc(10px * var(--scale));
+    font-size:calc(12px * var(--scale) * 0.9);
+    margin-bottom:calc(5px * var(--scale));
+  }
+  #volume-controls label:last-child{
+    margin-bottom:0;
   }
   #volume-controls input[type=range]{
     margin-left:calc(5px * var(--scale));
   }
+  #terminal::before,
   #terminal::after{
     content:"";
     position:absolute;
-    top:0;left:0;right:0;bottom:0;
+    left:0;right:0;
+    top:0;
+    height:20%;
     pointer-events:none;
-    background:repeating-linear-gradient(
-      rgba(0,0,0,0.15) 0px,
-      rgba(0,0,0,0.15) 1px,
-      transparent 1px,
-      transparent 2px
+    background:linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.3) 50%,
+      rgba(0,0,0,0) 100%
     );
+    mix-blend-mode:multiply;
     border-radius:inherit;
-    animation: roll 6s linear infinite;
+    animation:crt-band 5.6s linear infinite;
+    z-index:2;
   }
-  @keyframes roll{
-    from{background-position:0 0;}
-    to{background-position:0 100%;}
+  #terminal::after{
+    opacity:0.5;
+    animation-delay:-2.8s;
+  }
+  @keyframes crt-band{
+    from{transform:translateY(-100%);}
+    to{transform:translateY(600%);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #terminal::after{content:none;}
+    #terminal::before{
+      animation:none;
+      top:0;
+      height:100%;
+      transform:none;
+      opacity:0.15;
+      background:rgba(0,0,0,0.2);
+    }
   }
   #header, #content{
     white-space:pre-wrap;
@@ -153,7 +192,7 @@
     width:100%;
     cursor:pointer;
     padding:0 calc(4px * var(--scale));
-    min-height:max(44px, calc(44px * var(--scale)));
+    min-height:max(32px, calc(32px * var(--scale)));
   }
   .option:hover, .option:focus, .option.selected{
     background:#008800;
@@ -171,29 +210,46 @@
     <div id="content"></div>
     <div id="input"></div>
   </div>
-  <div id="audio-menu">
-    <button id="audio-toggle">Audio</button>
-    <div id="volume-controls">
-      <label>Hum <input type="range" min="1" max="10" value="2" id="hum-volume"></label>
-      <label>Scroll <input type="range" min="1" max="10" value="5" id="scroll-volume"></label>
-      <label>Focus <input type="range" min="1" max="10" value="5" id="focus-volume"></label>
-      <label>Select <input type="range" min="1" max="10" value="5" id="select-volume"></label>
+  <div id="controls-container">
+    <div id="audio-menu">
+      <button id="audio-toggle" aria-label="Audio">&#x1F50A;</button>
+      <span>Audio</span>
+      <div id="volume-controls">
+        <label>Hum <input type="range" min="0" max="10" value="1" id="hum-volume"></label>
+        <label>Scroll <input type="range" min="0" max="10" value="2" id="scroll-volume"></label>
+        <label>Focus <input type="range" min="0" max="10" value="5" id="focus-volume"></label>
+        <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
+      </div>
+    </div>
+    <div id="power-container">
+      <button id="power-button" aria-label="Power">&#x23FB;</button>
+      <span>Power</span>
     </div>
   </div>
-  <div id="power-container"><span>Power</span><button id="power-button" aria-label="Power">&#x23FB;</button></div>
 </div>
 <script>
 function updateScale(){
-  const scale=Math.min(3,Math.max(0.7,Math.min(window.innerWidth*0.9/600,window.innerHeight*0.9/800)));
+  const scale=Math.min(
+    3,
+    Math.max(
+      0.7,
+      Math.min(
+        window.innerWidth*0.98/600,
+        window.innerHeight*0.98/800
+      )*0.93
+    )
+  );
   document.documentElement.style.setProperty('--scale',scale);
 }
 window.addEventListener('resize',updateScale);
 updateScale();
-const headerLines=[
+const titleLines=[
 "ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
 "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
 "-Server 12-",
 "",
+];
+const headerLines=[
 "Welcome to the RobCo Engineering Division Database!",
 "How may I assist you this fine day?",
 "____________________________________________________",
@@ -493,8 +549,16 @@ document.addEventListener('keydown',e=>{
 
 async function init(){
   startScrollSound();
+  for(const line of titleLines){
+    const div=document.createElement('div');
+    div.style.textAlign='center';
+    header.appendChild(div);
+    await typeText(div,line);
+  }
   for(const line of headerLines){
-    await typeText(header,line);
+    const div=document.createElement('div');
+    header.appendChild(div);
+    await typeText(div,line);
   }
   stopScrollSound();
   showScreen('menu');
@@ -603,7 +667,7 @@ powerButton.addEventListener('click',async()=>{
     powerSound.play();
     powerScreen.style.display='none';
     terminal.classList.add('powered');
-    audioMenu.style.display='block';
+    audioMenu.style.display='flex';
     startFanHum();
     header.innerHTML='';
     content.innerHTML='';

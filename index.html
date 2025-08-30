@@ -15,13 +15,11 @@
     --scale:1;
   }
   html{
-    overflow-x:hidden;
-    overflow-y:auto;
+    overflow:hidden;
   }
   body{
     margin:0;
-    overflow-x:hidden;
-    overflow-y:auto;
+    overflow:hidden;
     background:#000;
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
@@ -181,11 +179,37 @@
     flex:1;
     overflow:hidden;
     word-break:break-word;
+    max-height:100%;
   }
   #input{
-    white-space:pre-wrap;
+    white-space:pre;
     min-height:1.2em;
+    outline:none;
+    background:transparent;
+    border:none;
+    color:inherit;
+    font:inherit;
+    letter-spacing:inherit;
+    line-height:inherit;
+    caret-color:transparent;
+    flex-shrink:0;
+    overflow:hidden;
   }
+  #input::before{
+    content:"> ";
+  }
+  #input::after{
+    content:"\2588";
+    animation:blink 1s steps(1,end) infinite;
+  }
+  .response{
+    opacity:1;
+    transition:opacity 1s;
+  }
+  .response.fade{
+    opacity:0;
+  }
+  @keyframes blink{50%{opacity:0;}}
   .option{
     display:flex;
     align-items:center;
@@ -198,8 +222,6 @@
     background:#008800;
     color:#041204;
   }
-  .cursor{display:inline-block; animation:blink 1s steps(1,end) infinite;}
-  @keyframes blink{50%{opacity:0;}}
 </style>
 </head>
 <body>
@@ -208,7 +230,7 @@
   <div id="terminal">
     <div id="header"></div>
     <div id="content"></div>
-    <div id="input"></div>
+    <div id="input" contenteditable="true"></div>
   </div>
   <div id="controls-container">
     <div id="audio-menu">
@@ -338,6 +360,13 @@ const screens={
     "Unauthorized access to experimental files will result in TERMINATION OF CONTRACT.",
     "",
     {text:"> RETURN",screen:"menu"}
+  ],
+  help:[
+    "== HELP ==",
+    "",
+    "Sample help terminal entry.",
+    "",
+    {text:"> RETURN",screen:"menu"}
   ]
 };
 
@@ -347,6 +376,7 @@ const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
+const historyEl=content;
 let currentOptions=[];
 let selected=-1;
 let typing=false;
@@ -356,6 +386,7 @@ let inputText="";
 let screenHistory=[];
 let skipNextClick=false;
 let powered=false;
+const MAX_INPUT_CHARS=64;
 
 const audioMenu=document.getElementById('audio-menu');
 const audioToggle=document.getElementById('audio-toggle');
@@ -383,10 +414,64 @@ scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;})
 focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
 
+input.addEventListener('input',updateInput);
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    handleCommand(inputText);
+  }
+});
+
 function updateInput(){
-  input.innerHTML='&gt; '+inputText+'<span class="cursor">█</span>';
+  let text=input.textContent.replace(/\n/g,'');
+  if(text.length>MAX_INPUT_CHARS){
+    text=text.slice(0,MAX_INPUT_CHARS);
+  }
+  input.textContent=text;
+  inputText=text;
+  placeCaretAtEnd(input);
 }
 updateInput();
+
+function placeCaretAtEnd(el){
+  const range=document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function displayMessage(text){
+  const div=document.createElement('div');
+  div.className='response';
+  div.textContent=text;
+  terminal.insertBefore(div,input);
+  setTimeout(()=>div.classList.add('fade'),5000);
+  setTimeout(()=>div.remove(),6000);
+}
+
+function clearResponses(){
+  document.querySelectorAll('.response').forEach(el=>el.remove());
+}
+
+function handleCommand(cmd){
+  clearResponses();
+  const command=cmd.trim().toLowerCase();
+  if(command==='back'){
+    goBack();
+  }else if(command==='?'||command==='help'){
+    showScreen('help');
+  }else if(screens[command]){
+    showScreen(command);
+  }else{
+    displayMessage('command not recognized.');
+  }
+  input.textContent='';
+  inputText='';
+  updateInput();
+  input.focus();
+}
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 fanHumGain=audioCtx.createGain();
@@ -508,20 +593,20 @@ async function typeText(el,text){
     if(delay>0) await sleep(delay);
   }
   el.textContent+='\n';
+  if(el.parentElement===historyEl){
+    historyEl.scrollTop=historyEl.scrollHeight;
+  }
 }
 
 function waitForContinue(){
   return new Promise(res=>{
     function handler(e){
-      if(e.type==='keydown'&&(e.key===' '||e.key==='Enter')){cleanup();}
-      else if(e.type==='mousedown'&&e.button===0){cleanup();}
+      if(e.type==='mousedown'&&e.button===0){cleanup();}
     }
     function cleanup(){
-      document.removeEventListener('keydown',handler);
       document.removeEventListener('mousedown',handler);
       res();
     }
-    document.addEventListener('keydown',handler);
     document.addEventListener('mousedown',handler);
   });
 }
@@ -541,11 +626,6 @@ document.addEventListener('click',e=>{
     skipNextClick=false;
   }
 },true);
-document.addEventListener('keydown',e=>{
-  if(!typing) return;
-  if(e.key===' ') speed=1.5;
-  else if(e.key==='Enter') speed=Infinity;
-});
 
 async function init(){
   startScrollSound();
@@ -565,8 +645,10 @@ async function init(){
 }
 
 async function showScreen(name){
+  clearResponses();
   screenHistory.push(name);
   inputText='';
+  input.textContent='';
   updateInput();
   content.innerHTML='';
   currentOptions=[];
@@ -647,16 +729,6 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Tab'){
     e.preventDefault();
     if(!typing) goBack();
-    return;
-  }
-  if(typing) return;
-  if(e.key==='Backspace'){
-    inputText=inputText.slice(0,-1);
-    updateInput();
-    e.preventDefault();
-  }else if(e.key.length===1 && !e.ctrlKey && !e.metaKey){
-    inputText+=e.key;
-    updateInput();
   }
 });
 
@@ -675,6 +747,7 @@ powerButton.addEventListener('click',async()=>{
     currentOptions=[];
     selected=-1;
     inputText='';
+    input.textContent='';
     updateInput();
     loadScrollSound().then(init);
     powered=true;

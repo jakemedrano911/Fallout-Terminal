@@ -464,23 +464,30 @@ function escapeHtml(str){
 async function startHacking(){
   terminalLocked=false;
   hackingActive=true;
-  const res=await fetch('Hacking Words.txt');
-  const text=await res.text();
-  const all=text.split(/\r?\n/).map(w=>w.trim()).filter(w=>/^[A-Za-z]+$/.test(w));
-  const byLen={};
-  for(const w of all){
-    const l=w.length;
-    (byLen[l]||(byLen[l]=[])).push(w.toUpperCase());
+  try{
+    const res=await fetch('Hacking Words.txt');
+    const text=await res.text();
+    const all=(text.match(/[A-Za-z]+/g)||[]).map(w=>w.toUpperCase());
+    const byLen={};
+    for(const w of all){
+      const l=w.length;
+      (byLen[l]||(byLen[l]=new Set())).add(w);
+    }
+    const lengths=Object.keys(byLen).filter(l=>byLen[l].size>=25);
+    if(!lengths.length) throw new Error('Insufficient words');
+    const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
+    const pool=Array.from(byLen[len]);
+    shuffle(pool);
+    const count=15+Math.floor(Math.random()*11);
+    const wordList=pool.slice(0,count);
+    const password=wordList[Math.floor(Math.random()*wordList.length)];
+    hackingData={attempts:4,password,wordList};
+    renderHackScreen();
+  }catch(err){
+    console.error('Failed to load words',err);
+    hackingActive=false;
+    displayMessage('WORD LIST UNAVAILABLE');
   }
-  const lengths=Object.keys(byLen).filter(l=>byLen[l].length>=25);
-  const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
-  const pool=byLen[len].slice();
-  shuffle(pool);
-  const count=15+Math.floor(Math.random()*11);
-  const wordList=pool.slice(0,count);
-  const password=wordList[Math.floor(Math.random()*wordList.length)];
-  hackingData={attempts:4,password,wordList};
-  renderHackScreen();
 }
 
 function blockHtml(block){

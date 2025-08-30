@@ -228,6 +228,7 @@
   #hacking .word:hover{background:#008800;color:#041204;}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;}
   .hack-row{line-height:1;}
+  #hacking, .hack-row { letter-spacing: 0; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;}
   #header.hack-header{padding-top:calc(4px * var(--scale));}
   #header.hack-header #hack-title{margin-bottom:calc(8px * var(--scale));}
@@ -575,7 +576,7 @@ function renderHackScreen(){
     row.className='hack-row';
     const left=blocks[r];
     const right=blocks[r+rows];
-    row.innerHTML=`0x${left.addr} ${blockHtml(left)}    0x${right.addr} ${blockHtml(right)}`;
+    row.innerHTML=`0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}`;
     grid.appendChild(row);
   }
   grid.querySelectorAll('.word').forEach(span=>{

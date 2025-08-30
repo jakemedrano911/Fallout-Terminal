@@ -545,11 +545,17 @@ function renderHackScreen(){
     for(let j=0;j<cols;j++) arr.push(chars[Math.floor(Math.random()*chars.length)]);
     blocks.push({addr:(base+i*cols).toString(16).toUpperCase().padStart(4,'0'),chars:arr,words:[]});
   }
+  const MAX_PLACEMENT_ATTEMPTS = 1000;
   for(const word of hackingData.wordList){
     const parts=[];
     for(let i=0;i<word.length;i+=cols) parts.push(word.slice(i,i+cols));
     const maxLen=parts.reduce((m,p)=>Math.max(m,p.length),0);
-    while(true){
+    if(parts.length>rows){
+      console.warn('Word too long to place', word);
+      continue;
+    }
+    let placed = false;
+    for(let attempts=0; attempts<MAX_PLACEMENT_ATTEMPTS; attempts++){
       const col=Math.floor(Math.random()*2);
       const row=Math.floor(Math.random()*(rows-parts.length+1));
       const start=Math.floor(Math.random()*(cols-maxLen+1));
@@ -568,7 +574,11 @@ function renderHackScreen(){
         for(let k=0;k<seg.length;k++) block.chars[start+k]=seg[k];
         block.words.push({start,word,segment:seg});
       }
+      placed = true;
       break;
+    }
+    if(!placed){
+      console.warn('Failed to place word', word);
     }
   }
   for(let r=0;r<rows;r++){

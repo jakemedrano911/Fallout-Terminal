@@ -222,6 +222,11 @@
     background:#008800;
     color:#041204;
   }
+  #hacking{white-space:pre;font:inherit;}
+  #hacking .word{cursor:pointer;}
+  #hacking .word:hover{background:#008800;color:#041204;}
+  #attempts{margin-bottom:1em;}
+  #hack-messages{margin-top:1em;}
 </style>
 </head>
 <body>
@@ -387,6 +392,9 @@ let screenHistory=[];
 let skipNextClick=false;
 let powered=false;
 const MAX_INPUT_CHARS=64;
+let hackingActive=false;
+let hackingData=null;
+let terminalLocked=false;
 
 const audioMenu=document.getElementById('audio-menu');
 const audioToggle=document.getElementById('audio-toggle');
@@ -442,6 +450,136 @@ function placeCaretAtEnd(el){
   sel.addRange(range);
 }
 
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function startHacking(){
+  terminalLocked=false;
+  hackingActive=true;
+  const res=await fetch('Hacking Words.txt');
+  const text=await res.text();
+  const all=text.split(/\r?\n/).map(w=>w.trim()).filter(w=>/^[A-Za-z]+$/.test(w));
+  const byLen={};
+  for(const w of all){
+    const l=w.length;
+    (byLen[l]||(byLen[l]=[])).push(w.toUpperCase());
+  }
+  const lengths=Object.keys(byLen).filter(l=>byLen[l].length>=25);
+  const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
+  const pool=byLen[len].slice();
+  shuffle(pool);
+  const count=15+Math.floor(Math.random()*11);
+  const wordList=pool.slice(0,count);
+  const password=wordList[Math.floor(Math.random()*wordList.length)];
+  hackingData={attempts:4,password,wordList};
+  renderHackScreen();
+}
+
+function blockHtml(block){
+  const parts=[];
+  let last=0;
+  const words=block.words.slice().sort((a,b)=>a.start-b.start);
+  for(const w of words){
+    parts.push(escapeHtml(block.chars.slice(last,w.start).join('')));
+    parts.push(`<span class="word" data-word="${w.word}">${w.word}</span>`);
+    last=w.start+w.word.length;
+  }
+  parts.push(escapeHtml(block.chars.slice(last).join('')));
+  return parts.join('');
+}
+
+function renderHackScreen(){
+  content.innerHTML='';
+  const attempts=document.createElement('div');
+  attempts.id='attempts';
+  attempts.textContent=`${hackingData.attempts} ATTEMPTS LEFT:`;
+  content.appendChild(attempts);
+  const grid=document.createElement('div');
+  grid.id='hacking';
+  content.appendChild(grid);
+  const messages=document.createElement('div');
+  messages.id='hack-messages';
+  content.appendChild(messages);
+  const rows=17,cols=12,total=rows*2;
+  const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
+  const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
+  const blocks=[];
+  for(let i=0;i<total;i++){
+    const arr=[];
+    for(let j=0;j<cols;j++) arr.push(chars[Math.floor(Math.random()*chars.length)]);
+    blocks.push({addr:(base+i*cols).toString(16).toUpperCase().padStart(4,'0'),chars:arr,words:[]});
+  }
+  for(const word of hackingData.wordList){
+    while(true){
+      const idx=Math.floor(Math.random()*total);
+      const block=blocks[idx];
+      const start=Math.floor(Math.random()*(cols-word.length));
+      if(block.words.some(w=>!(start+word.length<=w.start||start>=w.start+w.word.length))) continue;
+      for(let k=0;k<word.length;k++) block.chars[start+k]=word[k];
+      block.words.push({start,word});
+      break;
+    }
+  }
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');
+    row.className='hack-row';
+    const left=blocks[r];
+    const right=blocks[r+rows];
+    row.innerHTML=`0x${left.addr} ${blockHtml(left)}    0x${right.addr} ${blockHtml(right)}`;
+    grid.appendChild(row);
+  }
+  grid.querySelectorAll('.word').forEach(span=>{
+    span.addEventListener('click',()=>processGuess(span.dataset.word));
+  });
+  hackingData.blocks=blocks;
+  hackingData.messages=messages;
+  hackingData.attemptsEl=attempts;
+  input.focus();
+}
+
+function processGuess(guess){
+  if(!hackingActive) return;
+  const msg=hackingData.messages;
+  const guessDiv=document.createElement('div');
+  guessDiv.textContent=guess;
+  msg.appendChild(guessDiv);
+  if(guess===hackingData.password){
+    const ok=document.createElement('div');
+    ok.textContent='Access granted.';
+    msg.appendChild(ok);
+    hackingActive=false;
+    setTimeout(()=>showScreen('menu'),500);
+  }else{
+    const len=hackingData.password.length;
+    let like=0;
+    for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
+    const info=document.createElement('div');
+    info.textContent=`Entry denied. ${like}/${len} correct.`;
+    msg.appendChild(info);
+    hackingData.attempts--;
+    hackingData.attemptsEl.textContent=`${hackingData.attempts} ATTEMPTS LEFT:`;
+    if(hackingData.attempts<=0){
+      const lock=document.createElement('div');
+      lock.textContent='TERMINAL LOCKED.';
+      msg.appendChild(lock);
+      hackingActive=false;
+      terminalLocked=true;
+    }
+  }
+  input.textContent='';
+  inputText='';
+  updateInput();
+  input.focus();
+}
+
 function displayMessage(text){
   const div=document.createElement('div');
   div.className='response';
@@ -457,6 +595,16 @@ function clearResponses(){
 
 function handleCommand(cmd){
   clearResponses();
+  if(terminalLocked){
+    input.textContent='';
+    inputText='';
+    updateInput();
+    return;
+  }
+  if(hackingActive){
+    processGuess(cmd.trim().toUpperCase());
+    return;
+  }
   const command=cmd.trim().toLowerCase();
   if(command==='back'){
     goBack();
@@ -641,7 +789,7 @@ async function init(){
     await typeText(div,line);
   }
   stopScrollSound();
-  showScreen('menu');
+  await startHacking();
 }
 
 async function showScreen(name){
@@ -749,6 +897,9 @@ powerButton.addEventListener('click',async()=>{
     inputText='';
     input.textContent='';
     updateInput();
+    hackingActive=false;
+    hackingData=null;
+    terminalLocked=false;
     loadScrollSound().then(init);
     powered=true;
   }else{
@@ -760,6 +911,9 @@ powerButton.addEventListener('click',async()=>{
     terminal.classList.remove('powered');
     audioMenu.style.display='none';
     volumeControls.style.display='none';
+    hackingActive=false;
+    hackingData=null;
+    terminalLocked=false;
     powered=false;
   }
 });

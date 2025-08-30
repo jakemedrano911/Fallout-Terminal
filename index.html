@@ -222,11 +222,11 @@
     background:#008800;
     color:#041204;
   }
-  #hack-wrap{display:flex;}
-  #hacking{white-space:pre;font:inherit;}
+  #hack-wrap{display:flex;height:100%;justify-content:space-between;width:100%;}
+  #hacking{white-space:pre;font:inherit;flex-shrink:0;}
   #hacking .word{cursor:pointer;}
   #hacking .word:hover{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;margin-left:4ch;}
+  #hack-messages{white-space:pre;margin-left:4ch;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;height:100%;}
   #terminal.locked #content{opacity:0.2;}
   #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
 </style>
@@ -272,8 +272,18 @@ function updateScale(){
 }
 window.addEventListener('resize',updateScale);
 updateScale();
-const titleLines=[];
-const headerLines=[];
+const titleLines=[
+"ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
+"COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
+"-Server 12-",
+"",
+];
+const headerLines=[
+"Welcome to the RobCo Engineering Division Database!",
+"How may I assist you this fine day?",
+"---------------------------------------",
+"",
+];
 
 const screens={
   menu:[
@@ -579,23 +589,33 @@ function processGuess(guess){
   guess=guess.toUpperCase();
   const msg=hackingData.messages;
   const len=hackingData.password.length;
+  const box=document.createElement('div');
+  box.style.textAlign='right';
+  const guessLine=document.createElement('div');
+  guessLine.textContent=`>${guess}`;
+  box.appendChild(guessLine);
   if(guess===hackingData.password){
-    const line=document.createElement('div');
-    line.textContent=`${guess.padEnd(len+1)}${len}/${len} correct`;
-    msg.appendChild(line);
+    const likeLine=document.createElement('div');
+    likeLine.textContent=`${len}/${len} correct`;
+    box.appendChild(likeLine);
     const ok=document.createElement('div');
     ok.textContent='Access granted.';
-    msg.appendChild(ok);
+    box.appendChild(ok);
+    msg.appendChild(box);
     hackingActive=false;
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
-    setTimeout(()=>showScreen('menu'),500);
+    setTimeout(()=>showIntro(),500);
   }else{
     let like=0;
     for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
-    const line=document.createElement('div');
-    line.textContent=`${guess.padEnd(len+1)}${like}/${len} correct`;
-    msg.appendChild(line);
+    const denied=document.createElement('div');
+    denied.textContent='Entry denied';
+    box.appendChild(denied);
+    const likeLine=document.createElement('div');
+    likeLine.textContent=`${like}/${len} correct`;
+    box.appendChild(likeLine);
+    msg.appendChild(box);
     hackingData.attempts--;
     updateAttempts();
     if(hackingData.attempts<=0){
@@ -808,6 +828,25 @@ async function init(){
   header.innerHTML='';
   stopScrollSound();
   await startHacking();
+}
+
+async function showIntro(){
+  startScrollSound();
+  header.innerHTML='';
+  content.innerHTML='';
+  for(const line of titleLines){
+    const div=document.createElement('div');
+    div.style.textAlign='center';
+    header.appendChild(div);
+    await typeText(div,line);
+  }
+  for(const line of headerLines){
+    const div=document.createElement('div');
+    header.appendChild(div);
+    await typeText(div,line);
+  }
+  stopScrollSound();
+  showScreen('menu');
 }
 
 async function showScreen(name){

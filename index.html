@@ -60,6 +60,12 @@
     display:none;
     flex-direction:column;
     background:#041204;
+    background-image:repeating-linear-gradient(
+      rgba(0,0,0,0.55) 0px,
+      rgba(0,0,0,0.55) 1px,
+      transparent 1px,
+      transparent 4px
+    );
     border-radius:calc(12px * var(--scale));
   }
   #terminal.powered{
@@ -129,45 +135,43 @@
   #volume-controls input[type=range]{
     margin-left:calc(5px * var(--scale));
   }
-  #terminal::before{
+  #terminal::before,
+  #terminal::after{
     content:"";
     position:absolute;
     left:0;right:0;
     top:0;
-    height:calc(4px * var(--scale));
+    height:20%;
+    pointer-events:none;
     background:linear-gradient(
       to bottom,
-      rgba(122,255,122,0.3) 0%,
-      rgba(122,255,122,0.15) 60%,
-      transparent 100%
-    );
-    pointer-events:none;
-    z-index:2;
-    animation:scanline 12s linear infinite;
-  }
-  #terminal::after{
-    content:"";
-    position:absolute;
-    top:0;left:0;right:0;bottom:0;
-    pointer-events:none;
-    z-index:1;
-    background:repeating-linear-gradient(
-      rgba(0,0,0,0.55) 0px,
-      rgba(0,0,0,0.55) 1px,
-      transparent 1px,
-      transparent 4px
+      rgba(0,0,0,0) 0%,
+      rgba(0,0,0,0.3) 50%,
+      rgba(0,0,0,0) 100%
     );
     mix-blend-mode:multiply;
     border-radius:inherit;
-    animation: roll 6s linear infinite;
+    animation:crt-band 4s linear infinite;
+    z-index:2;
   }
-  @keyframes roll{
-    from{background-position:0 0;}
-    to{background-position:0 100%;}
+  #terminal::after{
+    opacity:0.5;
+    animation-delay:-2s;
   }
-  @keyframes scanline{
+  @keyframes crt-band{
     from{transform:translateY(-100%);}
-    to{transform:translateY(100%);}
+    to{transform:translateY(600%);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    #terminal::after{content:none;}
+    #terminal::before{
+      animation:none;
+      top:0;
+      height:100%;
+      transform:none;
+      opacity:0.15;
+      background:rgba(0,0,0,0.2);
+    }
   }
   #header, #content{
     white-space:pre-wrap;

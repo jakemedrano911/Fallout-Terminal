@@ -230,8 +230,8 @@
   #hacking .char.highlight{background:#008800;color:#041204;}
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-end;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
-  #hack-messages #input{margin-top:auto;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
+  #hack-messages #input{margin-top:0;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
@@ -293,7 +293,6 @@ const headerLines=[
 "Welcome to the RobCo Engineering Division Database!",
 "How may I assist you this fine day?",
 "---------------------------------------",
-"",
 ];
 
 const screens={
@@ -652,7 +651,7 @@ function processGuess(guess){
   const msg=hackingData.messages;
   const len=hackingData.password.length;
   const box=document.createElement('div');
-  box.style.textAlign='right';
+  box.style.textAlign='left';
   const guessLine=document.createElement('div');
   guessLine.textContent=`>${guess}`;
   box.appendChild(guessLine);

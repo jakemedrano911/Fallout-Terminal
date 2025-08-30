@@ -192,6 +192,7 @@
     font:inherit;
     letter-spacing:inherit;
     line-height:inherit;
+    word-break:break-all;
     caret-color:transparent;
   }
   #input::before{
@@ -370,6 +371,7 @@ let inputText="";
 let screenHistory=[];
 let skipNextClick=false;
 let powered=false;
+const MAX_INPUT_LENGTH=100;
 
 const audioMenu=document.getElementById('audio-menu');
 const audioToggle=document.getElementById('audio-toggle');
@@ -398,9 +400,16 @@ focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
 
 input.addEventListener('input',updateInput);
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    if(!typing) handleCommand(inputText);
+  }
+});
 
 function updateInput(){
-  inputText=input.textContent;
+  const raw=input.textContent;
+  inputText=raw.replace(/^>\s?/, '');
 }
 updateInput();
 
@@ -447,6 +456,20 @@ function goBack(){
     const prev=screenHistory.pop();
     showScreen(prev);
   }
+}
+function handleCommand(cmd){
+  cmd=cmd.replace(/^>\s?/, '');
+  if(cmd.length>MAX_INPUT_LENGTH){
+    const div=document.createElement('div');
+    div.textContent=`Input exceeds ${MAX_INPUT_LENGTH} characters.`;
+    content.appendChild(div);
+  }else if(cmd){
+    const div=document.createElement('div');
+    div.textContent=cmd;
+    content.appendChild(div);
+  }
+  input.textContent='';
+  updateInput();
 }
 function stopScrollSound(){
   if(!scrollTimeout) return;

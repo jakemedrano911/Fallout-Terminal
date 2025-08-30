@@ -222,11 +222,15 @@
     background:#008800;
     color:#041204;
   }
-  #hack-wrap{display:flex;height:100%;justify-content:space-between;width:100%;}
+  #hack-wrap{display:flex;justify-content:space-between;width:100%;}
   #hacking{white-space:pre;font:inherit;flex-shrink:0;}
   #hacking .word{cursor:pointer;}
   #hacking .word:hover{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;margin-left:4ch;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;height:100%;}
+  #hack-messages{white-space:pre;margin-left:4ch;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;}
+  #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;}
+  #header.hack-header{padding-top:calc(4px * var(--scale));}
+  #header.hack-header #hack-title{margin-bottom:calc(16px * var(--scale));}
+  #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
   #terminal.locked #content{opacity:0.2;}
   #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
 </style>
@@ -475,7 +479,7 @@ async function startHacking(){
       const l=w.length;
       (byLen[l]||(byLen[l]=new Set())).add(w);
     }
-    const lengths=Object.keys(byLen).filter(l=>byLen[l].size>=25);
+    const lengths=Object.keys(byLen).filter(l=>byLen[l].size>=25 && l>=4);
     if(!lengths.length) throw new Error('Insufficient words');
     const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
     const pool=Array.from(byLen[len]);
@@ -508,7 +512,10 @@ function blockHtml(block){
 function renderHackScreen(){
   header.innerHTML='';
   content.innerHTML='';
+  header.classList.add('hack-header');
+  content.classList.add('hack-content');
   const title=document.createElement('div');
+  title.id='hack-title';
   title.textContent='ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
   header.appendChild(title);
   const warning=document.createElement('div');
@@ -834,6 +841,8 @@ async function showIntro(){
   startScrollSound();
   header.innerHTML='';
   content.innerHTML='';
+  header.classList.remove('hack-header');
+  content.classList.remove('hack-content');
   for(const line of titleLines){
     const div=document.createElement('div');
     div.style.textAlign='center';

@@ -501,14 +501,15 @@ async function startHacking(){
 function blockHtml(block){
   const parts=[];
   let last=0;
+  const wrapChars=arr=>arr.map(ch=>`<span class="char">${escapeHtml(ch)}</span>`).join('');
   const words=block.words.slice().sort((a,b)=>a.start-b.start);
   for(const w of words){
     const seg=w.segment||w.word;
-    parts.push(escapeHtml(block.chars.slice(last,w.start).join('')));
+    parts.push(wrapChars(block.chars.slice(last,w.start)));
     parts.push(`<span class="word" data-word="${w.word}">${seg}</span>`);
     last=w.start+seg.length;
   }
-  parts.push(escapeHtml(block.chars.slice(last).join('')));
+  parts.push(wrapChars(block.chars.slice(last)));
   return parts.join('');
 }
 
@@ -589,7 +590,11 @@ function renderHackScreen(){
     row.innerHTML=`0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}`;
     grid.appendChild(row);
   }
+  grid.querySelectorAll('.char').forEach(span=>{
+    span.addEventListener('mouseenter',playCharFocusSound);
+  });
   grid.querySelectorAll('.word').forEach(span=>{
+    span.addEventListener('mouseenter',playWordFocusSound);
     span.addEventListener('click',()=>processGuess(span.dataset.word));
   });
   hackingData.blocks=blocks;
@@ -629,6 +634,7 @@ function processGuess(guess){
   const guessLine=document.createElement('div');
   guessLine.textContent=`>${guess}`;
   box.appendChild(guessLine);
+  playEnterCharSound();
   if(guess===hackingData.password){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${len}/${len} correct`;
@@ -640,6 +646,7 @@ function processGuess(guess){
     hackingActive=false;
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
+    playPasswordResult(true);
     setTimeout(()=>showIntro(),500);
   }else{
     let like=0;
@@ -653,6 +660,7 @@ function processGuess(guess){
     msg.appendChild(box);
     hackingData.attempts--;
     updateAttempts();
+    playPasswordResult(false);
     if(hackingData.attempts<=0){
       lockTerminal();
     }
@@ -813,6 +821,53 @@ function playSelectSound(){
   const enterAudio=new Audio(enterSrc);
   enterAudio.volume=selectVolume;
   enterAudio.play();
+}
+
+function playCharFocusSound(){
+  const files=[
+    'Terminal 3/single/charsingle_01.wav',
+    'Terminal 3/single/charsingle_02.wav',
+    'Terminal 3/single/charsingle_03.wav',
+    'Terminal 3/single/charsingle_04.wav',
+    'Terminal 3/single/charsingle_05.wav',
+    'Terminal 3/single/charsingle_06.wav'
+  ];
+  const src=files[Math.floor(Math.random()*files.length)];
+  const audio=new Audio(src);
+  audio.volume=focusVolume;
+  audio.play();
+}
+
+function playWordFocusSound(){
+  const files=[
+    'Terminal 3/multiple/charmultiple_01.wav',
+    'Terminal 3/multiple/charmultiple_02.wav',
+    'Terminal 3/multiple/charmultiple_03.wav',
+    'Terminal 3/multiple/charmultiple_04.wav'
+  ];
+  const src=files[Math.floor(Math.random()*files.length)];
+  const audio=new Audio(src);
+  audio.volume=focusVolume;
+  audio.play();
+}
+
+function playEnterCharSound(){
+  const files=[
+    'Terminal 3/enter/charenter_01.wav',
+    'Terminal 3/enter/charenter_02.wav',
+    'Terminal 3/enter/charenter_03.wav'
+  ];
+  const src=files[Math.floor(Math.random()*files.length)];
+  const audio=new Audio(src);
+  audio.volume=selectVolume;
+  audio.play();
+}
+
+function playPasswordResult(correct){
+  const file=correct?'Terminal 3/passgood.wav':'Terminal 3/passbad.wav';
+  const audio=new Audio(file);
+  audio.volume=selectVolume;
+  audio.play();
 }
 
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}

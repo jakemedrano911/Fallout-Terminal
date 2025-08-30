@@ -360,6 +360,13 @@ const screens={
     "Unauthorized access to experimental files will result in TERMINATION OF CONTRACT.",
     "",
     {text:"> RETURN",screen:"menu"}
+  ],
+  help:[
+    "== HELP ==",
+    "",
+    "Sample help terminal entry.",
+    "",
+    {text:"> RETURN",screen:"menu"}
   ]
 };
 
@@ -453,6 +460,8 @@ function handleCommand(cmd){
   const command=cmd.trim().toLowerCase();
   if(command==='back'){
     goBack();
+  }else if(command==='?'||command==='help'){
+    showScreen('help');
   }else if(screens[command]){
     showScreen(command);
   }else{
@@ -592,15 +601,12 @@ async function typeText(el,text){
 function waitForContinue(){
   return new Promise(res=>{
     function handler(e){
-      if(e.type==='keydown'&&(e.key===' '||e.key==='Enter')){cleanup();}
-      else if(e.type==='mousedown'&&e.button===0){cleanup();}
+      if(e.type==='mousedown'&&e.button===0){cleanup();}
     }
     function cleanup(){
-      document.removeEventListener('keydown',handler);
       document.removeEventListener('mousedown',handler);
       res();
     }
-    document.addEventListener('keydown',handler);
     document.addEventListener('mousedown',handler);
   });
 }
@@ -620,11 +626,6 @@ document.addEventListener('click',e=>{
     skipNextClick=false;
   }
 },true);
-document.addEventListener('keydown',e=>{
-  if(!typing) return;
-  if(e.key===' ') speed=1.5;
-  else if(e.key==='Enter') speed=Infinity;
-});
 
 async function init(){
   startScrollSound();

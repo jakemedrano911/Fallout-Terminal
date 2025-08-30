@@ -398,11 +398,37 @@ focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
 
 input.addEventListener('input',updateInput);
+input.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    handleCommand(inputText);
+  }
+});
 
 function updateInput(){
   inputText=input.textContent;
 }
 updateInput();
+
+function handleCommand(cmd){
+  const existing=document.getElementById('command-error');
+  if(existing) existing.remove();
+  const command=cmd.trim().toLowerCase();
+  if(command==='back'){
+    goBack();
+  }else if(screens[command]){
+    showScreen(command);
+  }else{
+    const error=document.createElement('div');
+    error.id='command-error';
+    error.textContent='command not recognized.';
+    terminal.insertBefore(error,input);
+  }
+  input.textContent='';
+  inputText='';
+  updateInput();
+  input.focus();
+}
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
 fanHumGain=audioCtx.createGain();

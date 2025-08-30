@@ -56,6 +56,7 @@
     border:calc(4px * var(--scale)) solid #008800;
     box-sizing:border-box;
     padding:calc(6px * var(--scale));
+    padding-left:calc(6px * var(--scale) + 4ch);
     overflow:hidden;
     display:none;
     flex-direction:column;
@@ -214,8 +215,8 @@
       <button id="audio-toggle" aria-label="Audio">&#x1F50A;</button>
       <span>Audio</span>
       <div id="volume-controls">
-        <label>Hum <input type="range" min="0" max="10" value="2" id="hum-volume"></label>
-        <label>Scroll <input type="range" min="0" max="10" value="5" id="scroll-volume"></label>
+        <label>Hum <input type="range" min="0" max="10" value="1" id="hum-volume"></label>
+        <label>Scroll <input type="range" min="0" max="10" value="2" id="scroll-volume"></label>
         <label>Focus <input type="range" min="0" max="10" value="5" id="focus-volume"></label>
         <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
       </div>

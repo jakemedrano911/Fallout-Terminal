@@ -24,7 +24,7 @@
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:calc(24px * var(--scale) * 0.9);
-    letter-spacing:calc(.25px * var(--scale) * 0.9);
+    letter-spacing:calc(.375px * var(--scale) * 0.9);
     line-height:1.2;
     display:flex;
     justify-content:center;
@@ -231,7 +231,7 @@
   #hacking .word.highlight{background:#008800;color:#041204;}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;}
   .hack-row{line-height:1;}
-  #hacking, .hack-row { letter-spacing: 0; }
+  #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;}
   #header.hack-header{padding-top:calc(4px * var(--scale));}
   #header.hack-header #hack-title{margin-bottom:calc(8px * var(--scale));}

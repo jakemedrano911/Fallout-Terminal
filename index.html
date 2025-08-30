@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RobCo Engineering Division Database</title>
+<title>ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</title>
 <style>
   @font-face{
     font-family:"FSEX300";
@@ -222,6 +222,17 @@
     background:#008800;
     color:#041204;
   }
+  #hack-wrap{display:flex;justify-content:space-between;width:100%;}
+  #hacking{white-space:pre;font:inherit;flex-shrink:0;}
+  #hacking .word{cursor:pointer;}
+  #hacking .word:hover{background:#008800;color:#041204;}
+  #hack-messages{white-space:pre;margin-left:4ch;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;}
+  #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;}
+  #header.hack-header{padding-top:calc(4px * var(--scale));}
+  #header.hack-header #hack-title{margin-bottom:calc(16px * var(--scale));}
+  #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
+  #terminal.locked #content{opacity:0.2;}
+  #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
 </style>
 </head>
 <body>
@@ -274,7 +285,7 @@ const titleLines=[
 const headerLines=[
 "Welcome to the RobCo Engineering Division Database!",
 "How may I assist you this fine day?",
-"____________________________________________________",
+"---------------------------------------",
 "",
 ];
 
@@ -387,6 +398,9 @@ let screenHistory=[];
 let skipNextClick=false;
 let powered=false;
 const MAX_INPUT_CHARS=64;
+let hackingActive=false;
+let hackingData=null;
+let terminalLocked=false;
 
 const audioMenu=document.getElementById('audio-menu');
 const audioToggle=document.getElementById('audio-toggle');
@@ -442,6 +456,185 @@ function placeCaretAtEnd(el){
   sel.addRange(range);
 }
 
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function startHacking(){
+  terminalLocked=false;
+  hackingActive=true;
+  try{
+    const res=await fetch('Hacking Words.txt');
+    const text=await res.text();
+    const all=(text.match(/[A-Za-z]+/g)||[]).map(w=>w.toUpperCase());
+    const byLen={};
+    for(const w of all){
+      const l=w.length;
+      (byLen[l]||(byLen[l]=new Set())).add(w);
+    }
+    const lengths=Object.keys(byLen).filter(l=>byLen[l].size>=25 && l>=4);
+    if(!lengths.length) throw new Error('Insufficient words');
+    const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
+    const pool=Array.from(byLen[len]);
+    shuffle(pool);
+    const count=15+Math.floor(Math.random()*11);
+    const wordList=pool.slice(0,count);
+    const password=wordList[Math.floor(Math.random()*wordList.length)];
+    hackingData={attempts:4,password,wordList};
+    renderHackScreen();
+  }catch(err){
+    console.error('Failed to load words',err);
+    hackingActive=false;
+    displayMessage('WORD LIST UNAVAILABLE');
+  }
+}
+
+function blockHtml(block){
+  const parts=[];
+  let last=0;
+  const words=block.words.slice().sort((a,b)=>a.start-b.start);
+  for(const w of words){
+    parts.push(escapeHtml(block.chars.slice(last,w.start).join('')));
+    parts.push(`<span class="word" data-word="${w.word}">${w.word}</span>`);
+    last=w.start+w.word.length;
+  }
+  parts.push(escapeHtml(block.chars.slice(last).join('')));
+  return parts.join('');
+}
+
+function renderHackScreen(){
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.add('hack-header');
+  content.classList.add('hack-content');
+  const title=document.createElement('div');
+  title.id='hack-title';
+  title.textContent='ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
+  header.appendChild(title);
+  const warning=document.createElement('div');
+  warning.id='hack-warning';
+  header.appendChild(warning);
+  const attempts=document.createElement('div');
+  attempts.id='attempts';
+  header.appendChild(attempts);
+  const wrap=document.createElement('div');
+  wrap.id='hack-wrap';
+  content.appendChild(wrap);
+  const grid=document.createElement('div');
+  grid.id='hacking';
+  wrap.appendChild(grid);
+  const messages=document.createElement('div');
+  messages.id='hack-messages';
+  wrap.appendChild(messages);
+  const rows=17,cols=12,total=rows*2;
+  const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
+  const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
+  const blocks=[];
+  for(let i=0;i<total;i++){
+    const arr=[];
+    for(let j=0;j<cols;j++) arr.push(chars[Math.floor(Math.random()*chars.length)]);
+    blocks.push({addr:(base+i*cols).toString(16).toUpperCase().padStart(4,'0'),chars:arr,words:[]});
+  }
+  for(const word of hackingData.wordList){
+    while(true){
+      const idx=Math.floor(Math.random()*total);
+      const block=blocks[idx];
+      const start=Math.floor(Math.random()*(cols-word.length));
+      if(block.words.some(w=>!(start+word.length<=w.start||start>=w.start+w.word.length))) continue;
+      for(let k=0;k<word.length;k++) block.chars[start+k]=word[k];
+      block.words.push({start,word});
+      break;
+    }
+  }
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');
+    row.className='hack-row';
+    const left=blocks[r];
+    const right=blocks[r+rows];
+    row.innerHTML=`0x${left.addr} ${blockHtml(left)}    0x${right.addr} ${blockHtml(right)}`;
+    grid.appendChild(row);
+  }
+  grid.querySelectorAll('.word').forEach(span=>{
+    span.addEventListener('click',()=>processGuess(span.dataset.word));
+  });
+  hackingData.blocks=blocks;
+  hackingData.messages=messages;
+  hackingData.attemptsEl=attempts;
+  hackingData.warningEl=warning;
+  updateAttempts();
+  input.focus();
+}
+
+function updateAttempts(){
+  const a=hackingData.attempts;
+  const word=a===1?'ATTEMPT':'ATTEMPTS';
+  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'▲'.repeat(a)}`;
+  hackingData.warningEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'';
+}
+
+function lockTerminal(){
+  const overlay=document.createElement('div');
+  overlay.id='lockout';
+  overlay.textContent='TERMINAL LOCKOUT\nPLEASE CONTACT SYSTEM ADMINISTRATOR';
+  terminal.classList.add('locked');
+  terminal.appendChild(overlay);
+  hackingActive=false;
+  terminalLocked=true;
+  hackingData.warningEl.textContent='';
+  hackingData.attemptsEl.textContent='';
+}
+
+function processGuess(guess){
+  if(!hackingActive) return;
+  guess=guess.toUpperCase();
+  const msg=hackingData.messages;
+  const len=hackingData.password.length;
+  const box=document.createElement('div');
+  box.style.textAlign='right';
+  const guessLine=document.createElement('div');
+  guessLine.textContent=`>${guess}`;
+  box.appendChild(guessLine);
+  if(guess===hackingData.password){
+    const likeLine=document.createElement('div');
+    likeLine.textContent=`${len}/${len} correct`;
+    box.appendChild(likeLine);
+    const ok=document.createElement('div');
+    ok.textContent='Access granted.';
+    box.appendChild(ok);
+    msg.appendChild(box);
+    hackingActive=false;
+    hackingData.warningEl.textContent='';
+    hackingData.attemptsEl.textContent='';
+    setTimeout(()=>showIntro(),500);
+  }else{
+    let like=0;
+    for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
+    const denied=document.createElement('div');
+    denied.textContent='Entry denied';
+    box.appendChild(denied);
+    const likeLine=document.createElement('div');
+    likeLine.textContent=`${like}/${len} correct`;
+    box.appendChild(likeLine);
+    msg.appendChild(box);
+    hackingData.attempts--;
+    updateAttempts();
+    if(hackingData.attempts<=0){
+      lockTerminal();
+    }
+  }
+  input.textContent='';
+  inputText='';
+  updateInput();
+  input.focus();
+}
+
 function displayMessage(text){
   const div=document.createElement('div');
   div.className='response';
@@ -457,6 +650,16 @@ function clearResponses(){
 
 function handleCommand(cmd){
   clearResponses();
+  if(terminalLocked){
+    input.textContent='';
+    inputText='';
+    updateInput();
+    return;
+  }
+  if(hackingActive){
+    processGuess(cmd.trim().toUpperCase());
+    return;
+  }
   const command=cmd.trim().toLowerCase();
   if(command==='back'){
     goBack();
@@ -629,6 +832,17 @@ document.addEventListener('click',e=>{
 
 async function init(){
   startScrollSound();
+  header.innerHTML='';
+  stopScrollSound();
+  await startHacking();
+}
+
+async function showIntro(){
+  startScrollSound();
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.remove('hack-header');
+  content.classList.remove('hack-content');
   for(const line of titleLines){
     const div=document.createElement('div');
     div.style.textAlign='center';
@@ -749,6 +963,9 @@ powerButton.addEventListener('click',async()=>{
     inputText='';
     input.textContent='';
     updateInput();
+    hackingActive=false;
+    hackingData=null;
+    terminalLocked=false;
     loadScrollSound().then(init);
     powered=true;
   }else{
@@ -760,6 +977,9 @@ powerButton.addEventListener('click',async()=>{
     terminal.classList.remove('powered');
     audioMenu.style.display='none';
     volumeControls.style.display='none';
+    hackingActive=false;
+    hackingData=null;
+    terminalLocked=false;
     powered=false;
   }
 });

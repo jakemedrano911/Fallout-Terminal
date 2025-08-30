@@ -179,8 +179,9 @@
   }
   #content{
     flex:1;
-    overflow:hidden;
+    overflow-y:auto;
     word-break:break-word;
+    max-height:100%;
   }
   #input{
     white-space:pre-wrap;
@@ -193,6 +194,7 @@
     letter-spacing:inherit;
     line-height:inherit;
     caret-color:transparent;
+    flex-shrink:0;
   }
   #input::before{
     content:"> ";
@@ -361,6 +363,7 @@ const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
+const historyEl=content;
 let currentOptions=[];
 let selected=-1;
 let typing=false;
@@ -550,6 +553,9 @@ async function typeText(el,text){
     if(delay>0) await sleep(delay);
   }
   el.textContent+='\n';
+  if(el.parentElement===historyEl){
+    historyEl.scrollTop=historyEl.scrollHeight;
+  }
 }
 
 function waitForContinue(){

@@ -229,11 +229,11 @@
   #hacking .char.highlight{background:#008800;color:#041204;}
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;align-self:flex-end;padding:0 calc(8px * var(--scale)) calc(8px * var(--scale)) 0;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;align-self:flex-end;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: inherit; }
-  #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(8px * var(--scale));}
-  #header.hack-header{padding-top:calc(8px * var(--scale));padding-bottom:calc(8px * var(--scale));}
+  #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(8px * var(--scale));padding-bottom:calc(24px * var(--scale));}
+  #header.hack-header{padding-top:calc(24px * var(--scale));padding-bottom:calc(8px * var(--scale));}
   #header.hack-header #hack-title{margin-top:calc(8px * var(--scale));margin-bottom:calc(16px * var(--scale));}
   #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
   #terminal.locked #content{opacity:0.2;}
@@ -662,7 +662,7 @@ function processGuess(guess){
     const ok=document.createElement('div');
     ok.textContent='Access granted.';
     box.appendChild(ok);
-    msg.appendChild(box);
+    msg.insertBefore(box,input);
     hackingActive=false;
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
@@ -677,7 +677,7 @@ function processGuess(guess){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${like}/${len} correct`;
     box.appendChild(likeLine);
-    msg.appendChild(box);
+    msg.insertBefore(box,input);
     hackingData.attempts--;
     updateAttempts();
     playPasswordResult(false);

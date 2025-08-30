@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RobCo Engineering Division Database</title>
+<title>ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</title>
 <style>
   @font-face{
     font-family:"FSEX300";
@@ -222,11 +222,13 @@
     background:#008800;
     color:#041204;
   }
+  #hack-wrap{display:flex;}
   #hacking{white-space:pre;font:inherit;}
   #hacking .word{cursor:pointer;}
   #hacking .word:hover{background:#008800;color:#041204;}
-  #attempts{margin-bottom:1em;}
-  #hack-messages{margin-top:1em;}
+  #hack-messages{white-space:pre;margin-left:4ch;}
+  #terminal.locked #content{opacity:0.2;}
+  #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
 </style>
 </head>
 <body>
@@ -270,18 +272,8 @@ function updateScale(){
 }
 window.addEventListener('resize',updateScale);
 updateScale();
-const titleLines=[
-"ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
-"COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
-"-Server 12-",
-"",
-];
-const headerLines=[
-"Welcome to the RobCo Engineering Division Database!",
-"How may I assist you this fine day?",
-"____________________________________________________",
-"",
-];
+const titleLines=[];
+const headerLines=[];
 
 const screens={
   menu:[
@@ -504,17 +496,26 @@ function blockHtml(block){
 }
 
 function renderHackScreen(){
+  header.innerHTML='';
   content.innerHTML='';
+  const title=document.createElement('div');
+  title.textContent='ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
+  header.appendChild(title);
+  const warning=document.createElement('div');
+  warning.id='hack-warning';
+  header.appendChild(warning);
   const attempts=document.createElement('div');
   attempts.id='attempts';
-  attempts.textContent=`${hackingData.attempts} ATTEMPTS LEFT:`;
-  content.appendChild(attempts);
+  header.appendChild(attempts);
+  const wrap=document.createElement('div');
+  wrap.id='hack-wrap';
+  content.appendChild(wrap);
   const grid=document.createElement('div');
   grid.id='hacking';
-  content.appendChild(grid);
+  wrap.appendChild(grid);
   const messages=document.createElement('div');
   messages.id='hack-messages';
-  content.appendChild(messages);
+  wrap.appendChild(messages);
   const rows=17,cols=12,total=rows*2;
   const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
   const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
@@ -549,36 +550,56 @@ function renderHackScreen(){
   hackingData.blocks=blocks;
   hackingData.messages=messages;
   hackingData.attemptsEl=attempts;
+  hackingData.warningEl=warning;
+  updateAttempts();
   input.focus();
+}
+
+function updateAttempts(){
+  const a=hackingData.attempts;
+  const word=a===1?'ATTEMPT':'ATTEMPTS';
+  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'▲'.repeat(a)}`;
+  hackingData.warningEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'';
+}
+
+function lockTerminal(){
+  const overlay=document.createElement('div');
+  overlay.id='lockout';
+  overlay.textContent='TERMINAL LOCKOUT\nPLEASE CONTACT SYSTEM ADMINISTRATOR';
+  terminal.classList.add('locked');
+  terminal.appendChild(overlay);
+  hackingActive=false;
+  terminalLocked=true;
+  hackingData.warningEl.textContent='';
+  hackingData.attemptsEl.textContent='';
 }
 
 function processGuess(guess){
   if(!hackingActive) return;
+  guess=guess.toUpperCase();
   const msg=hackingData.messages;
-  const guessDiv=document.createElement('div');
-  guessDiv.textContent=guess;
-  msg.appendChild(guessDiv);
+  const len=hackingData.password.length;
   if(guess===hackingData.password){
+    const line=document.createElement('div');
+    line.textContent=`${guess.padEnd(len+1)}${len}/${len} correct`;
+    msg.appendChild(line);
     const ok=document.createElement('div');
     ok.textContent='Access granted.';
     msg.appendChild(ok);
     hackingActive=false;
+    hackingData.warningEl.textContent='';
+    hackingData.attemptsEl.textContent='';
     setTimeout(()=>showScreen('menu'),500);
   }else{
-    const len=hackingData.password.length;
     let like=0;
     for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
-    const info=document.createElement('div');
-    info.textContent=`Entry denied. ${like}/${len} correct.`;
-    msg.appendChild(info);
+    const line=document.createElement('div');
+    line.textContent=`${guess.padEnd(len+1)}${like}/${len} correct`;
+    msg.appendChild(line);
     hackingData.attempts--;
-    hackingData.attemptsEl.textContent=`${hackingData.attempts} ATTEMPTS LEFT:`;
+    updateAttempts();
     if(hackingData.attempts<=0){
-      const lock=document.createElement('div');
-      lock.textContent='TERMINAL LOCKED.';
-      msg.appendChild(lock);
-      hackingActive=false;
-      terminalLocked=true;
+      lockTerminal();
     }
   }
   input.textContent='';
@@ -784,17 +805,7 @@ document.addEventListener('click',e=>{
 
 async function init(){
   startScrollSound();
-  for(const line of titleLines){
-    const div=document.createElement('div');
-    div.style.textAlign='center';
-    header.appendChild(div);
-    await typeText(div,line);
-  }
-  for(const line of headerLines){
-    const div=document.createElement('div');
-    header.appendChild(div);
-    await typeText(div,line);
-  }
+  header.innerHTML='';
   stopScrollSound();
   await startHacking();
 }

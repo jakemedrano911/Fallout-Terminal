@@ -36,7 +36,7 @@
   #terminal-wrapper{
     position:relative;
     width:calc(828px * var(--scale));
-    height:calc(594px * var(--scale));
+    height:calc(594px * var(--scale) * 0.93);
   }
   #power-screen{
     position:absolute;
@@ -230,12 +230,13 @@
   #hacking .char.highlight{background:#008800;color:#041204;}
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;align-self:flex-end;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-end;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
+  #hack-messages #input{margin-top:auto;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: inherit; }
-  #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(8px * var(--scale));padding-bottom:calc(24px * var(--scale));}
-  #header.hack-header{padding-top:calc(24px * var(--scale));padding-bottom:calc(8px * var(--scale));}
-  #header.hack-header #hack-title{margin-top:calc(8px * var(--scale));margin-bottom:calc(16px * var(--scale));}
+  #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
+  #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
+  #header.hack-header #hack-title{margin-top:calc(4px * var(--scale));margin-bottom:calc(8px * var(--scale));}
   #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
   #terminal.locked #content{opacity:0.2;}
   #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
@@ -629,7 +630,7 @@ function renderHackScreen(){
 function updateAttempts(){
   const a=hackingData.attempts;
   const word=a===1?'ATTEMPT':'ATTEMPTS';
-  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'▲'.repeat(a)}`;
+  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'█'.repeat(a)}`;
   hackingData.warningEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'';
 }
 

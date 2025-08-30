@@ -225,7 +225,10 @@
   #hack-wrap{display:flex;justify-content:flex-start;width:100%;gap:2ch;}
   #hacking{white-space:pre;font:inherit;flex-shrink:0;}
   #hacking .word{cursor:pointer;}
-  #hacking .word:hover{background:#008800;color:#041204;}
+  #hacking .char:hover,
+  #hacking .char.highlight{background:#008800;color:#041204;}
+  #hacking .word:hover,
+  #hacking .word.highlight{background:#008800;color:#041204;}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-end;flex:1;line-height:1;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: 0; }
@@ -591,10 +594,20 @@ function renderHackScreen(){
     grid.appendChild(row);
   }
   grid.querySelectorAll('.char').forEach(span=>{
-    span.addEventListener('mouseenter',playCharFocusSound);
+    span.addEventListener('mouseenter',()=>{
+      span.classList.add('highlight');
+      playCharFocusSound();
+    });
+    span.addEventListener('mouseleave',()=>span.classList.remove('highlight'));
   });
   grid.querySelectorAll('.word').forEach(span=>{
-    span.addEventListener('mouseenter',playWordFocusSound);
+    span.addEventListener('mouseenter',()=>{
+      grid.querySelectorAll(`.word[data-word="${span.dataset.word}"]`).forEach(w=>w.classList.add('highlight'));
+      playWordFocusSound();
+    });
+    span.addEventListener('mouseleave',()=>{
+      grid.querySelectorAll(`.word[data-word="${span.dataset.word}"]`).forEach(w=>w.classList.remove('highlight'));
+    });
     span.addEventListener('click',()=>processGuess(span.dataset.word));
   });
   hackingData.blocks=blocks;

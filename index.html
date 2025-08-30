@@ -15,13 +15,11 @@
     --scale:1;
   }
   html{
-    overflow-x:hidden;
-    overflow-y:auto;
+    overflow:hidden;
   }
   body{
     margin:0;
-    overflow-x:hidden;
-    overflow-y:auto;
+    overflow:hidden;
     background:#000;
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
@@ -179,12 +177,12 @@
   }
   #content{
     flex:1;
-    overflow-y:auto;
+    overflow:hidden;
     word-break:break-word;
     max-height:100%;
   }
   #input{
-    white-space:pre-wrap;
+    white-space:pre;
     min-height:1.2em;
     outline:none;
     background:transparent;
@@ -195,6 +193,7 @@
     line-height:inherit;
     caret-color:transparent;
     flex-shrink:0;
+    overflow:hidden;
   }
   #input::before{
     content:"> ";
@@ -202,6 +201,13 @@
   #input::after{
     content:"\2588";
     animation:blink 1s steps(1,end) infinite;
+  }
+  .response{
+    opacity:1;
+    transition:opacity 1s;
+  }
+  .response.fade{
+    opacity:0;
   }
   @keyframes blink{50%{opacity:0;}}
   .option{
@@ -373,6 +379,7 @@ let inputText="";
 let screenHistory=[];
 let skipNextClick=false;
 let powered=false;
+const MAX_INPUT_CHARS=64;
 
 const audioMenu=document.getElementById('audio-menu');
 const audioToggle=document.getElementById('audio-toggle');
@@ -409,23 +416,47 @@ input.addEventListener('keydown',e=>{
 });
 
 function updateInput(){
-  inputText=input.textContent;
+  let text=input.textContent.replace(/\n/g,'');
+  if(text.length>MAX_INPUT_CHARS){
+    text=text.slice(0,MAX_INPUT_CHARS);
+  }
+  input.textContent=text;
+  inputText=text;
+  placeCaretAtEnd(input);
 }
 updateInput();
 
+function placeCaretAtEnd(el){
+  const range=document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel=window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function displayMessage(text){
+  const div=document.createElement('div');
+  div.className='response';
+  div.textContent=text;
+  terminal.insertBefore(div,input);
+  setTimeout(()=>div.classList.add('fade'),5000);
+  setTimeout(()=>div.remove(),6000);
+}
+
+function clearResponses(){
+  document.querySelectorAll('.response').forEach(el=>el.remove());
+}
+
 function handleCommand(cmd){
-  const existing=document.getElementById('command-error');
-  if(existing) existing.remove();
+  clearResponses();
   const command=cmd.trim().toLowerCase();
   if(command==='back'){
     goBack();
   }else if(screens[command]){
     showScreen(command);
   }else{
-    const error=document.createElement('div');
-    error.id='command-error';
-    error.textContent='command not recognized.';
-    terminal.insertBefore(error,input);
+    displayMessage('command not recognized.');
   }
   input.textContent='';
   inputText='';
@@ -613,6 +644,7 @@ async function init(){
 }
 
 async function showScreen(name){
+  clearResponses();
   screenHistory.push(name);
   inputText='';
   input.textContent='';

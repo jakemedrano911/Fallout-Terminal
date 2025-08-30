@@ -406,6 +406,7 @@ hiddenInput.addEventListener('input',()=>{
 function updateInput(){
   input.innerHTML='&gt; '+inputText+'<span class="cursor">█</span>';
   hiddenInput.value=inputText;
+  hiddenInput.setSelectionRange(inputText.length,inputText.length);
 }
 updateInput();
 

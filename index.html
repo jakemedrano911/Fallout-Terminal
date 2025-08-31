@@ -232,6 +232,7 @@
   #hacking .word.highlight{background:#008800;color:#041204;}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
   #hack-messages #input{margin-top:0;}
+  .hack-message{text-align:left;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
@@ -257,7 +258,7 @@
       <div id="volume-controls">
         <label>Hum <input type="range" min="0" max="10" value="1" id="hum-volume"></label>
         <label>Scroll <input type="range" min="0" max="10" value="2" id="scroll-volume"></label>
-        <label>Focus <input type="range" min="0" max="10" value="5" id="focus-volume"></label>
+        <label>Focus <input type="range" min="0" max="10" value="2" id="focus-volume"></label>
         <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
       </div>
     </div>
@@ -500,7 +501,7 @@ async function startHacking(){
     const wordList=pool.slice(0,count);
     const password=wordList[Math.floor(Math.random()*wordList.length)];
     hackingData={attempts:4,password,wordList};
-    renderHackScreen();
+    await renderHackScreen();
   }catch(err){
     console.error('Failed to load words',err);
     hackingActive=false;
@@ -523,7 +524,7 @@ function blockHtml(block){
   return parts.join('');
 }
 
-function renderHackScreen(){
+async function renderHackScreen(){
   header.innerHTML='';
   content.innerHTML='';
   header.classList.add('hack-header');
@@ -548,6 +549,7 @@ function renderHackScreen(){
   messages.id='hack-messages';
   wrap.appendChild(messages);
   messages.appendChild(input);
+  startScrollSound();
   const rows=17,cols=12,total=rows*2;
   const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
   const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
@@ -598,9 +600,11 @@ function renderHackScreen(){
     row.className='hack-row';
     const left=blocks[r];
     const right=blocks[r+rows];
-    row.innerHTML=`0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}`;
+    const html=`0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}`;
     grid.appendChild(row);
+    await typeHtml(row,html);
   }
+  stopScrollSound();
   grid.querySelectorAll('.char').forEach(span=>{
     span.addEventListener('mouseenter',()=>{
       span.classList.add('highlight');
@@ -647,16 +651,17 @@ function lockTerminal(){
 
 function processGuess(guess){
   if(!hackingActive) return;
-  guess=guess.toUpperCase();
+  guess=guess.trim().toUpperCase();
+  const override=guess==='ADMIN OVERRIDE';
   const msg=hackingData.messages;
   const len=hackingData.password.length;
   const box=document.createElement('div');
-  box.style.textAlign='left';
+  box.className='hack-message';
   const guessLine=document.createElement('div');
-  guessLine.textContent=`>${guess}`;
+  guessLine.textContent=`>${override?'ADMIN OVERRIDE':guess}`;
   box.appendChild(guessLine);
   playEnterCharSound();
-  if(guess===hackingData.password){
+  if(override || guess===hackingData.password){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${len}/${len} correct`;
     box.appendChild(likeLine);
@@ -902,6 +907,22 @@ async function typeText(el,text){
   el.textContent+='\n';
   if(el.parentElement===historyEl){
     historyEl.scrollTop=historyEl.scrollHeight;
+  }
+}
+
+async function typeHtml(el,html){
+  let i=0;
+  while(i<html.length){
+    if(html[i]==='<'){
+      const j=html.indexOf('>',i);
+      el.insertAdjacentHTML('beforeend',html.slice(i,j+1));
+      i=j+1;
+    }else{
+      el.insertAdjacentHTML('beforeend',html[i]);
+      const delay=speed===Infinity?0:baseDelay/speed;
+      if(delay>0) await sleep(delay);
+      i++;
+    }
   }
 }
 

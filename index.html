@@ -531,6 +531,8 @@ async function renderHackScreen(){
   typing=true;
   header.innerHTML='';
   content.innerHTML='';
+  header.style.marginLeft='';
+  header.style.textAlign='';
   header.classList.add('hack-header');
   content.classList.add('hack-content');
   const title=document.createElement('div');
@@ -1017,9 +1019,10 @@ async function showIntro(){
   content.innerHTML='';
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
+  header.style.marginLeft='-2ch';
+  header.style.textAlign='center';
   for(const line of titleLines){
     const div=document.createElement('div');
-    div.style.textAlign='center';
     header.appendChild(div);
     await typeText(div,line);
   }

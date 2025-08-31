@@ -910,22 +910,48 @@ async function typeText(el,text){
   }
 }
 
-async function typeHtml(el,html){
-  let i=0;
-  while(i<html.length){
-    if(html[i]==='<'){
-      const j=html.indexOf('>',i);
-      el.insertAdjacentHTML('beforeend',html.slice(i,j+1));
-      i=j+1;
-    }else{
-      el.insertAdjacentHTML('beforeend',html[i]);
-      const delay=speed===Infinity?0:baseDelay/speed;
-      if(delay>0) await sleep(delay);
-      i++;
-    }
-  }
+function splitEntities(str){
+  const div=document.createElement('div');
+  div.textContent=str;
+  const encoded=div.innerHTML;
+  return encoded.match(/&[a-zA-Z0-9#]+;|./g)||[];
 }
 
+function decodeEntity(entity){
+  const div=document.createElement('div');
+  div.innerHTML=entity;
+  return div.textContent;
+}
+
+async function typeHtml(el,html){
+  const template=document.createElement('template');
+  template.innerHTML=html;
+
+  async function typeNode(target,node){
+    for(const child of node.childNodes){
+      if(child.nodeType===Node.TEXT_NODE){
+        await typeTextNode(target,child.textContent);
+      }else if(child.nodeType===Node.ELEMENT_NODE){
+        const clone=child.cloneNode(false);
+        target.appendChild(clone);
+        await typeNode(clone,child);
+      }
+    }
+  }
+
+  async function typeTextNode(target,text){
+    const units=splitEntities(text);
+    const textNode=document.createTextNode('');
+    target.appendChild(textNode);
+    for(const unit of units){
+      textNode.data+=unit.startsWith('&')?decodeEntity(unit):unit;
+      const delay=speed===Infinity?0:baseDelay/speed;
+      if(delay>0) await sleep(delay);
+    }
+  }
+
+  await typeNode(el,template.content);
+}
 function waitForContinue(){
   return new Promise(res=>{
     function handler(e){

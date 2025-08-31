@@ -241,6 +241,9 @@
   #hack-prompt{margin-top:calc(4px * var(--scale));}
   .hack-message{text-align:left;}
   .hack-row{line-height:1;}
+  .hack-addr{display:inline-block;width:6ch;}
+  .hack-block{display:inline-block;width:12ch;}
+  .hack-gap{display:inline-block;width:4ch;}
   #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-start;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
   #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
@@ -542,16 +545,24 @@ function detectBrackets(block){
       wordIndices.add(w.start+k);
     }
   }
-  const match={'(':')','{':'}','[':']','<':'>'};
+  const openToClose={'(':')','{':'}','[':']','<':'>'};
+  const closeToOpen={')':'(','}':'{',']':'[','>':'<'};
+  const stack=[];
   for(let i=0;i<block.chars.length;i++){
+    if(wordIndices.has(i)){
+      stack.length=0;
+      continue;
+    }
     const ch=block.chars[i];
-    const close=match[ch];
-    if(!close) continue;
-    for(let j=i+1;j<block.chars.length;j++){
-      if(wordIndices.has(j)) break;
-      if(block.chars[j]===close){
-        pairs.push({start:i,end:j});
-        break;
+    if(openToClose[ch]){
+      stack.push({ch,index:i});
+    }else if(closeToOpen[ch]){
+      for(let s=stack.length-1;s>=0;s--){
+        if(stack[s].ch===closeToOpen[ch]){
+          pairs.push({start:stack[s].index,end:i});
+          stack.splice(s,1);
+          break;
+        }
       }
     }
   }
@@ -695,7 +706,7 @@ async function renderHackScreen(){
   for(let r=0;r<rows;r++){
     const left=blocks[r];
     const right=blocks[r+rows];
-    gridHtml+=`<div class="hack-row">0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}</div>`;
+    gridHtml+=`<div class="hack-row"><span class="hack-addr">0x${left.addr}</span> <span class="hack-block">${blockHtml(left)}</span><span class="hack-gap"></span><span class="hack-addr">0x${right.addr}</span> <span class="hack-block">${blockHtml(right)}</span></div>`;
   }
   await typeHtml(grid, gridHtml);
   stopScrollSound();

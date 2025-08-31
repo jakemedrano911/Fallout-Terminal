@@ -633,7 +633,6 @@ async function renderHackScreen(){
   const messages=document.createElement('div');
   messages.id='hack-messages';
   wrap.appendChild(messages);
-  messages.appendChild(input);
   startScrollSound();
   hackingData.attemptsEl=attempts;
   hackingData.promptEl=prompt;
@@ -737,10 +736,12 @@ async function renderHackScreen(){
     span.addEventListener('mouseleave',()=>span.classList.remove('highlight'));
     span.addEventListener('click',()=>useBracket(span));
   });
-    hackingData.blocks=blocks;
-    hackingData.messages=messages;
-    hackingData.grid=grid;
-    input.focus();
+  wrap.style.height=grid.clientHeight+'px';
+  messages.appendChild(input);
+  hackingData.blocks=blocks;
+  hackingData.messages=messages;
+  hackingData.grid=grid;
+  input.focus();
 }
 
 function updateAttempts(){
@@ -780,14 +781,23 @@ function processGuess(guess){
   if(!hackingActive) return;
   guess=guess.trim().toUpperCase();
   const override=guess==='ADMIN OVERRIDE';
+  const allowances=guess==='ADMIN ALLOWANCES';
   const len=hackingData.password.length;
   const box=document.createElement('div');
   box.className='hack-message';
   const guessLine=document.createElement('div');
-  guessLine.textContent=`>${override?'ADMIN OVERRIDE':guess}`;
+  guessLine.textContent=`>${override?'ADMIN OVERRIDE':allowances?'ADMIN ALLOWANCES':guess}`;
   box.appendChild(guessLine);
   playEnterCharSound();
-  if(override || guess===hackingData.password){
+  if(allowances){
+    hackingData.attempts=99;
+    hackingData.maxAttempts=99;
+    updateAttempts();
+    const ok=document.createElement('div');
+    ok.textContent='Allowances set to 99.';
+    box.appendChild(ok);
+    insertHackBox(box);
+  }else if(override || guess===hackingData.password){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${len}/${len} correct`;
     box.appendChild(likeLine);

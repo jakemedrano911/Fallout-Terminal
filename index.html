@@ -527,17 +527,17 @@ function blockHtml(block){
 }
 
 async function renderHackScreen(){
+  speed=1;
+  typing=true;
   header.innerHTML='';
   content.innerHTML='';
   header.classList.add('hack-header');
   content.classList.add('hack-content');
   const title=document.createElement('div');
   title.id='hack-title';
-  title.textContent='ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
   header.appendChild(title);
   const prompt=document.createElement('div');
   prompt.id='hack-prompt';
-  prompt.textContent='ENTER PASSWORD NOW';
   header.appendChild(prompt);
   const attempts=document.createElement('div');
   attempts.id='attempts';
@@ -556,6 +556,25 @@ async function renderHackScreen(){
   wrap.appendChild(messages);
   messages.appendChild(input);
   startScrollSound();
+  hackingData.attemptsEl=attempts;
+  hackingData.warningEl=warning;
+  updateAttempts();
+  const attemptsText=attempts.textContent;
+  const warningText=warning.textContent;
+  title.textContent='';
+  prompt.textContent='';
+  attempts.textContent='';
+  warning.textContent='';
+  await typeText(title,'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL');
+  title.textContent=title.textContent.trimEnd();
+  await typeText(prompt,'ENTER PASSWORD NOW');
+  prompt.textContent=prompt.textContent.trimEnd();
+  await typeText(attempts,attemptsText);
+  attempts.textContent=attempts.textContent.trimEnd();
+  if(warningText){
+    await typeText(warning,warningText);
+    warning.textContent=warning.textContent.trimEnd();
+  }
   const rows=17,cols=12,total=rows*2;
   const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
   const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
@@ -601,16 +620,16 @@ async function renderHackScreen(){
       console.warn('Failed to place word', word);
     }
   }
+  let gridHtml='';
   for(let r=0;r<rows;r++){
-    const row=document.createElement('div');
-    row.className='hack-row';
     const left=blocks[r];
     const right=blocks[r+rows];
-    const html=`0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}`;
-    grid.appendChild(row);
-    await typeHtml(row,html);
+    gridHtml+=`<div class="hack-row">0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}</div>`;
   }
+  await typeHtml(grid, gridHtml);
   stopScrollSound();
+  typing=false;
+  speed=1;
   grid.querySelectorAll('.char').forEach(span=>{
     span.addEventListener('mouseenter',()=>{
       span.classList.add('highlight');
@@ -630,9 +649,6 @@ async function renderHackScreen(){
   });
   hackingData.blocks=blocks;
   hackingData.messages=messages;
-  hackingData.attemptsEl=attempts;
-  hackingData.warningEl=warning;
-  updateAttempts();
   input.focus();
 }
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RobCo Engineering Division Database</title>
+<title>ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL</title>
 <style>
   @font-face{
     font-family:"FSEX300";
@@ -24,7 +24,7 @@
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:calc(24px * var(--scale) * 0.9);
-    letter-spacing:calc(.25px * var(--scale) * 0.9);
+    letter-spacing:calc(.75px * var(--scale) * 0.9);
     line-height:1.2;
     display:flex;
     justify-content:center;
@@ -35,8 +35,8 @@
   }
   #terminal-wrapper{
     position:relative;
-    width:calc(800px * var(--scale));
-    height:calc(720px * var(--scale));
+    width:calc(828px * var(--scale));
+    height:calc(594px * var(--scale) * 0.93);
   }
   #power-screen{
     position:absolute;
@@ -193,6 +193,7 @@
     line-height:inherit;
     caret-color:transparent;
     flex-shrink:0;
+    align-self:flex-start;
     overflow:hidden;
   }
   #input::before{
@@ -222,6 +223,24 @@
     background:#008800;
     color:#041204;
   }
+  #hack-wrap{display:flex;justify-content:flex-start;align-items:flex-start;width:100%;gap:2ch;}
+  #hacking{white-space:pre;font:inherit;flex-shrink:0;}
+  #hacking .word{cursor:pointer;}
+  #hacking .char:hover,
+  #hacking .char.highlight{background:#008800;color:#041204;}
+  #hacking .word:hover,
+  #hacking .word.highlight{background:#008800;color:#041204;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
+  #hack-messages #input{margin-top:0;}
+  .hack-message{text-align:left;}
+  .hack-row{line-height:1;}
+  #hacking, .hack-row { letter-spacing: inherit; }
+  #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
+  #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
+  #header.hack-header #hack-title{margin-top:calc(4px * var(--scale));margin-bottom:calc(8px * var(--scale));}
+  #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
+  #terminal.locked #content{opacity:0.2;}
+  #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
 </style>
 </head>
 <body>
@@ -239,7 +258,7 @@
       <div id="volume-controls">
         <label>Hum <input type="range" min="0" max="10" value="1" id="hum-volume"></label>
         <label>Scroll <input type="range" min="0" max="10" value="2" id="scroll-volume"></label>
-        <label>Focus <input type="range" min="0" max="10" value="5" id="focus-volume"></label>
+        <label>Focus <input type="range" min="0" max="10" value="2" id="focus-volume"></label>
         <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
       </div>
     </div>
@@ -255,10 +274,10 @@ function updateScale(){
     3,
     Math.max(
       0.7,
-      Math.min(
-        window.innerWidth*0.98/600,
-        window.innerHeight*0.98/800
-      )*0.93
+        Math.min(
+          window.innerWidth*0.98/621,
+          window.innerHeight*0.98/660
+        )*0.93
     )
   );
   document.documentElement.style.setProperty('--scale',scale);
@@ -274,8 +293,7 @@ const titleLines=[
 const headerLines=[
 "Welcome to the RobCo Engineering Division Database!",
 "How may I assist you this fine day?",
-"____________________________________________________",
-"",
+"---------------------------------------",
 ];
 
 const screens={
@@ -387,6 +405,15 @@ let screenHistory=[];
 let skipNextClick=false;
 let powered=false;
 const MAX_INPUT_CHARS=64;
+let hackingActive=false;
+let hackingData=null;
+let terminalLocked=false;
+
+function restoreInput(){
+  if(input.parentElement!==terminal){
+    terminal.appendChild(input);
+  }
+}
 
 const audioMenu=document.getElementById('audio-menu');
 const audioToggle=document.getElementById('audio-toggle');
@@ -442,6 +469,234 @@ function placeCaretAtEnd(el){
   sel.addRange(range);
 }
 
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+}
+
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function startHacking(){
+  terminalLocked=false;
+  hackingActive=true;
+  try{
+    const res=await fetch('Hacking Words.txt');
+    const text=await res.text();
+    const all=(text.match(/[A-Za-z]+/g)||[]).map(w=>w.toUpperCase());
+    const byLen={};
+    for(const w of all){
+      const l=w.length;
+      (byLen[l]||(byLen[l]=new Set())).add(w);
+    }
+    const lengths=Object.keys(byLen).filter(l=>byLen[l].size>=25 && l>=4);
+    if(!lengths.length) throw new Error('Insufficient words');
+    const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
+    const pool=Array.from(byLen[len]);
+    shuffle(pool);
+    const count=15+Math.floor(Math.random()*11);
+    const wordList=pool.slice(0,count);
+    const password=wordList[Math.floor(Math.random()*wordList.length)];
+    hackingData={attempts:4,password,wordList};
+    await renderHackScreen();
+  }catch(err){
+    console.error('Failed to load words',err);
+    hackingActive=false;
+    displayMessage('WORD LIST UNAVAILABLE');
+  }
+}
+
+function blockHtml(block){
+  const parts=[];
+  let last=0;
+  const wrapChars=arr=>arr.map(ch=>`<span class="char">${escapeHtml(ch)}</span>`).join('');
+  const words=block.words.slice().sort((a,b)=>a.start-b.start);
+  for(const w of words){
+    const seg=w.segment||w.word;
+    parts.push(wrapChars(block.chars.slice(last,w.start)));
+    parts.push(`<span class="word" data-word="${w.word}">${seg}</span>`);
+    last=w.start+seg.length;
+  }
+  parts.push(wrapChars(block.chars.slice(last)));
+  return parts.join('');
+}
+
+async function renderHackScreen(){
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.add('hack-header');
+  content.classList.add('hack-content');
+  const title=document.createElement('div');
+  title.id='hack-title';
+  title.textContent='ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
+  header.appendChild(title);
+  const warning=document.createElement('div');
+  warning.id='hack-warning';
+  header.appendChild(warning);
+  const attempts=document.createElement('div');
+  attempts.id='attempts';
+  header.appendChild(attempts);
+  const wrap=document.createElement('div');
+  wrap.id='hack-wrap';
+  content.appendChild(wrap);
+  const grid=document.createElement('div');
+  grid.id='hacking';
+  wrap.appendChild(grid);
+  const messages=document.createElement('div');
+  messages.id='hack-messages';
+  wrap.appendChild(messages);
+  messages.appendChild(input);
+  startScrollSound();
+  const rows=17,cols=12,total=rows*2;
+  const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
+  const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
+  const blocks=[];
+  for(let i=0;i<total;i++){
+    const arr=[];
+    for(let j=0;j<cols;j++) arr.push(chars[Math.floor(Math.random()*chars.length)]);
+    blocks.push({addr:(base+i*cols).toString(16).toUpperCase().padStart(4,'0'),chars:arr,words:[]});
+  }
+  const MAX_PLACEMENT_ATTEMPTS = 1000;
+  for(const word of hackingData.wordList){
+    const parts=[];
+    for(let i=0;i<word.length;i+=cols) parts.push(word.slice(i,i+cols));
+    const maxLen=parts.reduce((m,p)=>Math.max(m,p.length),0);
+    if(parts.length>rows){
+      console.warn('Word too long to place', word);
+      continue;
+    }
+    let placed = false;
+    for(let attempts=0; attempts<MAX_PLACEMENT_ATTEMPTS; attempts++){
+      const col=Math.floor(Math.random()*2);
+      const row=Math.floor(Math.random()*(rows-parts.length+1));
+      const start=Math.floor(Math.random()*(cols-maxLen+1));
+      let ok=true;
+      for(let p=0;p<parts.length;p++){
+        const block=blocks[col*rows+row+p];
+        const seg=parts[p];
+        if(block.words.some(w=>!(start+seg.length<=w.start || start>=w.start+(w.segment||w.word).length))){
+          ok=false;break;
+        }
+      }
+      if(!ok) continue;
+      for(let p=0;p<parts.length;p++){
+        const block=blocks[col*rows+row+p];
+        const seg=parts[p];
+        for(let k=0;k<seg.length;k++) block.chars[start+k]=seg[k];
+        block.words.push({start,word,segment:seg});
+      }
+      placed = true;
+      break;
+    }
+    if(!placed){
+      console.warn('Failed to place word', word);
+    }
+  }
+  for(let r=0;r<rows;r++){
+    const row=document.createElement('div');
+    row.className='hack-row';
+    const left=blocks[r];
+    const right=blocks[r+rows];
+    const html=`0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}`;
+    grid.appendChild(row);
+    await typeHtml(row,html);
+  }
+  stopScrollSound();
+  grid.querySelectorAll('.char').forEach(span=>{
+    span.addEventListener('mouseenter',()=>{
+      span.classList.add('highlight');
+      playCharFocusSound();
+    });
+    span.addEventListener('mouseleave',()=>span.classList.remove('highlight'));
+  });
+  grid.querySelectorAll('.word').forEach(span=>{
+    span.addEventListener('mouseenter',()=>{
+      grid.querySelectorAll(`.word[data-word="${span.dataset.word}"]`).forEach(w=>w.classList.add('highlight'));
+      playWordFocusSound();
+    });
+    span.addEventListener('mouseleave',()=>{
+      grid.querySelectorAll(`.word[data-word="${span.dataset.word}"]`).forEach(w=>w.classList.remove('highlight'));
+    });
+    span.addEventListener('click',()=>processGuess(span.dataset.word));
+  });
+  hackingData.blocks=blocks;
+  hackingData.messages=messages;
+  hackingData.attemptsEl=attempts;
+  hackingData.warningEl=warning;
+  updateAttempts();
+  input.focus();
+}
+
+function updateAttempts(){
+  const a=hackingData.attempts;
+  const word=a===1?'ATTEMPT':'ATTEMPTS';
+  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'█'.repeat(a)}`;
+  hackingData.warningEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'';
+}
+
+function lockTerminal(){
+  const overlay=document.createElement('div');
+  overlay.id='lockout';
+  overlay.textContent='TERMINAL LOCKOUT\nPLEASE CONTACT SYSTEM ADMINISTRATOR';
+  terminal.classList.add('locked');
+  terminal.appendChild(overlay);
+  hackingActive=false;
+  terminalLocked=true;
+  hackingData.warningEl.textContent='';
+  hackingData.attemptsEl.textContent='';
+}
+
+function processGuess(guess){
+  if(!hackingActive) return;
+  guess=guess.trim().toUpperCase();
+  const override=guess==='ADMIN OVERRIDE';
+  const msg=hackingData.messages;
+  const len=hackingData.password.length;
+  const box=document.createElement('div');
+  box.className='hack-message';
+  const guessLine=document.createElement('div');
+  guessLine.textContent=`>${override?'ADMIN OVERRIDE':guess}`;
+  box.appendChild(guessLine);
+  playEnterCharSound();
+  if(override || guess===hackingData.password){
+    const likeLine=document.createElement('div');
+    likeLine.textContent=`${len}/${len} correct`;
+    box.appendChild(likeLine);
+    const ok=document.createElement('div');
+    ok.textContent='Access granted.';
+    box.appendChild(ok);
+    msg.insertBefore(box,input);
+    hackingActive=false;
+    hackingData.warningEl.textContent='';
+    hackingData.attemptsEl.textContent='';
+    playPasswordResult(true);
+    setTimeout(()=>showIntro(),500);
+  }else{
+    let like=0;
+    for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
+    const denied=document.createElement('div');
+    denied.textContent='Entry denied';
+    box.appendChild(denied);
+    const likeLine=document.createElement('div');
+    likeLine.textContent=`${like}/${len} correct`;
+    box.appendChild(likeLine);
+    msg.insertBefore(box,input);
+    hackingData.attempts--;
+    updateAttempts();
+    playPasswordResult(false);
+    if(hackingData.attempts<=0){
+      lockTerminal();
+    }
+  }
+  input.textContent='';
+  inputText='';
+  updateInput();
+  input.focus();
+}
+
 function displayMessage(text){
   const div=document.createElement('div');
   div.className='response';
@@ -457,6 +712,16 @@ function clearResponses(){
 
 function handleCommand(cmd){
   clearResponses();
+  if(terminalLocked){
+    input.textContent='';
+    inputText='';
+    updateInput();
+    return;
+  }
+  if(hackingActive){
+    processGuess(cmd.trim().toUpperCase());
+    return;
+  }
   const command=cmd.trim().toLowerCase();
   if(command==='back'){
     goBack();
@@ -584,6 +849,53 @@ function playSelectSound(){
   enterAudio.play();
 }
 
+function playCharFocusSound(){
+  const files=[
+    'Terminal 3/single/charsingle_01.wav',
+    'Terminal 3/single/charsingle_02.wav',
+    'Terminal 3/single/charsingle_03.wav',
+    'Terminal 3/single/charsingle_04.wav',
+    'Terminal 3/single/charsingle_05.wav',
+    'Terminal 3/single/charsingle_06.wav'
+  ];
+  const src=files[Math.floor(Math.random()*files.length)];
+  const audio=new Audio(src);
+  audio.volume=focusVolume;
+  audio.play();
+}
+
+function playWordFocusSound(){
+  const files=[
+    'Terminal 3/multiple/charmultiple_01.wav',
+    'Terminal 3/multiple/charmultiple_02.wav',
+    'Terminal 3/multiple/charmultiple_03.wav',
+    'Terminal 3/multiple/charmultiple_04.wav'
+  ];
+  const src=files[Math.floor(Math.random()*files.length)];
+  const audio=new Audio(src);
+  audio.volume=focusVolume;
+  audio.play();
+}
+
+function playEnterCharSound(){
+  const files=[
+    'Terminal 3/enter/charenter_01.wav',
+    'Terminal 3/enter/charenter_02.wav',
+    'Terminal 3/enter/charenter_03.wav'
+  ];
+  const src=files[Math.floor(Math.random()*files.length)];
+  const audio=new Audio(src);
+  audio.volume=selectVolume;
+  audio.play();
+}
+
+function playPasswordResult(correct){
+  const file=correct?'Terminal 3/passgood.wav':'Terminal 3/passbad.wav';
+  const audio=new Audio(file);
+  audio.volume=selectVolume;
+  audio.play();
+}
+
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 async function typeText(el,text){
@@ -598,6 +910,48 @@ async function typeText(el,text){
   }
 }
 
+function splitEntities(str){
+  const div=document.createElement('div');
+  div.textContent=str;
+  const encoded=div.innerHTML;
+  return encoded.match(/&[a-zA-Z0-9#]+;|./g)||[];
+}
+
+function decodeEntity(entity){
+  const div=document.createElement('div');
+  div.innerHTML=entity;
+  return div.textContent;
+}
+
+async function typeHtml(el,html){
+  const template=document.createElement('template');
+  template.innerHTML=html;
+
+  async function typeNode(target,node){
+    for(const child of node.childNodes){
+      if(child.nodeType===Node.TEXT_NODE){
+        await typeTextNode(target,child.textContent);
+      }else if(child.nodeType===Node.ELEMENT_NODE){
+        const clone=child.cloneNode(false);
+        target.appendChild(clone);
+        await typeNode(clone,child);
+      }
+    }
+  }
+
+  async function typeTextNode(target,text){
+    const units=splitEntities(text);
+    const textNode=document.createTextNode('');
+    target.appendChild(textNode);
+    for(const unit of units){
+      textNode.data+=unit.startsWith('&')?decodeEntity(unit):unit;
+      const delay=speed===Infinity?0:baseDelay/speed;
+      if(delay>0) await sleep(delay);
+    }
+  }
+
+  await typeNode(el,template.content);
+}
 function waitForContinue(){
   return new Promise(res=>{
     function handler(e){
@@ -629,6 +983,18 @@ document.addEventListener('click',e=>{
 
 async function init(){
   startScrollSound();
+  header.innerHTML='';
+  stopScrollSound();
+  await startHacking();
+}
+
+async function showIntro(){
+  restoreInput();
+  startScrollSound();
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.remove('hack-header');
+  content.classList.remove('hack-content');
   for(const line of titleLines){
     const div=document.createElement('div');
     div.style.textAlign='center';
@@ -645,6 +1011,7 @@ async function init(){
 }
 
 async function showScreen(name){
+  restoreInput();
   clearResponses();
   screenHistory.push(name);
   inputText='';
@@ -749,6 +1116,9 @@ powerButton.addEventListener('click',async()=>{
     inputText='';
     input.textContent='';
     updateInput();
+    hackingActive=false;
+    hackingData=null;
+    terminalLocked=false;
     loadScrollSound().then(init);
     powered=true;
   }else{
@@ -760,6 +1130,9 @@ powerButton.addEventListener('click',async()=>{
     terminal.classList.remove('powered');
     audioMenu.style.display='none';
     volumeControls.style.display='none';
+    hackingActive=false;
+    hackingData=null;
+    terminalLocked=false;
     powered=false;
   }
 });

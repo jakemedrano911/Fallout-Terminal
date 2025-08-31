@@ -231,7 +231,9 @@
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
-  #hack-messages #input{margin-top:0;align-self:flex-end;}
+  #hack-messages #input{margin-top:0;align-self:flex-start;}
+  #hack-messages #attempts{align-self:flex-start;margin-bottom:calc(2px * var(--scale));}
+  #hack-prompt{margin-top:calc(4px * var(--scale));}
   .hack-message{text-align:left;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: inherit; }
@@ -533,12 +535,15 @@ async function renderHackScreen(){
   title.id='hack-title';
   title.textContent='ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
   header.appendChild(title);
+  const prompt=document.createElement('div');
+  prompt.id='hack-prompt';
+  prompt.textContent='ENTER PASSWORD NOW';
+  header.appendChild(prompt);
   const warning=document.createElement('div');
   warning.id='hack-warning';
   header.appendChild(warning);
   const attempts=document.createElement('div');
   attempts.id='attempts';
-  header.appendChild(attempts);
   const wrap=document.createElement('div');
   wrap.id='hack-wrap';
   content.appendChild(wrap);
@@ -548,6 +553,7 @@ async function renderHackScreen(){
   const messages=document.createElement('div');
   messages.id='hack-messages';
   wrap.appendChild(messages);
+  messages.appendChild(attempts);
   messages.appendChild(input);
   startScrollSound();
   const rows=17,cols=12,total=rows*2;
@@ -668,7 +674,7 @@ function processGuess(guess){
     const ok=document.createElement('div');
     ok.textContent='Access granted.';
     box.appendChild(ok);
-    msg.insertBefore(box,input);
+    msg.insertBefore(box,hackingData.attemptsEl);
     hackingActive=false;
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
@@ -683,7 +689,7 @@ function processGuess(guess){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${like}/${len} correct`;
     box.appendChild(likeLine);
-    msg.insertBefore(box,input);
+    msg.insertBefore(box,hackingData.attemptsEl);
     hackingData.attempts--;
     updateAttempts();
     playPasswordResult(false);

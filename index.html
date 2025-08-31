@@ -462,8 +462,9 @@ input.addEventListener('keydown',e=>{
 
 function updateInput(){
   let text=input.textContent.replace(/\n/g,'');
-  if(text.length>MAX_INPUT_CHARS){
-    text=text.slice(0,MAX_INPUT_CHARS);
+  const limit=hackingActive?20:MAX_INPUT_CHARS;
+  if(text.length>limit){
+    text=text.slice(0,limit);
   }
   input.textContent=text;
   inputText=text;
@@ -612,9 +613,6 @@ async function renderHackScreen(){
   const title=document.createElement('div');
   title.id='hack-title';
   header.appendChild(title);
-  const difficulty=document.createElement('div');
-  difficulty.id='hack-difficulty';
-  header.appendChild(difficulty);
   const prompt=document.createElement('div');
   prompt.id='hack-prompt';
   header.appendChild(prompt);
@@ -640,16 +638,12 @@ async function renderHackScreen(){
   updateAttempts();
   const promptText=prompt.textContent;
   const attemptsText=attempts.textContent;
-  const diffText=`DIFFICULTY: ${hackingData.difficulty.toUpperCase()}`;
   title.textContent='';
-  difficulty.textContent='';
   prompt.textContent='';
   attempts.textContent='';
   warning.textContent='';
   await typeText(title,'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL');
   title.textContent=title.textContent.trimEnd();
-  await typeText(difficulty,diffText);
-  difficulty.textContent=difficulty.textContent.trimEnd();
   await typeText(prompt,promptText);
   prompt.textContent=prompt.textContent.trimEnd();
   await typeText(attempts,attemptsText);
@@ -747,7 +741,8 @@ async function renderHackScreen(){
 function updateAttempts(){
   const a=hackingData.attempts;
   const word=a===1?'ATTEMPT':'ATTEMPTS';
-  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'█'.repeat(a)}`;
+  const blocks='█'.repeat(Math.min(a,4));
+  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${blocks}`;
   hackingData.promptEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'ENTER PASSWORD NOW';
 }
 
@@ -912,7 +907,7 @@ function handleCommand(cmd){
     return;
   }
   if(hackingActive){
-    processGuess(cmd.trim().toUpperCase());
+    processGuess(cmd.trim().toUpperCase().slice(0,20));
     return;
   }
   const command=cmd.trim().toLowerCase();
@@ -920,6 +915,13 @@ function handleCommand(cmd){
     goBack();
   }else if(command==='?'||command==='help'){
     showScreen('help');
+  }else if(command==='syntaxhelper'){
+    if(hackingActive){
+      hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
+      setTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+    }else{
+      displayMessage('command not recognized.');
+    }
   }else if(screens[command]){
     showScreen(command);
   }else{

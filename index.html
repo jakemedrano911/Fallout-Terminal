@@ -230,14 +230,16 @@
   #hacking .char.highlight{background:#008800;color:#041204;}
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;display:flex;flex-direction:column-reverse;justify-content:flex-start;align-items:flex-start;flex:1;line-height:1;align-self:stretch;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
-  #hack-messages #input{margin-top:0;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
+  #hack-messages #input{margin-top:0;align-self:flex-start;}
+  #hack-prompt{margin-top:calc(4px * var(--scale));}
   .hack-message{text-align:left;}
   .hack-row{line-height:1;}
   #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-end;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
   #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
   #header.hack-header #hack-title{margin-top:calc(4px * var(--scale));margin-bottom:calc(8px * var(--scale));}
+  #header.hack-header #attempts{margin-bottom:calc(4px * var(--scale));}
   #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
   #terminal.locked #content{opacity:0.2;}
   #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
@@ -497,7 +499,7 @@ async function startHacking(){
     const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
     const pool=Array.from(byLen[len]);
     shuffle(pool);
-    const count=11+Math.floor(Math.random()*8);
+    const count=15+Math.floor(Math.random()*11);
     const wordList=pool.slice(0,count);
     const password=wordList[Math.floor(Math.random()*wordList.length)];
     hackingData={attempts:4,password,wordList};
@@ -533,12 +535,16 @@ async function renderHackScreen(){
   title.id='hack-title';
   title.textContent='ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
   header.appendChild(title);
-  const warning=document.createElement('div');
-  warning.id='hack-warning';
-  header.appendChild(warning);
+  const prompt=document.createElement('div');
+  prompt.id='hack-prompt';
+  prompt.textContent='ENTER PASSWORD NOW';
+  header.appendChild(prompt);
   const attempts=document.createElement('div');
   attempts.id='attempts';
   header.appendChild(attempts);
+  const warning=document.createElement('div');
+  warning.id='hack-warning';
+  header.appendChild(warning);
   const wrap=document.createElement('div');
   wrap.id='hack-wrap';
   content.appendChild(wrap);
@@ -668,7 +674,7 @@ function processGuess(guess){
     const ok=document.createElement('div');
     ok.textContent='Access granted.';
     box.appendChild(ok);
-    msg.appendChild(box);
+    msg.insertBefore(box,input);
     hackingActive=false;
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
@@ -683,7 +689,7 @@ function processGuess(guess){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${like}/${len} correct`;
     box.appendChild(likeLine);
-    msg.appendChild(box);
+    msg.insertBefore(box,input);
     hackingData.attempts--;
     updateAttempts();
     playPasswordResult(false);

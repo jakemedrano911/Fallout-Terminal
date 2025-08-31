@@ -249,8 +249,10 @@
   #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
   #header.hack-header #hack-title{margin-top:calc(4px * var(--scale));margin-bottom:calc(8px * var(--scale));}
   #header.hack-header #attempts{margin-bottom:calc(4px * var(--scale));}
-  #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
-  #terminal.locked #content{opacity:0.2;}
+    #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
+    #terminal-screen{height:100%;display:flex;flex-direction:column;transition:transform .5s linear;}
+    #terminal.locking #terminal-screen{transform:translateY(-100%);}
+    #terminal.locked #content{opacity:0.2;}
   #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
 </style>
 </head>
@@ -258,9 +260,11 @@
 <div id="terminal-wrapper">
   <div id="power-screen">POWER OFF - PRESS POWER BUTTON</div>
   <div id="terminal">
-    <div id="header"></div>
-    <div id="content"></div>
-    <div id="input" contenteditable="true"></div>
+    <div id="terminal-screen">
+      <div id="header"></div>
+      <div id="content"></div>
+      <div id="input" contenteditable="true"></div>
+    </div>
   </div>
   <div id="controls-container">
     <div id="audio-menu">
@@ -400,6 +404,7 @@ const screens={
 };
 
 const terminal=document.getElementById('terminal');
+const terminalScreen=document.getElementById('terminal-screen');
 const powerButton=document.getElementById('power-button');
 const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
@@ -421,8 +426,8 @@ let hackingData=null;
 let terminalLocked=false;
 
 function restoreInput(){
-  if(input.parentElement!==terminal){
-    terminal.appendChild(input);
+  if(input.parentElement!==terminalScreen){
+    terminalScreen.appendChild(input);
   }
 }
 
@@ -747,16 +752,19 @@ function updateAttempts(){
 }
 
 function lockTerminal(){
-  const overlay=document.createElement('div');
-  overlay.id='lockout';
-  overlay.textContent='TERMINAL LOCKOUT\nPLEASE CONTACT SYSTEM ADMINISTRATOR';
-  terminal.classList.add('locked');
-  terminal.appendChild(overlay);
   hackingActive=false;
   terminalLocked=true;
   hackingData.promptEl.textContent='';
   hackingData.warningEl.textContent='';
   hackingData.attemptsEl.textContent='';
+  const overlay=document.createElement('div');
+  overlay.id='lockout';
+  overlay.textContent='TERMINAL LOCKOUT\nPLEASE CONTACT SYSTEM ADMINISTRATOR';
+  terminalScreen.addEventListener('transitionend',()=>{
+    terminal.classList.add('locked');
+    terminal.appendChild(overlay);
+  },{once:true});
+  terminal.classList.add('locking');
 }
 
 function trimHackMessages(){

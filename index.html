@@ -559,24 +559,21 @@ async function renderHackScreen(){
   messages.appendChild(input);
   startScrollSound();
   hackingData.attemptsEl=attempts;
+  hackingData.promptEl=prompt;
   hackingData.warningEl=warning;
   updateAttempts();
+  const promptText=prompt.textContent;
   const attemptsText=attempts.textContent;
-  const warningText=warning.textContent;
   title.textContent='';
   prompt.textContent='';
   attempts.textContent='';
   warning.textContent='';
   await typeText(title,'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL');
   title.textContent=title.textContent.trimEnd();
-  await typeText(prompt,'ENTER PASSWORD NOW');
+  await typeText(prompt,promptText);
   prompt.textContent=prompt.textContent.trimEnd();
   await typeText(attempts,attemptsText);
   attempts.textContent=attempts.textContent.trimEnd();
-  if(warningText){
-    await typeText(warning,warningText);
-    warning.textContent=warning.textContent.trimEnd();
-  }
   const rows=17,cols=12,total=rows*2;
   const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
   const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
@@ -658,7 +655,7 @@ function updateAttempts(){
   const a=hackingData.attempts;
   const word=a===1?'ATTEMPT':'ATTEMPTS';
   hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'█'.repeat(a)}`;
-  hackingData.warningEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'';
+  hackingData.promptEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'ENTER PASSWORD NOW';
 }
 
 function lockTerminal(){
@@ -669,6 +666,7 @@ function lockTerminal(){
   terminal.appendChild(overlay);
   hackingActive=false;
   terminalLocked=true;
+  hackingData.promptEl.textContent='';
   hackingData.warningEl.textContent='';
   hackingData.attemptsEl.textContent='';
 }
@@ -694,6 +692,7 @@ function processGuess(guess){
     box.appendChild(ok);
     msg.insertBefore(box,input);
     hackingActive=false;
+    hackingData.promptEl.textContent='';
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
     playPasswordResult(true);

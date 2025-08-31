@@ -219,6 +219,9 @@
     padding:0 calc(4px * var(--scale));
     line-height:1;
   }
+  .option + .option{
+    margin-top:calc(4px * var(--scale));
+  }
   .option:hover, .option:focus, .option.selected{
     background:#008800;
     color:#041204;
@@ -1035,16 +1038,16 @@ async function showIntro(){
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
   header.style.marginLeft='-2ch';
-  header.style.textAlign='center';
+  header.style.textAlign='left';
   for(const line of titleLines){
     const div=document.createElement('div');
-    div.style.textAlign='left';
-    div.style.marginLeft='2ch';
+    div.style.textAlign='center';
     header.appendChild(div);
     await typeText(div,line);
   }
   for(const line of headerLines){
     const div=document.createElement('div');
+    div.style.marginLeft='2ch';
     header.appendChild(div);
     await typeText(div,line);
   }

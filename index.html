@@ -494,15 +494,24 @@ async function startHacking(){
       const l=w.length;
       (byLen[l]||(byLen[l]=new Set())).add(w);
     }
-    const lengths=Object.keys(byLen).filter(l=>byLen[l].size>=25 && l>=4);
-    if(!lengths.length) throw new Error('Insufficient words');
-    const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
-    const pool=Array.from(byLen[len]);
+    const difficulties=[
+      {name:'Very Easy',wordCount:[14,18],length:[4,5]},
+      {name:'Easy',wordCount:[15,20],length:[6,8]},
+      {name:'Average',wordCount:[16,22],length:[9,10]},
+      {name:'Hard',wordCount:[18,24],length:[11,12]},
+      {name:'Very Hard',wordCount:[20,25],length:[13,15]}
+    ];
+    const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
+    let pool=[];
+    for(let l=diff.length[0]; l<=diff.length[1]; l++){
+      if(byLen[l]) pool=pool.concat(Array.from(byLen[l]));
+    }
+    if(pool.length<diff.wordCount[0]) throw new Error('Insufficient words');
     shuffle(pool);
-    const count=15+Math.floor(Math.random()*11);
+    const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
     const wordList=pool.slice(0,count);
     const password=wordList[Math.floor(Math.random()*wordList.length)];
-    hackingData={attempts:4,password,wordList};
+    hackingData={attempts:4,password,wordList,difficulty:diff.name};
     await renderHackScreen();
   }catch(err){
     console.error('Failed to load words',err);
@@ -538,6 +547,9 @@ async function renderHackScreen(){
   const title=document.createElement('div');
   title.id='hack-title';
   header.appendChild(title);
+  const difficulty=document.createElement('div');
+  difficulty.id='hack-difficulty';
+  header.appendChild(difficulty);
   const prompt=document.createElement('div');
   prompt.id='hack-prompt';
   header.appendChild(prompt);
@@ -564,12 +576,16 @@ async function renderHackScreen(){
   updateAttempts();
   const promptText=prompt.textContent;
   const attemptsText=attempts.textContent;
+  const diffText=`DIFFICULTY: ${hackingData.difficulty.toUpperCase()}`;
   title.textContent='';
+  difficulty.textContent='';
   prompt.textContent='';
   attempts.textContent='';
   warning.textContent='';
   await typeText(title,'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL');
   title.textContent=title.textContent.trimEnd();
+  await typeText(difficulty,diffText);
+  difficulty.textContent=difficulty.textContent.trimEnd();
   await typeText(prompt,promptText);
   prompt.textContent=prompt.textContent.trimEnd();
   await typeText(attempts,attemptsText);

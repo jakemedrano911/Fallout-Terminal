@@ -249,8 +249,10 @@
   #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
   #header.hack-header #hack-title{margin-top:calc(4px * var(--scale));margin-bottom:calc(8px * var(--scale));}
   #header.hack-header #attempts{margin-bottom:calc(4px * var(--scale));}
-  #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
-  #terminal.locked #content{opacity:0.2;}
+    #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
+    #terminal-screen{height:100%;display:flex;flex-direction:column;transition:transform 1s linear;}
+    #terminal.locking #terminal-screen{transform:translateY(-100%);}
+    #terminal.locked #content{opacity:0.2;}
   #lockout{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;text-align:center;white-space:pre-wrap;}
 </style>
 </head>
@@ -258,9 +260,11 @@
 <div id="terminal-wrapper">
   <div id="power-screen">POWER OFF - PRESS POWER BUTTON</div>
   <div id="terminal">
-    <div id="header"></div>
-    <div id="content"></div>
-    <div id="input" contenteditable="true"></div>
+    <div id="terminal-screen">
+      <div id="header"></div>
+      <div id="content"></div>
+      <div id="input" contenteditable="true"></div>
+    </div>
   </div>
   <div id="controls-container">
     <div id="audio-menu">
@@ -400,6 +404,7 @@ const screens={
 };
 
 const terminal=document.getElementById('terminal');
+const terminalScreen=document.getElementById('terminal-screen');
 const powerButton=document.getElementById('power-button');
 const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
@@ -421,8 +426,8 @@ let hackingData=null;
 let terminalLocked=false;
 
 function restoreInput(){
-  if(input.parentElement!==terminal){
-    terminal.appendChild(input);
+  if(input.parentElement!==terminalScreen){
+    terminalScreen.appendChild(input);
   }
 }
 
@@ -462,8 +467,9 @@ input.addEventListener('keydown',e=>{
 
 function updateInput(){
   let text=input.textContent.replace(/\n/g,'');
-  if(text.length>MAX_INPUT_CHARS){
-    text=text.slice(0,MAX_INPUT_CHARS);
+  const limit=hackingActive?20:MAX_INPUT_CHARS;
+  if(text.length>limit){
+    text=text.slice(0,limit);
   }
   input.textContent=text;
   inputText=text;
@@ -612,9 +618,6 @@ async function renderHackScreen(){
   const title=document.createElement('div');
   title.id='hack-title';
   header.appendChild(title);
-  const difficulty=document.createElement('div');
-  difficulty.id='hack-difficulty';
-  header.appendChild(difficulty);
   const prompt=document.createElement('div');
   prompt.id='hack-prompt';
   header.appendChild(prompt);
@@ -640,16 +643,12 @@ async function renderHackScreen(){
   updateAttempts();
   const promptText=prompt.textContent;
   const attemptsText=attempts.textContent;
-  const diffText=`DIFFICULTY: ${hackingData.difficulty.toUpperCase()}`;
   title.textContent='';
-  difficulty.textContent='';
   prompt.textContent='';
   attempts.textContent='';
   warning.textContent='';
   await typeText(title,'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL');
   title.textContent=title.textContent.trimEnd();
-  await typeText(difficulty,diffText);
-  difficulty.textContent=difficulty.textContent.trimEnd();
   await typeText(prompt,promptText);
   prompt.textContent=prompt.textContent.trimEnd();
   await typeText(attempts,attemptsText);
@@ -747,21 +746,25 @@ async function renderHackScreen(){
 function updateAttempts(){
   const a=hackingData.attempts;
   const word=a===1?'ATTEMPT':'ATTEMPTS';
-  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${'█'.repeat(a)}`;
+  const blocks='█'.repeat(Math.min(a,4));
+  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${blocks}`;
   hackingData.promptEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'ENTER PASSWORD NOW';
 }
 
 function lockTerminal(){
-  const overlay=document.createElement('div');
-  overlay.id='lockout';
-  overlay.textContent='TERMINAL LOCKOUT\nPLEASE CONTACT SYSTEM ADMINISTRATOR';
-  terminal.classList.add('locked');
-  terminal.appendChild(overlay);
   hackingActive=false;
   terminalLocked=true;
   hackingData.promptEl.textContent='';
   hackingData.warningEl.textContent='';
   hackingData.attemptsEl.textContent='';
+  const overlay=document.createElement('div');
+  overlay.id='lockout';
+  overlay.textContent='TERMINAL LOCKOUT\nPLEASE CONTACT SYSTEM ADMINISTRATOR';
+  terminalScreen.addEventListener('transitionend',()=>{
+    terminal.classList.add('locked');
+    terminal.appendChild(overlay);
+  },{once:true});
+  terminal.classList.add('locking');
 }
 
 function trimHackMessages(){
@@ -911,12 +914,17 @@ function handleCommand(cmd){
     updateInput();
     return;
   }
-  if(hackingActive){
-    processGuess(cmd.trim().toUpperCase());
-    return;
-  }
   const command=cmd.trim().toLowerCase();
-  if(command==='back'){
+  if(command==='syntaxhelper'){
+    if(hackingActive){
+      hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
+      setTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+    }else{
+      displayMessage('command not recognized.');
+    }
+  }else if(hackingActive){
+    processGuess(cmd.trim().toUpperCase().slice(0,20));
+  }else if(command==='back'){
     goBack();
   }else if(command==='?'||command==='help'){
     showScreen('help');
@@ -1304,18 +1312,19 @@ powerButton.addEventListener('click',async()=>{
     terminal.classList.add('powered');
     audioMenu.style.display='flex';
     startFanHum();
-    header.innerHTML='';
-    content.innerHTML='';
-    screenHistory=[];
-    currentOptions=[];
-    selected=-1;
-    inputText='';
-    input.textContent='';
-    updateInput();
-    hackingActive=false;
-    hackingData=null;
-    terminalLocked=false;
-    loadScrollSound().then(init);
+    if(!terminalLocked){
+      header.innerHTML='';
+      content.innerHTML='';
+      screenHistory=[];
+      currentOptions=[];
+      selected=-1;
+      inputText='';
+      input.textContent='';
+      updateInput();
+      hackingActive=false;
+      hackingData=null;
+      loadScrollSound().then(init);
+    }
     powered=true;
   }else{
     const powerSound=new Audio('Terminal 3/poweroff.mp3');
@@ -1328,7 +1337,6 @@ powerButton.addEventListener('click',async()=>{
     volumeControls.style.display='none';
     hackingActive=false;
     hackingData=null;
-    terminalLocked=false;
     powered=false;
   }
 });

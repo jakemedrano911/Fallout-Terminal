@@ -230,7 +230,7 @@
   #hacking .char.highlight{background:#008800;color:#041204;}
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column-reverse;justify-content:flex-start;align-items:flex-start;flex:1;line-height:1;align-self:stretch;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
   #hack-messages #input{margin-top:0;}
   .hack-message{text-align:left;}
   .hack-row{line-height:1;}
@@ -497,7 +497,7 @@ async function startHacking(){
     const len=parseInt(lengths[Math.floor(Math.random()*lengths.length)],10);
     const pool=Array.from(byLen[len]);
     shuffle(pool);
-    const count=15+Math.floor(Math.random()*11);
+    const count=11+Math.floor(Math.random()*8);
     const wordList=pool.slice(0,count);
     const password=wordList[Math.floor(Math.random()*wordList.length)];
     hackingData={attempts:4,password,wordList};
@@ -668,7 +668,7 @@ function processGuess(guess){
     const ok=document.createElement('div');
     ok.textContent='Access granted.';
     box.appendChild(ok);
-    msg.insertBefore(box,input);
+    msg.appendChild(box);
     hackingActive=false;
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
@@ -683,7 +683,7 @@ function processGuess(guess){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${like}/${len} correct`;
     box.appendChild(likeLine);
-    msg.insertBefore(box,input);
+    msg.appendChild(box);
     hackingData.attempts--;
     updateAttempts();
     playPasswordResult(false);

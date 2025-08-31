@@ -914,22 +914,20 @@ function handleCommand(cmd){
     updateInput();
     return;
   }
-  if(hackingActive){
-    processGuess(cmd.trim().toUpperCase().slice(0,20));
-    return;
-  }
   const command=cmd.trim().toLowerCase();
-  if(command==='back'){
-    goBack();
-  }else if(command==='?'||command==='help'){
-    showScreen('help');
-  }else if(command==='syntaxhelper'){
+  if(command==='syntaxhelper'){
     if(hackingActive){
       hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
       setTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
     }else{
       displayMessage('command not recognized.');
     }
+  }else if(hackingActive){
+    processGuess(cmd.trim().toUpperCase().slice(0,20));
+  }else if(command==='back'){
+    goBack();
+  }else if(command==='?'||command==='help'){
+    showScreen('help');
   }else if(screens[command]){
     showScreen(command);
   }else{

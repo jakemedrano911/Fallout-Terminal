@@ -233,11 +233,17 @@
   #hacking .char.highlight{background:#008800;color:#041204;}
   #hacking .word:hover,
   #hacking .word.highlight{background:#008800;color:#041204;}
-  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;}
+  #hacking .bracket{cursor:pointer;}
+  #hacking .bracket:hover,
+  #hacking .bracket.highlight{background:#008800;color:#041204;}
+  #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;overflow:hidden;}
   #hack-messages #input{margin-top:0;align-self:flex-start;}
   #hack-prompt{margin-top:calc(4px * var(--scale));}
   .hack-message{text-align:left;}
   .hack-row{line-height:1;}
+  .hack-addr{display:inline-block;width:6ch;}
+  .hack-block{display:inline-block;width:12ch;}
+  .hack-gap{display:inline-block;width:4ch;}
   #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-start;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
   #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
@@ -511,10 +517,17 @@ async function startHacking(){
     }
     if(pool.length<diff.wordCount[0]) throw new Error('Insufficient words');
     shuffle(pool);
-    const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
-    const wordList=pool.slice(0,count);
-    const password=wordList[Math.floor(Math.random()*wordList.length)];
-    hackingData={attempts:4,password,wordList,difficulty:diff.name};
+      const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
+      const wordList=pool.slice(0,count);
+      const password=wordList[Math.floor(Math.random()*wordList.length)];
+      hackingData={
+        attempts:4,
+        maxAttempts:4,
+        password,
+        wordList,
+        difficulty:diff.name,
+        activeWords:wordList.filter(w=>w!==password)
+      };
     await renderHackScreen();
   }catch(err){
     console.error('Failed to load words',err);
@@ -523,18 +536,67 @@ async function startHacking(){
   }
 }
 
+function detectBrackets(block){
+  const pairs=[];
+  const wordIndices=new Set();
+  for(const w of block.words){
+    const seg=w.segment||w.word;
+    for(let k=0;k<seg.length;k++){
+      wordIndices.add(w.start+k);
+    }
+  }
+  const openToClose={'(':')','{':'}','[':']','<':'>'};
+  const closeToOpen={')':'(','}':'{',']':'[','>':'<'};
+  const stack=[];
+  for(let i=0;i<block.chars.length;i++){
+    if(wordIndices.has(i)){
+      stack.length=0;
+      continue;
+    }
+    const ch=block.chars[i];
+    if(openToClose[ch]){
+      stack.push({ch,index:i});
+    }else if(closeToOpen[ch]){
+      for(let s=stack.length-1;s>=0;s--){
+        if(stack[s].ch===closeToOpen[ch]){
+          pairs.push({start:stack[s].index,end:i});
+          stack.splice(s,1);
+          break;
+        }
+      }
+    }
+  }
+  block.brackets=pairs;
+}
+
 function blockHtml(block){
   const parts=[];
-  let last=0;
-  const wrapChars=arr=>arr.map(ch=>`<span class="char">${escapeHtml(ch)}</span>`).join('');
-  const words=block.words.slice().sort((a,b)=>a.start-b.start);
-  for(const w of words){
+  const regions=[];
+  for(const w of block.words){
     const seg=w.segment||w.word;
-    parts.push(wrapChars(block.chars.slice(last,w.start)));
-    parts.push(`<span class="word" data-word="${w.word}">${seg}</span>`);
-    last=w.start+seg.length;
+    regions.push({start:w.start,end:w.start+seg.length,type:'word',word:w.word,text:seg});
   }
-  parts.push(wrapChars(block.chars.slice(last)));
+  for(const b of block.brackets||[]){
+    regions.push({start:b.start,end:b.end+1,type:'bracket'});
+  }
+  regions.sort((a,b)=>a.start-b.start);
+  let idx=0;
+  const wrapChar=ch=>`<span class="char">${escapeHtml(ch)}</span>`;
+  for(const r of regions){
+    while(idx<r.start){
+      parts.push(wrapChar(block.chars[idx++]));
+    }
+    if(r.type==='word'){
+      parts.push(`<span class="word" data-word="${r.word}">${r.text}</span>`);
+    }else if(r.type==='bracket'){
+      const seg=block.chars.slice(r.start,r.end).map(wrapChar).join('');
+      parts.push(`<span class="bracket">${seg}</span>`);
+    }
+    idx=r.end;
+  }
+  while(idx<block.chars.length){
+    parts.push(wrapChar(block.chars[idx++]));
+  }
   return parts.join('');
 }
 
@@ -571,7 +633,6 @@ async function renderHackScreen(){
   const messages=document.createElement('div');
   messages.id='hack-messages';
   wrap.appendChild(messages);
-  messages.appendChild(input);
   startScrollSound();
   hackingData.attemptsEl=attempts;
   hackingData.promptEl=prompt;
@@ -594,16 +655,17 @@ async function renderHackScreen(){
   await typeText(attempts,attemptsText);
   attempts.textContent=attempts.textContent.trimEnd();
   const rows=17,cols=12,total=rows*2;
-  const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
-  const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
-  const blocks=[];
+    const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
+    const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
+    hackingData.junkChars=chars;
+    const blocks=[];
   for(let i=0;i<total;i++){
     const arr=[];
     for(let j=0;j<cols;j++) arr.push(chars[Math.floor(Math.random()*chars.length)]);
     blocks.push({addr:(base+i*cols).toString(16).toUpperCase().padStart(4,'0'),chars:arr,words:[]});
   }
   const MAX_PLACEMENT_ATTEMPTS = 1000;
-  for(const word of hackingData.wordList){
+    for(const word of hackingData.wordList){
     const parts=[];
     for(let i=0;i<word.length;i+=cols) parts.push(word.slice(i,i+cols));
     const maxLen=parts.reduce((m,p)=>Math.max(m,p.length),0);
@@ -637,12 +699,13 @@ async function renderHackScreen(){
     if(!placed){
       console.warn('Failed to place word', word);
     }
-  }
-  let gridHtml='';
+    }
+    for(const block of blocks) detectBrackets(block);
+    let gridHtml='';
   for(let r=0;r<rows;r++){
     const left=blocks[r];
     const right=blocks[r+rows];
-    gridHtml+=`<div class="hack-row">0x${left.addr} ${blockHtml(left)}\u00A0\u00A0\u00A0\u00A00x${right.addr} ${blockHtml(right)}</div>`;
+    gridHtml+=`<div class="hack-row"><span class="hack-addr">0x${left.addr}</span> <span class="hack-block">${blockHtml(left)}</span><span class="hack-gap"></span><span class="hack-addr">0x${right.addr}</span> <span class="hack-block">${blockHtml(right)}</span></div>`;
   }
   await typeHtml(grid, gridHtml);
   stopScrollSound();
@@ -665,8 +728,19 @@ async function renderHackScreen(){
     });
     span.addEventListener('click',()=>processGuess(span.dataset.word));
   });
+  grid.querySelectorAll('.bracket').forEach(span=>{
+    span.addEventListener('mouseenter',()=>{
+      span.classList.add('highlight');
+      playCharFocusSound();
+    });
+    span.addEventListener('mouseleave',()=>span.classList.remove('highlight'));
+    span.addEventListener('click',()=>useBracket(span));
+  });
+  wrap.style.height=grid.clientHeight+'px';
+  messages.appendChild(input);
   hackingData.blocks=blocks;
   hackingData.messages=messages;
+  hackingData.grid=grid;
   input.focus();
 }
 
@@ -690,26 +764,47 @@ function lockTerminal(){
   hackingData.attemptsEl.textContent='';
 }
 
+function trimHackMessages(){
+  const msg=hackingData.messages;
+  while(msg.scrollHeight>msg.clientHeight && msg.firstChild && msg.firstChild!==input){
+    msg.removeChild(msg.firstChild);
+  }
+}
+
+function insertHackBox(box){
+  const msg=hackingData.messages;
+  msg.insertBefore(box,input);
+  trimHackMessages();
+}
+
 function processGuess(guess){
   if(!hackingActive) return;
   guess=guess.trim().toUpperCase();
   const override=guess==='ADMIN OVERRIDE';
-  const msg=hackingData.messages;
+  const allowances=guess==='ADMIN ALLOWANCES';
   const len=hackingData.password.length;
   const box=document.createElement('div');
   box.className='hack-message';
   const guessLine=document.createElement('div');
-  guessLine.textContent=`>${override?'ADMIN OVERRIDE':guess}`;
+  guessLine.textContent=`>${override?'ADMIN OVERRIDE':allowances?'ADMIN ALLOWANCES':guess}`;
   box.appendChild(guessLine);
   playEnterCharSound();
-  if(override || guess===hackingData.password){
+  if(allowances){
+    hackingData.attempts=99;
+    hackingData.maxAttempts=99;
+    updateAttempts();
+    const ok=document.createElement('div');
+    ok.textContent='Allowances set to 99.';
+    box.appendChild(ok);
+    insertHackBox(box);
+  }else if(override || guess===hackingData.password){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${len}/${len} correct`;
     box.appendChild(likeLine);
     const ok=document.createElement('div');
     ok.textContent='Access granted.';
     box.appendChild(ok);
-    msg.insertBefore(box,input);
+    insertHackBox(box);
     hackingActive=false;
     hackingData.promptEl.textContent='';
     hackingData.warningEl.textContent='';
@@ -725,7 +820,7 @@ function processGuess(guess){
     const likeLine=document.createElement('div');
     likeLine.textContent=`${like}/${len} correct`;
     box.appendChild(likeLine);
-    msg.insertBefore(box,input);
+    insertHackBox(box);
     hackingData.attempts--;
     updateAttempts();
     playPasswordResult(false);
@@ -737,6 +832,62 @@ function processGuess(guess){
   inputText='';
   updateInput();
   input.focus();
+}
+
+function addHackMessage(text){
+  const box=document.createElement('div');
+  box.className='hack-message';
+  const line=document.createElement('div');
+  line.textContent=text;
+  box.appendChild(line);
+  insertHackBox(box);
+}
+
+function removeDud(){
+  const candidates=hackingData.activeWords.filter(w=>!hackingData.removedWords?.has(w));
+  if(!candidates.length) return;
+  const word=candidates[Math.floor(Math.random()*candidates.length)];
+  if(!hackingData.removedWords) hackingData.removedWords=new Set();
+  hackingData.removedWords.add(word);
+  hackingData.activeWords=hackingData.activeWords.filter(w=>w!==word);
+  const chars=hackingData.junkChars;
+  hackingData.grid.querySelectorAll(`.word[data-word="${word}"]`).forEach(span=>{
+    const len=span.textContent.length;
+    let junk='';
+    for(let i=0;i<len;i++) junk+=chars[Math.floor(Math.random()*chars.length)];
+    span.innerHTML=junk.split('').map(c=>`<span class="char">${escapeHtml(c)}</span>`).join('');
+    span.classList.remove('word');
+    span.removeAttribute('data-word');
+  });
+  addHackMessage('> Dud removed');
+}
+
+function resetAttempts(){
+  hackingData.attempts=hackingData.maxAttempts;
+  updateAttempts();
+  addHackMessage('> Allowance replenished');
+}
+
+function useBracket(span){
+  if(span.classList.contains('used')) return;
+  span.classList.add('used');
+  const len=span.textContent.length;
+  const chars=hackingData.junkChars;
+  let junk='';
+  for(let i=0;i<len;i++) junk+=chars[Math.floor(Math.random()*chars.length)];
+  const frag=document.createDocumentFragment();
+  for(const ch of junk){
+    const el=document.createElement('span');
+    el.className='char';
+    el.textContent=ch;
+    frag.appendChild(el);
+  }
+  span.replaceWith(frag);
+  if(Math.random()<0.5){
+    removeDud();
+  }else{
+    resetAttempts();
+  }
 }
 
 function displayMessage(text){

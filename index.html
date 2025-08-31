@@ -217,7 +217,7 @@
     width:100%;
     cursor:pointer;
     padding:0 calc(4px * var(--scale));
-    min-height:max(24px, calc(24px * var(--scale)));
+    line-height:1;
   }
   .option:hover, .option:focus, .option.selected{
     background:#008800;
@@ -1022,6 +1022,8 @@ async function showIntro(){
   header.style.textAlign='center';
   for(const line of titleLines){
     const div=document.createElement('div');
+    div.style.textAlign='left';
+    div.style.marginLeft='2ch';
     header.appendChild(div);
     await typeText(div,line);
   }

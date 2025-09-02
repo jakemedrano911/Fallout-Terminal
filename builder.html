@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Terminal Builder</title>
+<style>
+body{font-family:Arial,sans-serif;margin:20px;background:#111;color:#eee;}
+label{display:block;margin-top:10px;}
+textarea{width:100%;height:80px;}
+input[type=text]{width:100%;}
+button{margin-top:10px;}
+#preview{width:800px;height:600px;border:1px solid #333;margin-top:20px;}
+</style>
+</head>
+<body>
+<h1>Terminal Config Builder</h1>
+<form id="builder">
+  <label>Title Lines (one per line)
+    <textarea id="title"></textarea>
+  </label>
+  <label>Header Lines (one per line)
+    <textarea id="header"></textarea>
+  </label>
+  <label>Menu Entries (one per line)
+    <textarea id="menu"></textarea>
+  </label>
+  <label>Hacking Difficulty
+    <select id="difficulty">
+      <option>Very Easy</option>
+      <option>Easy</option>
+      <option>Average</option>
+      <option>Hard</option>
+      <option>Very Hard</option>
+    </select>
+  </label>
+  <label>Password
+    <input type="text" id="password" />
+  </label>
+  <label>Dud Words (one per line)
+    <textarea id="duds"></textarea>
+  </label>
+  <button type="submit">Generate</button>
+</form>
+<div id="downloads"></div>
+<iframe id="preview"></iframe>
+<script>
+function lines(id){
+  return document.getElementById(id).value.split('\n').map(l=>l.trim()).filter(Boolean);
+}
+function slug(text){
+  return text.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+}
+function buildConfig(){
+  const titleLines=lines('title');
+  const headerLines=lines('header');
+  const menuLines=lines('menu');
+  const password=document.getElementById('password').value.trim();
+  const duds=lines('duds');
+  const difficulty=document.getElementById('difficulty').value;
+  const menu=menuLines.map(line=>({text:`> ${line}`,screen:slug(line)}));
+  const screens={menu};
+  menuLines.forEach(line=>{
+    const key=slug(line);
+    screens[key]=[`== ${line} ==`,"",{text:"> RETURN",screen:"menu"}];
+  });
+  return {
+    titleLines,
+    headerLines,
+    screens,
+    hacking:{difficulty,password,duds}
+  };
+}
+const form=document.getElementById('builder');
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const cfg=buildConfig();
+  const downloads=document.getElementById('downloads');
+  downloads.innerHTML='';
+  const jsonBlob=new Blob([JSON.stringify(cfg,null,2)],{type:'application/json'});
+  const jsonUrl=URL.createObjectURL(jsonBlob);
+  const jsonLink=document.createElement('a');
+  jsonLink.href=jsonUrl;
+  jsonLink.download='config.json';
+  jsonLink.textContent='Download config.json';
+  downloads.appendChild(jsonLink);
+  const base=await fetch('index.html').then(r=>r.text());
+  const replaced=base.replace('</body>',`<script>window.config=${JSON.stringify(cfg)};</script></body>`);
+  const htmlBlob=new Blob([replaced],{type:'text/html'});
+  const htmlUrl=URL.createObjectURL(htmlBlob);
+  const htmlLink=document.createElement('a');
+  htmlLink.href=htmlUrl;
+  htmlLink.download='index.html';
+  htmlLink.textContent='Download index.html';
+  downloads.appendChild(document.createElement('br'));
+  downloads.appendChild(htmlLink);
+  const iframe=document.getElementById('preview');
+  iframe.src=`index.html?config=${encodeURIComponent(jsonUrl)}`;
+});
+</script>
+</body>
+</html>

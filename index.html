@@ -299,19 +299,19 @@ function updateScale(){
 }
 window.addEventListener('resize',updateScale);
 updateScale();
-const titleLines=[
+let titleLines=[
 "ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
 "COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
 "-Server 12-",
 "",
 ];
-const headerLines=[
+let headerLines=[
 "Welcome to the RobCo Engineering Division Database!",
 "How may I assist you this fine day?",
 "───────────────────────────────────────",
 ];
 
-const screens={
+let screens={
   menu:[
     {text:"> Protectron Schematics",screen:"protectron"},
     {text:"> Mr. Handy Service Records",screen:"handy"},
@@ -402,6 +402,29 @@ const screens={
     {text:"> RETURN",screen:"menu"}
   ]
 };
+
+let hackingConfig=null;
+
+async function loadConfig(){
+  try{
+    const params=new URLSearchParams(location.search);
+    let cfg=null;
+    if(params.has('config')){
+      const res=await fetch(params.get('config'));
+      cfg=await res.json();
+    }else if(window.config){
+      cfg=window.config;
+    }
+    if(cfg){
+      if(cfg.titleLines) titleLines=cfg.titleLines;
+      if(cfg.headerLines) headerLines=cfg.headerLines;
+      if(cfg.screens) screens=cfg.screens;
+      if(cfg.hacking) hackingConfig=cfg.hacking;
+    }
+  }catch(err){
+    console.error('Failed to load config',err);
+  }
+}
 
 const terminal=document.getElementById('terminal');
 const terminalScreen=document.getElementById('terminal-screen');
@@ -497,43 +520,65 @@ function escapeHtml(str){
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-async function startHacking(){
+async function startHacking(custom){
   terminalLocked=false;
   hackingActive=true;
   try{
-    const res=await fetch('Hacking Words.txt');
-    const text=await res.text();
-    const all=(text.match(/[A-Za-z]+/g)||[]).map(w=>w.toUpperCase());
-    const byLen={};
-    for(const w of all){
-      const l=w.length;
-      (byLen[l]||(byLen[l]=new Set())).add(w);
-    }
-    const difficulties=[
-      {name:'Very Easy',wordCount:[8,10],length:[4,5]},
-      {name:'Easy',wordCount:[10,12],length:[6,7]},
-      {name:'Average',wordCount:[12,14],length:[8,9]},
-      {name:'Hard',wordCount:[15,17],length:[10,11]},
-      {name:'Very Hard',wordCount:[17,20],length:[12,15]}
-    ];
-    const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
-    let pool=[];
-    for(let l=diff.length[0]; l<=diff.length[1]; l++){
-      if(byLen[l]) pool=pool.concat(Array.from(byLen[l]));
-    }
-    if(pool.length<diff.wordCount[0]) throw new Error('Insufficient words');
-    shuffle(pool);
-      const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
-      const wordList=pool.slice(0,count);
-      const password=wordList[Math.floor(Math.random()*wordList.length)];
+    if(custom){
+      const password=(custom.password||'').toUpperCase();
+      const duds=(custom.duds||[]).map(w=>w.toUpperCase());
+      const wordList=[password,...duds];
+      const attemptsByDiff={
+        'Very Easy':4,
+        'Easy':4,
+        'Average':4,
+        'Hard':5,
+        'Very Hard':5
+      };
+      const attempts=attemptsByDiff[custom.difficulty]||4;
       hackingData={
-        attempts:4,
-        maxAttempts:4,
+        attempts,
+        maxAttempts:attempts,
         password,
         wordList,
-        difficulty:diff.name,
+        difficulty:custom.difficulty||'Custom',
         activeWords:wordList.filter(w=>w!==password)
       };
+    }else{
+      const res=await fetch('Hacking Words.txt');
+      const text=await res.text();
+      const all=(text.match(/[A-Za-z]+/g)||[]).map(w=>w.toUpperCase());
+      const byLen={};
+      for(const w of all){
+        const l=w.length;
+        (byLen[l]||(byLen[l]=new Set())).add(w);
+      }
+      const difficulties=[
+        {name:'Very Easy',wordCount:[8,10],length:[4,5]},
+        {name:'Easy',wordCount:[10,12],length:[6,7]},
+        {name:'Average',wordCount:[12,14],length:[8,9]},
+        {name:'Hard',wordCount:[15,17],length:[10,11]},
+        {name:'Very Hard',wordCount:[17,20],length:[12,15]}
+      ];
+      const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
+      let pool=[];
+      for(let l=diff.length[0]; l<=diff.length[1]; l++){
+        if(byLen[l]) pool=pool.concat(Array.from(byLen[l]));
+      }
+      if(pool.length<diff.wordCount[0]) throw new Error('Insufficient words');
+      shuffle(pool);
+        const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
+        const wordList=pool.slice(0,count);
+        const password=wordList[Math.floor(Math.random()*wordList.length)];
+        hackingData={
+          attempts:4,
+          maxAttempts:4,
+          password,
+          wordList,
+          difficulty:diff.name,
+          activeWords:wordList.filter(w=>w!==password)
+        };
+    }
     await renderHackScreen();
   }catch(err){
     console.error('Failed to load words',err);
@@ -1183,10 +1228,11 @@ document.addEventListener('click',e=>{
 },true);
 
 async function init(){
+  await loadConfig();
   startScrollSound();
   header.innerHTML='';
   stopScrollSound();
-  await startHacking();
+  await startHacking(hackingConfig);
 }
 
 async function showIntro(){

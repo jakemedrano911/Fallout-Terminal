@@ -510,11 +510,11 @@ async function startHacking(){
       (byLen[l]||(byLen[l]=new Set())).add(w);
     }
     const difficulties=[
-      {name:'Very Easy',wordCount:[14,18],length:[4,5]},
-      {name:'Easy',wordCount:[15,20],length:[6,8]},
-      {name:'Average',wordCount:[16,22],length:[9,10]},
-      {name:'Hard',wordCount:[18,24],length:[11,12]},
-      {name:'Very Hard',wordCount:[20,25],length:[13,15]}
+      {name:'Very Easy',wordCount:[8,8],length:[4,5]},
+      {name:'Easy',wordCount:[10,10],length:[6,7]},
+      {name:'Average',wordCount:[12,12],length:[8,9]},
+      {name:'Hard',wordCount:[15,15],length:[10,11]},
+      {name:'Very Hard',wordCount:[17,17],length:[12,15]}
     ];
     const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
     let pool=[];

@@ -501,6 +501,16 @@ async function startHacking(){
   terminalLocked=false;
   hackingActive=true;
   try{
+    let hackCfg={};
+    try{
+      const cfgRes=await fetch('config.json');
+      if(cfgRes.ok){
+        const cfg=await cfgRes.json();
+        hackCfg=cfg.hacking||{};
+      }
+    }catch(e){
+      console.warn('Config load failed',e);
+    }
     const res=await fetch('Hacking Words.txt');
     const text=await res.text();
     const all=(text.match(/[A-Za-z]+/g)||[]).map(w=>w.toUpperCase());
@@ -516,24 +526,44 @@ async function startHacking(){
       {name:'Hard',wordCount:[15,17],length:[10,11]},
       {name:'Very Hard',wordCount:[17,20],length:[12,15]}
     ];
-    const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
+    let diff;
+    if(hackCfg.difficulty){
+      diff=difficulties.find(d=>d.name.toLowerCase()===hackCfg.difficulty.toLowerCase());
+    }
+    if(!diff) diff=difficulties[Math.floor(Math.random()*difficulties.length)];
     let pool=[];
     for(let l=diff.length[0]; l<=diff.length[1]; l++){
       if(byLen[l]) pool=pool.concat(Array.from(byLen[l]));
     }
     if(pool.length<diff.wordCount[0]) throw new Error('Insufficient words');
+    let wordList=Array.isArray(hackCfg.dudWords)
+      ?Array.from(new Set(hackCfg.dudWords.map(w=>w.toUpperCase())))
+      :[];
+    pool=pool.filter(w=>!wordList.includes(w));
+    let password;
+    if(hackCfg.password){
+      password=hackCfg.password.toUpperCase();
+      pool=pool.filter(w=>w!==password);
+    }else{
+      shuffle(pool);
+      password=pool.pop();
+    }
+    wordList=wordList.filter(w=>w!==password);
+    wordList.push(password);
     shuffle(pool);
-      const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
-      const wordList=pool.slice(0,count);
-      const password=wordList[Math.floor(Math.random()*wordList.length)];
-      hackingData={
-        attempts:4,
-        maxAttempts:4,
-        password,
-        wordList,
-        difficulty:diff.name,
-        activeWords:wordList.filter(w=>w!==password)
-      };
+    const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
+    while(wordList.length<count && pool.length){
+      wordList.push(pool.pop());
+    }
+    shuffle(wordList);
+    hackingData={
+      attempts:4,
+      maxAttempts:4,
+      password,
+      wordList,
+      difficulty:diff.name,
+      activeWords:wordList.filter(w=>w!==password)
+    };
     await renderHackScreen();
   }catch(err){
     console.error('Failed to load words',err);

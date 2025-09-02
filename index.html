@@ -299,109 +299,19 @@ function updateScale(){
 }
 window.addEventListener('resize',updateScale);
 updateScale();
-const titleLines=[
-"ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
-"COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
-"-Server 12-",
-"",
-];
-const headerLines=[
-"Welcome to the RobCo Engineering Division Database!",
-"How may I assist you this fine day?",
-"───────────────────────────────────────",
-];
+let titleLines=[];
+let headerLines=[];
+let screens={};
+let hacking={};
 
-const screens={
-  menu:[
-    {text:"> Protectron Schematics",screen:"protectron"},
-    {text:"> Mr. Handy Service Records",screen:"handy"},
-    {text:"> Assaultron Combat Models",screen:"assaultron"},
-    {text:"> Securitron Systems Control",screen:"securitron"},
-    {text:"> Experimental Robotics Files",screen:"experimental"},
-    "",
-    ""
-  ],
-  protectron:[
-    "== PROTECTRON SCHEMATICS ==",
-    "",
-    "Model: PRC-66b",
-    "Design: Bipedal, steel-alloy frame",
-    "Power Supply: Standard fission battery pack",
-    "Primary Functions: Civil service, law enforcement, light labor",
-    "Weapon Systems: Integrated laser emitter (calibrated for crowd control)",
-    "",
-    "WARNING: Protectron AI routines exhibit limited situational awareness.",
-    "Recommend close oversight when deployed in mixed civilian environments.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  handy:[
-    "== MR. HANDY SERVICE RECORDS ==",
-    "",
-    "Unit: MH-13A",
-    "Last Maintenance: 07/15/2076",
-    "Notes: Coolant leak in upper thruster assembly. Patched with epoxy resin.",
-    "Armament: Circular saw, extendable manipulator arms, standard flame nozzle",
-    "Service Log: Unit has been reassigned to Vault facilities for sanitation and meal preparation.",
-    "",
-    "CAUTION: Mr. Handy flame module should NOT be operated in enclosed living quarters.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  assaultron:[
-    "== ASSAULTRON COMBAT MODELS ==",
-    "",
-    "Model: ATX-03",
-    "Chassis: Lightweight, high-speed framework",
-    "Power Supply: Enclave-enhanced microfusion cell",
-    "Primary Armament: Integrated face-mounted laser array",
-    "Secondary Armament: Retractable claw appendages",
-    "Performance: Field trials confirm 95% neutralization efficiency against armed combatants.",
-    "",
-    "NOTE: Operators advised to maintain line-of-sight at all times.",
-    "Unit will prioritize nearest hostile target without hesitation.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  securitron:[
-    "== SECURITRON SYSTEMS CONTROL ==",
-    "",
-    "Model: Series VII Securitron",
-    "Current OS Build: 4.23b",
-    "Weapon Systems: 9mm submachinegun, onboard grenade launcher, riot baton",
-    "Patrol Pattern: Auto-routed grid cycle",
-    "Override Protocol: Requires Overseer clearance code (SEC-PRIME)",
-    "",
-    "Systems stable. Last crash report: NONE.",
-    "All Securitron units in storage. Awaiting deployment order.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  experimental:[
-    "== EXPERIMENTAL ROBOTICS FILES ==",
-    "",
-    "File: X9-Blackbird Initiative",
-    "Contents: Prototype stealth reconnaissance platform",
-    "Status: [REDACTED]",
-    "Notes: Cloaking field unstable. High energy draw. Prolonged use risks catastrophic cell failure.",
-    "",
-    "File: Project REX",
-    "Contents: Experimental human-robot neural integration",
-    "Status: SUSPENDED",
-    "Notes: Overseer authorization required. Do not disseminate.",
-    "",
-    "Unauthorized access to experimental files will result in TERMINATION OF CONTRACT.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  help:[
-    "== HELP ==",
-    "",
-    "Sample help terminal entry.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ]
-};
+const configPromise=fetch('config.json')
+  .then(res=>res.json())
+  .then(cfg=>{
+    titleLines=cfg.titleLines;
+    headerLines=cfg.headerLines;
+    screens=cfg.screens;
+    hacking=cfg.hacking;
+  });
 
 const terminal=document.getElementById('terminal');
 const terminalScreen=document.getElementById('terminal-screen');
@@ -509,13 +419,7 @@ async function startHacking(){
       const l=w.length;
       (byLen[l]||(byLen[l]=new Set())).add(w);
     }
-    const difficulties=[
-      {name:'Very Easy',wordCount:[8,10],length:[4,5]},
-      {name:'Easy',wordCount:[10,12],length:[6,7]},
-      {name:'Average',wordCount:[12,14],length:[8,9]},
-      {name:'Hard',wordCount:[15,17],length:[10,11]},
-      {name:'Very Hard',wordCount:[17,20],length:[12,15]}
-    ];
+    const difficulties=hacking.difficulties;
     const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
     let pool=[];
     for(let l=diff.length[0]; l<=diff.length[1]; l++){
@@ -1323,6 +1227,7 @@ powerButton.addEventListener('click',async()=>{
       updateInput();
       hackingActive=false;
       hackingData=null;
+      await configPromise;
       loadScrollSound().then(init);
     }
     powered=true;

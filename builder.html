@@ -8,6 +8,8 @@
     fieldset { margin-bottom: 1rem; }
     .menu-item { margin-bottom: 0.5rem; }
     .menu-item input, .menu-item textarea { margin-right: 0.5rem; }
+    .difficulty-item { margin-bottom: 0.5rem; }
+    .difficulty-item input { margin-right: 0.5rem; }
     iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 1rem; }
   </style>
 </head>
@@ -57,6 +59,11 @@
     <label title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password"></label>
     <label title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
     <div id="dud-warning" style="color:red"></div>
+    <fieldset title="Define hacking difficulty levels. Each level has a name, word count range, and password length range.">
+      <legend>Difficulties</legend>
+      <div id="difficulties"></div>
+      <button type="button" id="add-difficulty" title="Add a new difficulty level">Add Difficulty</button>
+    </fieldset>
   </fieldset>
   <button type="submit" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
 </form>
@@ -73,11 +80,40 @@ const defaultDifficulties = [
 
 const difficultyLabel = document.getElementById('difficulty-label');
 const difficultySelect = document.getElementById('difficulty');
-const difficultyTip = defaultDifficulties
-  .map(d => `${d.name} (${d.length[0]}-${d.length[1]} letters, ${d.wordCount[0]}-${d.wordCount[1]} words)`)
-  .join('; ') + '; Random selects any difficulty.';
-difficultyLabel.title = 'Select the difficulty for the hacking minigame. ' + difficultyTip;
-difficultySelect.title = difficultyLabel.title;
+
+function addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
+  const div=document.createElement('div');
+  div.className='difficulty-item';
+  div.innerHTML=
+    '<input type="text" class="diff-name" placeholder="Name">'+
+    '<label>Words: <input type="number" class="word-min" min="1"> - <input type="number" class="word-max" min="1"></label>'+
+    '<label>Length: <input type="number" class="len-min" min="1"> - <input type="number" class="len-max" min="1"></label>'+
+    '<button type="button" class="move-diff-up" title="Move this difficulty up">▲</button>'+
+    '<button type="button" class="move-diff-down" title="Move this difficulty down">▼</button>'+
+    '<button type="button" class="remove-diff" title="Remove this difficulty">Remove</button>';
+  div.querySelector('.diff-name').value=d.name||'';
+  div.querySelector('.word-min').value=d.wordCount[0];
+  div.querySelector('.word-max').value=d.wordCount[1];
+  div.querySelector('.len-min').value=d.length[0];
+  div.querySelector('.len-max').value=d.length[1];
+  document.getElementById('difficulties').appendChild(div);
+}
+
+function getDifficulties(){
+  return Array.from(document.querySelectorAll('#difficulties .difficulty-item')).map(div=>({
+    name:div.querySelector('.diff-name').value.trim(),
+    wordCount:[parseInt(div.querySelector('.word-min').value,10),parseInt(div.querySelector('.word-max').value,10)],
+    length:[parseInt(div.querySelector('.len-min').value,10),parseInt(div.querySelector('.len-max').value,10)]
+  })).filter(d=>d.name);
+}
+
+function updateDifficultySelect(){
+  const diffs=getDifficulties();
+  difficultySelect.innerHTML='<option>Random</option>'+diffs.map(d=>`<option>${d.name}</option>`).join('');
+  const tip=diffs.map(d=>`${d.name} (${d.length[0]}-${d.length[1]} letters, ${d.wordCount[0]}-${d.wordCount[1]} words)`).join('; ')+'; Random selects any difficulty.';
+  difficultyLabel.title='Select the difficulty for the hacking minigame. '+tip;
+  difficultySelect.title=difficultyLabel.title;
+}
 
 function addScreen(id='') {
   const fs = document.createElement('fieldset');
@@ -137,6 +173,11 @@ function loadConfig(config) {
   document.getElementById('border-color').value = style.borderColor || '#008800';
 
   document.getElementById('locked').checked = config.locked || false;
+  const diffs = config.hacking?.difficulties || defaultDifficulties;
+  const diffsDiv=document.getElementById('difficulties');
+  diffsDiv.innerHTML='';
+  diffs.forEach(addDifficulty);
+  updateDifficultySelect();
   const diff = config.hacking?.difficulty;
   document.getElementById('difficulty').value = diff === undefined ? 'Random' : diff;
   attemptsEl.value = config.hacking?.attempts ?? 4;
@@ -181,6 +222,21 @@ document.getElementById('add-screen').addEventListener('click', () => addScreen(
       }
     }
   });
+
+document.getElementById('add-difficulty').addEventListener('click',()=>{addDifficulty();updateDifficultySelect();});
+document.getElementById('difficulties').addEventListener('click',e=>{
+  if(e.target.classList.contains('remove-diff')){
+    e.target.closest('.difficulty-item').remove();
+  }else if(e.target.classList.contains('move-diff-up')){
+    const item=e.target.closest('.difficulty-item');
+    const prev=item.previousElementSibling; if(prev) item.parentElement.insertBefore(item,prev);
+  }else if(e.target.classList.contains('move-diff-down')){
+    const item=e.target.closest('.difficulty-item');
+    const next=item.nextElementSibling; if(next) item.parentElement.insertBefore(next,item);
+  }
+  updateDifficultySelect();
+});
+document.getElementById('difficulties').addEventListener('input',updateDifficultySelect);
 
 document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
 const passwordEl = document.getElementById('password');
@@ -228,6 +284,8 @@ dudWordsEl.addEventListener('input', validateDudWords);
   });
 
   addScreen('menu');
+  defaultDifficulties.forEach(addDifficulty);
+  updateDifficultySelect();
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
@@ -276,7 +334,7 @@ document.getElementById('builder-form').addEventListener('submit', e => {
     const borderColor = document.getElementById('border-color').value;
     const style = { textColor, backgroundColor, borderColor };
 
-    const hacking = { difficulties: defaultDifficulties };
+    const hacking = { difficulties: getDifficulties() };
     if (difficulty) hacking.difficulty = difficulty;
     if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
     if (!isNaN(maxAttempts) && maxAttempts !== 4) hacking.maxAttempts = maxAttempts;

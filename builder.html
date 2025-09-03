@@ -7,7 +7,7 @@
     body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem; }
     fieldset { margin-bottom: 1rem; }
     .menu-item { margin-bottom: 0.5rem; }
-    .menu-item input { margin-right: 0.5rem; }
+    .menu-item input, .menu-item textarea { margin-right: 0.5rem; }
     iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 1rem; }
   </style>
 </head>
@@ -71,7 +71,7 @@ function addScreen(id='') {
 function addMenuItem(screenEl, text='', screen='', command='') {
   const div = document.createElement('div');
   div.className = 'menu-item';
-  div.innerHTML = '<input type="text" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line">' +
+  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line"></textarea>' +
                   '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected">' +
                   '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected">' +
                   '<button type="button" class="remove-item" title="Remove this menu item">Remove</button>';
@@ -105,10 +105,11 @@ document.getElementById('builder-form').addEventListener('submit', e => {
     const id = screenEl.querySelector('.screen-id').value.trim();
     if(!id) return;
     const items = Array.from(screenEl.querySelectorAll('.menu-item')).map(item => {
-      const text = item.querySelector('.menu-text').value.trim();
+      const textEl = item.querySelector('.menu-text');
+      const text = textEl.value;
       const screen = item.querySelector('.menu-screen').value.trim();
       const command = item.querySelector('.menu-command').value.trim();
-      if(!text && !screen && !command) return null;
+      if(!text.trim() && !screen && !command) return null;
       if(screen){
         return { text, screen };
       }else if(command){

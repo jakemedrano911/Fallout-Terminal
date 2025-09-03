@@ -325,8 +325,18 @@ window.addEventListener('resize',()=>{
   }
 });
 updateScale(prevWidth,prevHeight);
+const defaultBootLines=[
+  'Initializing Robco Industries (TM) MF Boot Agent v2.3.0',
+  'RETROS BIOS',
+  'RBIOS-4.02.08.00 52EE5.E7.E8',
+  'Copyright 2201-2203 Robco Ind.',
+  'Uppermem: 64 KB',
+  'Root (5A8)',
+  'Maintenance Mode'
+];
 let titleLines=[];
 let headerLines=[];
+let bootLines=defaultBootLines;
 let screens={};
 let hacking={};
 let startLocked=true;
@@ -342,6 +352,7 @@ async function loadConfig(){
   }
   titleLines=cfg.titleLines;
   headerLines=cfg.headerLines;
+  bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
   screens=cfg.screens;
   hacking=cfg.hacking;
     if(cfg.style){
@@ -1247,17 +1258,8 @@ async function showLockedBoot(){
   await typeUserInput(l5,'SET HALT RESTART/MAINT');
   const br2=document.createElement('div');
   header.appendChild(br2);
-  const sysLines=[
-    'Initializing Robco Industries (TM) MF Boot Agent v2.3.0',
-    'RETROS BIOS',
-    'RBIOS-4.02.08.00 52EE5.E7.E8',
-    'Copyright 2201-2203 Robco Ind.',
-    'Uppermem: 64 KB',
-    'Root (5A8)',
-    'Maintenance Mode'
-  ];
   startScrollSound();
-  for(const text of sysLines){
+  for(const text of bootLines){
     const div=document.createElement('div');
     header.appendChild(div);
     await typeText(div,text);

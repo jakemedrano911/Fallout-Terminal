@@ -424,8 +424,6 @@ const MAX_INPUT_CHARS=64;
 let hackingActive=false;
 let hackingData=null;
 let terminalLocked=false;
-let hackedOnce=false;
-let hackedPasswordLength=0;
 
 function restoreInput(){
   if(input.parentElement!==terminalScreen){
@@ -810,8 +808,6 @@ function processGuess(guess){
     ok.textContent='Access granted.';
     box.appendChild(ok);
     insertHackBox(box);
-    hackedOnce=true;
-    hackedPasswordLength=len;
     hackingActive=false;
     hackingData.promptEl.textContent='';
     hackingData.warningEl.textContent='';
@@ -1115,16 +1111,6 @@ async function typeText(el,text){
   }
 }
 
-async function typeWithCharSound(el,text){
-  const delay=baseDelay*2;
-  for(const ch of text){
-    el.textContent+=ch;
-    playCharFocusSound();
-    await sleep(delay);
-  }
-  el.textContent+='\n';
-}
-
 function splitEntities(str){
   const div=document.createElement('div');
   div.textContent=str;
@@ -1201,35 +1187,6 @@ async function init(){
   header.innerHTML='';
   stopScrollSound();
   await startHacking();
-}
-
-async function bootAnimation(){
-  restoreInput();
-  header.innerHTML='';
-  content.innerHTML='';
-  header.classList.remove('hack-header');
-  content.classList.remove('hack-content');
-  header.style.marginLeft='-2ch';
-  header.style.textAlign='left';
-  const welcome=document.createElement('div');
-  content.appendChild(welcome);
-  startScrollSound();
-  await typeText(welcome,'Welcome to RobCo Industries (TM) Termlink');
-  stopScrollSound();
-  const logon=document.createElement('div');
-  logon.textContent='>';
-  content.appendChild(logon);
-  await typeWithCharSound(logon,'Logon Admin');
-  const enter=document.createElement('div');
-  content.appendChild(enter);
-  startScrollSound();
-  await typeText(enter,'Enter Password');
-  stopScrollSound();
-  const pw=document.createElement('div');
-  pw.textContent='>';
-  content.appendChild(pw);
-  await typeWithCharSound(pw,'*'.repeat(hackedPasswordLength));
-  await showIntro();
 }
 
 async function showIntro(){
@@ -1366,8 +1323,7 @@ powerButton.addEventListener('click',async()=>{
       updateInput();
       hackingActive=false;
       hackingData=null;
-      const startFn=hackedOnce?bootAnimation:init;
-      loadScrollSound().then(startFn);
+      loadScrollSound().then(init);
     }
     powered=true;
   }else{

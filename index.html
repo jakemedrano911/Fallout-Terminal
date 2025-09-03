@@ -1194,13 +1194,83 @@ async function init(){
   if(hasHacked){
     await showBoot();
   }else if(startLocked){
+    await showLockedBoot();
     await startHacking();
   }else{
     await showIntro();
   }
 }
 
+async function showLockedBoot(){
+  typing=true;
+  speed=1;
+  restoreInput();
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.remove('hack-header');
+  content.classList.remove('hack-content');
+  header.style.marginLeft='-2ch';
+  header.style.textAlign='left';
+
+  startScrollSound();
+  const l1=document.createElement('div');
+  header.appendChild(l1);
+  await typeText(l1,'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK');
+  stopScrollSound();
+
+  const l2=document.createElement('div');
+  l2.textContent='>';
+  header.appendChild(l2);
+  if(speed!==Infinity) await sleep(1500);
+  await typeUserInput(l2,'SET TERMINAL/INQUIRE');
+
+  startScrollSound();
+  const l3=document.createElement('div');
+  header.appendChild(l3);
+  await typeText(l3,'RIT-V300');
+  stopScrollSound();
+
+  const l4=document.createElement('div');
+  l4.textContent='>';
+  header.appendChild(l4);
+  if(speed!==Infinity) await sleep(1500);
+  await typeUserInput(l4,'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F');
+
+  const l5=document.createElement('div');
+  l5.textContent='>';
+  header.appendChild(l5);
+  if(speed!==Infinity) await sleep(1500);
+  await typeUserInput(l5,'SET HALT RESTART/MAINT');
+
+  const sysLines=[
+    'Initializing Robco Industries (TM) MF Boot Agent v2.3.0',
+    'RETROS BIOS',
+    'RBIOS-4.02.08.00 52EE5.E7.E8',
+    'Copyright 2201-2203 Robco Ind.',
+    'Uppermem: 64 KB',
+    'Root (5A8)',
+    'Maintenance Mode'
+  ];
+  startScrollSound();
+  for(const text of sysLines){
+    const div=document.createElement('div');
+    header.appendChild(div);
+    await typeText(div,text);
+  }
+  stopScrollSound();
+
+  const lEnd=document.createElement('div');
+  lEnd.textContent='>';
+  header.appendChild(lEnd);
+  if(speed!==Infinity) await sleep(1500);
+  await typeUserInput(lEnd,'RUN DEBUG/ACCOUNTS.F');
+
+  typing=false;
+}
+
 async function showBoot(){
+  typing=true;
+  speed=1;
   restoreInput();
   header.innerHTML='';
   content.innerHTML='';
@@ -1216,7 +1286,7 @@ async function showBoot(){
   const line2=document.createElement('div');
   line2.textContent='>';
   header.appendChild(line2);
-  await sleep(1500);
+  if(speed!==Infinity) await sleep(1500);
   await typeUserInput(line2,'Logon Admin');
   const line3=document.createElement('div');
   header.appendChild(line3);
@@ -1226,9 +1296,10 @@ async function showBoot(){
   const line4=document.createElement('div');
   line4.textContent='>';
   header.appendChild(line4);
-  await sleep(1500);
+  if(speed!==Infinity) await sleep(1500);
   await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
-  await sleep(500);
+  if(speed!==Infinity) await sleep(500);
+  typing=false;
   await showIntro();
 }
 

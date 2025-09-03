@@ -15,11 +15,11 @@
     --scale:1;
   }
   html{
-    overflow:hidden;
+    overflow:auto;
   }
   body{
     margin:0;
-    overflow:hidden;
+    overflow:auto;
     background:#000;
     color:#7aff7a;
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
@@ -79,7 +79,7 @@
     align-items:center;
     justify-content:flex-end;
   }
-  #power-container, #audio-menu{
+  #power-container, #audio-menu, #config-container{
     position:relative;
     display:flex;
     flex-direction:column;
@@ -89,13 +89,16 @@
   #audio-menu span{
     margin-top:calc(5px * var(--scale));
   }
+  #config-container span{
+    margin-top:calc(5px * var(--scale));
+  }
   #power-container span{
     position:absolute;
     top:calc(100% + (5px * var(--scale)));
     left:50%;
     transform:translateX(-50%);
   }
-  #power-button, #audio-toggle{
+  #power-button, #audio-toggle, #config-button{
     background:#b3410e;
     color:#fff;
     border:calc(2px * var(--scale)) solid #008800;
@@ -105,6 +108,10 @@
     font-size:calc(20px * var(--scale) * 0.9);
     cursor:pointer;
   }
+  #config-button{
+    background:#b8b20d;
+  }
+  #config-file{display:none;}
   #audio-menu{
     display:none;
     margin-bottom:calc(10px * var(--scale));
@@ -277,6 +284,11 @@
         <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
       </div>
     </div>
+    <div id="config-container">
+      <input type="file" id="config-file" accept="application/json" style="display:none">
+      <button id="config-button" aria-label="Holotape">&#x1F4FC;</button>
+      <span>Holotape</span>
+    </div>
     <div id="power-container">
       <button id="power-button" aria-label="Power">&#x23FB;</button>
       <span>Power</span>
@@ -299,109 +311,28 @@ function updateScale(){
 }
 window.addEventListener('resize',updateScale);
 updateScale();
-const titleLines=[
-"ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM",
-"COPYRIGHT 2075-2077 ROBCO INDUSTRIES",
-"-Server 12-",
-"",
-];
-const headerLines=[
-"Welcome to the RobCo Engineering Division Database!",
-"How may I assist you this fine day?",
-"───────────────────────────────────────",
-];
+let titleLines=[];
+let headerLines=[];
+let screens={};
+let hacking={};
+let startLocked=true;
 
-const screens={
-  menu:[
-    {text:"> Protectron Schematics",screen:"protectron"},
-    {text:"> Mr. Handy Service Records",screen:"handy"},
-    {text:"> Assaultron Combat Models",screen:"assaultron"},
-    {text:"> Securitron Systems Control",screen:"securitron"},
-    {text:"> Experimental Robotics Files",screen:"experimental"},
-    "",
-    ""
-  ],
-  protectron:[
-    "== PROTECTRON SCHEMATICS ==",
-    "",
-    "Model: PRC-66b",
-    "Design: Bipedal, steel-alloy frame",
-    "Power Supply: Standard fission battery pack",
-    "Primary Functions: Civil service, law enforcement, light labor",
-    "Weapon Systems: Integrated laser emitter (calibrated for crowd control)",
-    "",
-    "WARNING: Protectron AI routines exhibit limited situational awareness.",
-    "Recommend close oversight when deployed in mixed civilian environments.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  handy:[
-    "== MR. HANDY SERVICE RECORDS ==",
-    "",
-    "Unit: MH-13A",
-    "Last Maintenance: 07/15/2076",
-    "Notes: Coolant leak in upper thruster assembly. Patched with epoxy resin.",
-    "Armament: Circular saw, extendable manipulator arms, standard flame nozzle",
-    "Service Log: Unit has been reassigned to Vault facilities for sanitation and meal preparation.",
-    "",
-    "CAUTION: Mr. Handy flame module should NOT be operated in enclosed living quarters.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  assaultron:[
-    "== ASSAULTRON COMBAT MODELS ==",
-    "",
-    "Model: ATX-03",
-    "Chassis: Lightweight, high-speed framework",
-    "Power Supply: Enclave-enhanced microfusion cell",
-    "Primary Armament: Integrated face-mounted laser array",
-    "Secondary Armament: Retractable claw appendages",
-    "Performance: Field trials confirm 95% neutralization efficiency against armed combatants.",
-    "",
-    "NOTE: Operators advised to maintain line-of-sight at all times.",
-    "Unit will prioritize nearest hostile target without hesitation.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  securitron:[
-    "== SECURITRON SYSTEMS CONTROL ==",
-    "",
-    "Model: Series VII Securitron",
-    "Current OS Build: 4.23b",
-    "Weapon Systems: 9mm submachinegun, onboard grenade launcher, riot baton",
-    "Patrol Pattern: Auto-routed grid cycle",
-    "Override Protocol: Requires Overseer clearance code (SEC-PRIME)",
-    "",
-    "Systems stable. Last crash report: NONE.",
-    "All Securitron units in storage. Awaiting deployment order.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  experimental:[
-    "== EXPERIMENTAL ROBOTICS FILES ==",
-    "",
-    "File: X9-Blackbird Initiative",
-    "Contents: Prototype stealth reconnaissance platform",
-    "Status: [REDACTED]",
-    "Notes: Cloaking field unstable. High energy draw. Prolonged use risks catastrophic cell failure.",
-    "",
-    "File: Project REX",
-    "Contents: Experimental human-robot neural integration",
-    "Status: SUSPENDED",
-    "Notes: Overseer authorization required. Do not disseminate.",
-    "",
-    "Unauthorized access to experimental files will result in TERMINATION OF CONTRACT.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ],
-  help:[
-    "== HELP ==",
-    "",
-    "Sample help terminal entry.",
-    "",
-    {text:"> RETURN",screen:"menu"}
-  ]
-};
+let uploadedConfig=null;
+
+async function loadConfig(){
+  let cfg;
+  if(uploadedConfig){
+    cfg=uploadedConfig;
+  }else{
+    cfg=await fetch('config.json').then(res=>res.json());
+  }
+  titleLines=cfg.titleLines;
+  headerLines=cfg.headerLines;
+  screens=cfg.screens;
+  hacking=cfg.hacking;
+  startLocked=cfg.locked!==undefined?cfg.locked:true;
+  if(hasHacked) startLocked=false;
+}
 
 const terminal=document.getElementById('terminal');
 const terminalScreen=document.getElementById('terminal-screen');
@@ -410,7 +341,23 @@ const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
+const configFile=document.getElementById('config-file');
+const configButton=document.getElementById('config-button');
 const historyEl=content;
+
+configFile.addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  if(file){
+    try{
+      const text=await file.text();
+      uploadedConfig=JSON.parse(text);
+    }catch(err){
+      console.error('Invalid configuration file',err);
+      uploadedConfig=null;
+    }
+  }
+});
+configButton.addEventListener('click',()=>configFile.click());
 let currentOptions=[];
 let selected=-1;
 let typing=false;
@@ -424,6 +371,8 @@ const MAX_INPUT_CHARS=64;
 let hackingActive=false;
 let hackingData=null;
 let terminalLocked=false;
+let hasHacked=false;
+let hackedPasswordLength=0;
 
 function restoreInput(){
   if(input.parentElement!==terminalScreen){
@@ -509,36 +458,58 @@ async function startHacking(){
       const l=w.length;
       (byLen[l]||(byLen[l]=new Set())).add(w);
     }
-    const difficulties=[
-      {name:'Very Easy',wordCount:[14,18],length:[4,5]},
-      {name:'Easy',wordCount:[15,20],length:[6,8]},
-      {name:'Average',wordCount:[16,22],length:[9,10]},
-      {name:'Hard',wordCount:[18,24],length:[11,12]},
-      {name:'Very Hard',wordCount:[20,25],length:[13,15]}
-    ];
-    const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
+    const difficulties=hacking.difficulties;
+    if(!Array.isArray(difficulties)||!difficulties.length) throw new Error('Invalid hacking configuration');
+    let diff;
+    if(hacking.difficulty){
+      diff=difficulties.find(d=>d.name===hacking.difficulty);
+      if(!diff) throw new Error('Invalid hacking configuration');
+    }else{
+      diff=difficulties[Math.floor(Math.random()*difficulties.length)];
+    }
     let pool=[];
     for(let l=diff.length[0]; l<=diff.length[1]; l++){
       if(byLen[l]) pool=pool.concat(Array.from(byLen[l]));
     }
-    if(pool.length<diff.wordCount[0]) throw new Error('Insufficient words');
+    const fixedPassword=hacking.password?hacking.password.toUpperCase():null;
+    const fixedDuds=(hacking.dudWords||[]).map(w=>w.toUpperCase());
+    if(fixedPassword){
+      if(fixedPassword.length<diff.length[0]||fixedPassword.length>diff.length[1]) throw new Error('Invalid hacking configuration');
+      if(!byLen[fixedPassword.length]||!byLen[fixedPassword.length].has(fixedPassword)) throw new Error('Invalid hacking configuration');
+    }
+    for(const w of fixedDuds){
+      if(w===fixedPassword) throw new Error('Invalid hacking configuration');
+      if(w.length<diff.length[0]||w.length>diff.length[1]) throw new Error('Invalid hacking configuration');
+      if(!byLen[w.length]||!byLen[w.length].has(w)) throw new Error('Invalid hacking configuration');
+    }
+    const maxCount=diff.wordCount[1];
+    const minCount=Math.max(diff.wordCount[0],fixedDuds.length+1);
+    if(minCount>maxCount) throw new Error('Invalid hacking configuration');
+    let count=minCount+Math.floor(Math.random()*(maxCount-minCount+1));
+    pool=pool.filter(w=>w!==fixedPassword && !fixedDuds.includes(w));
+    if(pool.length<count-fixedDuds.length-(fixedPassword?1:0)) throw new Error('Insufficient words');
     shuffle(pool);
-      const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
-      const wordList=pool.slice(0,count);
-      const password=wordList[Math.floor(Math.random()*wordList.length)];
-      hackingData={
-        attempts:4,
-        maxAttempts:4,
-        password,
-        wordList,
-        difficulty:diff.name,
-        activeWords:wordList.filter(w=>w!==password)
-      };
+    let wordList=fixedDuds.concat(pool.slice(0,count-fixedDuds.length-(fixedPassword?1:0)));
+    if(fixedPassword) wordList.push(fixedPassword);
+    shuffle(wordList);
+    const password=fixedPassword||wordList[Math.floor(Math.random()*wordList.length)];
+    hackingData={
+      attempts:4,
+      maxAttempts:4,
+      password,
+      wordList,
+      difficulty:diff.name,
+      activeWords:wordList.filter(w=>w!==password)
+    };
     await renderHackScreen();
   }catch(err){
-    console.error('Failed to load words',err);
+    console.error('Failed to start hacking',err);
     hackingActive=false;
-    displayMessage('WORD LIST UNAVAILABLE');
+    if(err.message==='Invalid hacking configuration'){
+      displayMessage('INVALID HACKING CONFIG');
+    }else{
+      displayMessage('WORD LIST UNAVAILABLE');
+    }
   }
 }
 
@@ -780,7 +751,7 @@ function insertHackBox(box){
   trimHackMessages();
 }
 
-function processGuess(guess){
+function processGuess(guess,playSound=true){
   if(!hackingActive) return;
   guess=guess.trim().toUpperCase();
   const override=guess==='ADMIN OVERRIDE';
@@ -791,7 +762,7 @@ function processGuess(guess){
   const guessLine=document.createElement('div');
   guessLine.textContent=`>${override?'ADMIN OVERRIDE':allowances?'ADMIN ALLOWANCES':guess}`;
   box.appendChild(guessLine);
-  playEnterCharSound();
+  if(playSound) playEnterCharSound();
   if(allowances){
     hackingData.attempts=99;
     hackingData.maxAttempts=99;
@@ -813,6 +784,8 @@ function processGuess(guess){
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
     playPasswordResult(true);
+    hackedPasswordLength=hackingData.password.length;
+    hasHacked=true;
     setTimeout(()=>showIntro(),500);
   }else{
     let like=0;
@@ -897,7 +870,9 @@ function displayMessage(text){
   const div=document.createElement('div');
   div.className='response';
   div.textContent=text;
-  terminal.insertBefore(div,input);
+  if(input.parentElement){
+    input.parentElement.insertBefore(div,input);
+  }
   setTimeout(()=>div.classList.add('fade'),5000);
   setTimeout(()=>div.remove(),6000);
 }
@@ -907,6 +882,7 @@ function clearResponses(){
 }
 
 function handleCommand(cmd){
+  playEnterCharSound();
   clearResponses();
   if(terminalLocked){
     input.textContent='';
@@ -920,10 +896,10 @@ function handleCommand(cmd){
       hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
       setTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
     }else{
-      displayMessage('command not recognized.');
+      displayMessage('command unknown');
     }
   }else if(hackingActive){
-    processGuess(cmd.trim().toUpperCase().slice(0,20));
+    processGuess(cmd.trim().toUpperCase().slice(0,20),false);
   }else if(command==='back'){
     goBack();
   }else if(command==='?'||command==='help'){
@@ -931,7 +907,7 @@ function handleCommand(cmd){
   }else if(screens[command]){
     showScreen(command);
   }else{
-    displayMessage('command not recognized.');
+    displayMessage('command unknown');
   }
   input.textContent='';
   inputText='';
@@ -1111,6 +1087,15 @@ async function typeText(el,text){
   }
 }
 
+async function typeUserInput(el,text){
+  for(let ch of text){
+    el.textContent+=ch;
+    playCharFocusSound();
+    await sleep(baseDelay*10);
+  }
+  el.textContent+='\n';
+}
+
 function splitEntities(str){
   const div=document.createElement('div');
   div.textContent=str;
@@ -1186,7 +1171,45 @@ async function init(){
   startScrollSound();
   header.innerHTML='';
   stopScrollSound();
-  await startHacking();
+  if(hasHacked){
+    await showBoot();
+  }else if(startLocked){
+    await startHacking();
+  }else{
+    await showIntro();
+  }
+}
+
+async function showBoot(){
+  restoreInput();
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.remove('hack-header');
+  content.classList.remove('hack-content');
+  header.style.marginLeft='-2ch';
+  header.style.textAlign='left';
+  startScrollSound();
+  const line1=document.createElement('div');
+  header.appendChild(line1);
+  await typeText(line1,'Welcome to RobCo Industries (TM) Termlink');
+  stopScrollSound();
+  const line2=document.createElement('div');
+  line2.textContent='>';
+  header.appendChild(line2);
+  await sleep(1500);
+  await typeUserInput(line2,'Logon Admin');
+  const line3=document.createElement('div');
+  header.appendChild(line3);
+  startScrollSound();
+  await typeText(line3,'Enter Password');
+  stopScrollSound();
+  const line4=document.createElement('div');
+  line4.textContent='>';
+  header.appendChild(line4);
+  await sleep(1500);
+  await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
+  await sleep(500);
+  await showIntro();
 }
 
 async function showIntro(){
@@ -1238,7 +1261,14 @@ async function showScreen(name){
         div.className='option';
         div.tabIndex=0;
         await typeText(div,line.text);
-        div.addEventListener('click',()=>{playSelectSound();showScreen(line.screen);});
+        div.addEventListener('click',()=>{
+          playSelectSound();
+          if(line.screen){
+            showScreen(line.screen);
+          }else if(line.command){
+            displayMessage(line.command);
+          }
+        });
         div.addEventListener('mouseenter',()=>{
           if(selected>=0){
             currentOptions[selected].classList.remove('selected');
@@ -1323,6 +1353,7 @@ powerButton.addEventListener('click',async()=>{
       updateInput();
       hackingActive=false;
       hackingData=null;
+      await loadConfig();
       loadScrollSound().then(init);
     }
     powered=true;

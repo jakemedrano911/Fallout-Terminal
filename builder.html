@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Terminal Config Builder</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem; }
+    fieldset { margin-bottom: 1rem; }
+    .menu-item { margin-bottom: 0.5rem; }
+    .menu-item input, .menu-item textarea { margin-right: 0.5rem; }
+    iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+<h1>Config Builder</h1>
+<form id="builder-form">
+  <fieldset title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line.">
+    <legend>Titles</legend>
+    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line" title="Each line becomes a title line"></textarea>
+  </fieldset>
+  <fieldset title="Enter header text shown beneath the title. Each line becomes its own header line.">
+    <legend>Headers</legend>
+    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line" title="Each line becomes a header line"></textarea>
+  </fieldset>
+  <fieldset title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text.">
+    <legend>Screens</legend>
+    <div id="screens"></div>
+    <button type="button" id="add-screen" title="Add a new screen">Add Screen</button>
+  </fieldset>
+  <fieldset title="Configure hacking settings for locked terminals.">
+    <legend>Hacking</legend>
+    <label title="If checked, the terminal starts locked and requires hacking."><input type="checkbox" id="locked" checked> Locked</label>
+    <label title="Select the difficulty for the hacking minigame.">Difficulty:
+      <select id="difficulty">
+        <option>Very Easy</option>
+        <option>Easy</option>
+        <option selected>Average</option>
+        <option>Hard</option>
+        <option>Very Hard</option>
+      </select>
+    </label>
+    <label title="Password needed to unlock the terminal after hacking.">Password: <input type="text" id="password"></label>
+    <label title="Comma-separated words that will be removed as duds during hacking.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
+  </fieldset>
+  <button type="submit" title="Generate the configuration file and update the preview">Generate Config</button>
+</form>
+<a id="download-link" style="display:none" download="config.json">Download config.json</a>
+<iframe id="preview"></iframe>
+<script>
+const defaultDifficulties = [
+  { name: "Very Easy", wordCount: [8,10], length: [4,5] },
+  { name: "Easy", wordCount: [10,12], length: [6,7] },
+  { name: "Average", wordCount: [12,14], length: [8,9] },
+  { name: "Hard", wordCount: [15,17], length: [10,11] },
+  { name: "Very Hard", wordCount: [17,20], length: [12,15] }
+];
+
+function addScreen(id='') {
+  const fs = document.createElement('fieldset');
+  fs.className = 'screen';
+  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items.">Screen</legend>' +
+                 '<label title="Unique identifier for this screen">ID: <input type="text" class="screen-id"></label>' +
+                 '<div class="menu-items"></div>' +
+                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text">Add Menu Item</button>' +
+                 '<button type="button" class="remove-screen" title="Remove this screen">Remove Screen</button>';
+  fs.querySelector('.screen-id').value = id;
+  document.getElementById('screens').appendChild(fs);
+  addMenuItem(fs);
+}
+
+function addMenuItem(screenEl, text='', screen='', command='') {
+  const div = document.createElement('div');
+  div.className = 'menu-item';
+  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line"></textarea>' +
+                  '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected">' +
+                  '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected">' +
+                  '<button type="button" class="remove-item" title="Remove this menu item">Remove</button>';
+  div.querySelector('.menu-text').value = text;
+  div.querySelector('.menu-screen').value = screen;
+  div.querySelector('.menu-command').value = command;
+  screenEl.querySelector('.menu-items').appendChild(div);
+}
+
+document.getElementById('add-screen').addEventListener('click', () => addScreen());
+
+document.getElementById('screens').addEventListener('click', e => {
+  if (e.target.classList.contains('remove-item')) {
+    e.target.parentElement.remove();
+  } else if (e.target.classList.contains('add-menu-item')) {
+    const screenEl = e.target.closest('.screen');
+    addMenuItem(screenEl);
+  } else if (e.target.classList.contains('remove-screen')) {
+    e.target.closest('.screen').remove();
+  }
+});
+
+addScreen('menu');
+
+document.getElementById('builder-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const titles = document.getElementById('titles').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const headers = document.getElementById('headers').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const screensObj = {};
+  Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
+    const id = screenEl.querySelector('.screen-id').value.trim();
+    if(!id) return;
+    const items = Array.from(screenEl.querySelectorAll('.menu-item')).map(item => {
+      const textEl = item.querySelector('.menu-text');
+      const text = textEl.value;
+      const screen = item.querySelector('.menu-screen').value.trim();
+      const command = item.querySelector('.menu-command').value.trim();
+      if(!text.trim() && !screen && !command) return null;
+      if(screen){
+        return { text, screen };
+      }else if(command){
+        return { text, command };
+      }else{
+        return text;
+      }
+    }).filter(x => x !== null);
+    screensObj[id] = items;
+  });
+  const difficulty = document.getElementById('difficulty').value;
+  const password = document.getElementById('password').value.trim();
+  const dudWords = document.getElementById('dud-words').value.split(',').map(s => s.trim()).filter(Boolean);
+  const locked = document.getElementById('locked').checked;
+
+  const config = {
+    titleLines: titles,
+    headerLines: headers,
+    screens: screensObj,
+    locked,
+    hacking: {
+      difficulty,
+      password,
+      dudWords,
+      difficulties: defaultDifficulties
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const dl = document.getElementById('download-link');
+  dl.href = url;
+  dl.style.display = 'inline';
+
+  updatePreview(config);
+});
+
+function updatePreview(config) {
+  fetch('index.html').then(res => res.text()).then(html => {
+    const configBlob = new Blob([JSON.stringify(config, null, 2)], {type:'application/json'});
+    const configUrl = URL.createObjectURL(configBlob);
+    let modified = html.replace('config.json', configUrl);
+    modified = modified.replace('<head>', '<head><base href="." />');
+    const previewFrame = document.getElementById('preview');
+    const htmlBlob = new Blob([modified], {type:'text/html'});
+    previewFrame.src = URL.createObjectURL(htmlBlob);
+  });
+}
+</script>
+</body>
+</html>

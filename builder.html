@@ -41,6 +41,11 @@
     <label title="Background color of the terminal window, e.g., #041204.">Background Color: <input type="color" id="bg-color" value="#041204"></label>
     <label title="Color of the terminal window outline, e.g., #008800.">Outline Color: <input type="color" id="border-color" value="#008800"></label>
   </fieldset>
+  <fieldset title="Default typing speeds. 0 skips the animation.">
+    <legend>Typing Speeds</legend>
+    <label>User Speed: <input type="number" id="user-speed" min="0" max="5" value="1"></label>
+    <label>Computer Speed: <input type="number" id="comp-speed" min="0" max="5" value="1"></label>
+  </fieldset>
   <fieldset title="Configure hacking settings for locked terminals.">
     <legend>Hacking</legend>
     <label title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked> Locked</label>
@@ -171,6 +176,9 @@ function loadConfig(config) {
   document.getElementById('text-color').value = style.textColor || '#7aff7a';
   document.getElementById('bg-color').value = style.backgroundColor || '#041204';
   document.getElementById('border-color').value = style.borderColor || '#008800';
+
+  document.getElementById('user-speed').value = config.userSpeed ?? 1;
+  document.getElementById('comp-speed').value = config.compSpeed ?? 1;
 
   document.getElementById('locked').checked = config.locked || false;
   const diffs = config.hacking?.difficulties || defaultDifficulties;
@@ -334,6 +342,9 @@ document.getElementById('builder-form').addEventListener('submit', e => {
     const borderColor = document.getElementById('border-color').value;
     const style = { textColor, backgroundColor, borderColor };
 
+    const userSpeed = parseInt(document.getElementById('user-speed').value, 10);
+    const compSpeed = parseInt(document.getElementById('comp-speed').value, 10);
+
     const hacking = { difficulties: getDifficulties() };
     if (difficulty) hacking.difficulty = difficulty;
     if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
@@ -345,6 +356,8 @@ document.getElementById('builder-form').addEventListener('submit', e => {
       titleLines: titles,
       headerLines: headers,
       bootLines,
+      userSpeed: isNaN(userSpeed) ? 1 : userSpeed,
+      compSpeed: isNaN(compSpeed) ? 1 : compSpeed,
       screens: screensObj,
       style,
       locked,

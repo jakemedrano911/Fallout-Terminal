@@ -1299,6 +1299,8 @@ async function showBoot(){
   header.appendChild(line1);
   await typeText(line1,'Welcome to RobCo Industries (TM) Termlink');
   stopScrollSound();
+  const brBoot1=document.createElement('br');
+  header.appendChild(brBoot1);
   const line2=document.createElement('div');
   line2.textContent='>';
   header.appendChild(line2);
@@ -1311,6 +1313,8 @@ async function showBoot(){
   startScrollSound();
   await typeText(line3,'Enter Password');
   stopScrollSound();
+  const brBoot2=document.createElement('br');
+  header.appendChild(brBoot2);
   const line4=document.createElement('div');
   line4.textContent='>';
   header.appendChild(line4);

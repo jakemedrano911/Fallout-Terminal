@@ -48,3 +48,10 @@ In this example the password is eight letters long, so every generated word will
 also contain eight characters. Because only two dud words are supplied, the
 terminal backfills the remaining required words with random eight-letter
 candidates.
+
+## Preferences
+
+Use the **Prefs** button beside the terminal to adjust audio volumes or typing
+speeds. Setting the **User Speed** or **Computer Speed** slider to `0` skips its
+respective animation entirely. Your chosen settings are stored in your browser
+and restored on the next visit.

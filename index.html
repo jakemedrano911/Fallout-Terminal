@@ -82,15 +82,44 @@
     align-items:center;
     justify-content:flex-end;
   }
-  #power-container, #audio-menu, #config-container{
+  #power-container, #config-container, #pref-container{
     position:relative;
     display:flex;
     flex-direction:column;
     align-items:center;
   }
   #controls-container span{color:var(--text-color);}
-  #audio-menu span{
+  #pref-container{
+    display:none;
+    margin-bottom:calc(10px * var(--scale));
+  }
+  #pref-container span{
     margin-top:calc(5px * var(--scale));
+  }
+  #pref-menu{
+    display:none;
+    flex-direction:column;
+    position:absolute;
+    bottom:calc(100% + (5px * var(--scale)));
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--terminal-bg);
+    border:calc(2px * var(--scale)) solid var(--border-color);
+    color:var(--text-color);
+    padding:calc(5px * var(--scale));
+    z-index:1;
+  }
+  #pref-menu label{
+    display:flex;
+    align-items:center;
+    font-size:calc(12px * var(--scale) * 0.9);
+    margin-bottom:calc(5px * var(--scale));
+  }
+  #pref-menu label:last-child{
+    margin-bottom:0;
+  }
+  #pref-menu input[type=range]{
+    margin-left:calc(5px * var(--scale));
   }
   #config-container span{
     margin-top:calc(5px * var(--scale));
@@ -101,7 +130,7 @@
     left:50%;
     transform:translateX(-50%);
   }
-  #power-button, #audio-toggle, #config-button{
+  #power-button, #config-button, #pref-button{
     background:#b3410e;
     color:#fff;
     border:calc(2px * var(--scale)) solid var(--border-color);
@@ -115,35 +144,6 @@
     background:#b8b20d;
   }
   #config-file{display:none;}
-  #audio-menu{
-    display:none;
-    margin-bottom:calc(10px * var(--scale));
-  }
-  #volume-controls{
-    display:none;
-    flex-direction:column;
-    position:absolute;
-    bottom:calc(100% + (5px * var(--scale)));
-    left:50%;
-    transform:translateX(-50%);
-    background:var(--terminal-bg);
-    border:calc(2px * var(--scale)) solid var(--border-color);
-    color:var(--text-color);
-    padding:calc(5px * var(--scale));
-    z-index:1;
-  }
-  #volume-controls label{
-    display:flex;
-    align-items:center;
-    font-size:calc(12px * var(--scale) * 0.9);
-    margin-bottom:calc(5px * var(--scale));
-  }
-  #volume-controls label:last-child{
-    margin-bottom:0;
-  }
-  #volume-controls input[type=range]{
-    margin-left:calc(5px * var(--scale));
-  }
   #terminal::before,
   #terminal::after{
     content:"";
@@ -278,14 +278,16 @@
     </div>
   </div>
   <div id="controls-container">
-    <div id="audio-menu">
-      <button id="audio-toggle" aria-label="Audio">&#x1F50A;</button>
-      <span>Audio</span>
-      <div id="volume-controls">
+    <div id="pref-container">
+      <button id="pref-button" aria-label="Preferences">&#9881;</button>
+      <span>Prefs</span>
+      <div id="pref-menu">
         <label>Hum <input type="range" min="0" max="10" value="1" id="hum-volume"></label>
         <label>Scroll <input type="range" min="0" max="10" value="2" id="scroll-volume"></label>
         <label>Focus <input type="range" min="0" max="10" value="2" id="focus-volume"></label>
         <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
+        <label>User Speed <input type="range" min="0" max="5" value="1" id="user-speed-slider"></label>
+        <label>Computer Speed <input type="range" min="0" max="5" value="1" id="comp-speed-slider"></label>
       </div>
     </div>
     <div id="config-container">
@@ -355,6 +357,16 @@ async function loadConfig(){
   bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
   screens=cfg.screens;
   hacking = cfg.hacking || {};
+  if(savedUserSpeed===null && cfg.userSpeed!==undefined){
+    userBaseSpeed=cfg.userSpeed===0?Infinity:cfg.userSpeed;
+    userSpeed=userBaseSpeed;
+    if(userSpeedSlider) userSpeedSlider.value=userBaseSpeed===Infinity?0:userBaseSpeed;
+  }
+  if(savedCompSpeed===null && cfg.compSpeed!==undefined){
+    compBaseSpeed=cfg.compSpeed===0?Infinity:cfg.compSpeed;
+    compSpeed=compBaseSpeed;
+    if(compSpeedSlider) compSpeedSlider.value=compBaseSpeed===Infinity?0:compBaseSpeed;
+  }
     if(cfg.style){
       const {textColor, backgroundColor, borderColor}=cfg.style;
       if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
@@ -395,7 +407,12 @@ let currentOptions=[];
 let selected=-1;
 let typing=false;
 let baseDelay=10;
-let speed=1;
+const savedUserSpeed=localStorage.getItem('userSpeed');
+const savedCompSpeed=localStorage.getItem('compSpeed');
+let userBaseSpeed=savedUserSpeed!==null?Number(savedUserSpeed):1;
+let compBaseSpeed=savedCompSpeed!==null?Number(savedCompSpeed):1;
+let userSpeed=userBaseSpeed;
+let compSpeed=compBaseSpeed;
 let inputText="";
 let screenHistory=[];
 let skipNextClick=false;
@@ -407,22 +424,29 @@ let terminalLocked=false;
 let hasHacked=false;
 let hackedPasswordLength=0;
 
+function resetSpeeds(){
+  userSpeed=userBaseSpeed;
+  compSpeed=compBaseSpeed;
+}
+
 function restoreInput(){
   if(input.parentElement!==terminalScreen){
     terminalScreen.appendChild(input);
   }
 }
 
-const audioMenu=document.getElementById('audio-menu');
-const audioToggle=document.getElementById('audio-toggle');
-const volumeControls=document.getElementById('volume-controls');
+const prefContainer=document.getElementById('pref-container');
+const prefButton=document.getElementById('pref-button');
+const prefMenu=document.getElementById('pref-menu');
 const humSlider=document.getElementById('hum-volume');
 const scrollSlider=document.getElementById('scroll-volume');
 const focusSlider=document.getElementById('focus-volume');
 const selectSlider=document.getElementById('select-volume');
+const userSpeedSlider=document.getElementById('user-speed-slider');
+const compSpeedSlider=document.getElementById('comp-speed-slider');
 
-audioToggle.addEventListener('click',()=>{
-  volumeControls.style.display=volumeControls.style.display==='flex'?'none':'flex';
+prefButton.addEventListener('click',()=>{
+  prefMenu.style.display=prefMenu.style.display==='flex'?'none':'flex';
 });
 
 let humVolume=humSlider.value/10;
@@ -438,6 +462,20 @@ humSlider.addEventListener('input',()=>{
 scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;});
 focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
+userSpeedSlider.value=userSpeed===Infinity?0:userSpeed;
+compSpeedSlider.value=compSpeed===Infinity?0:compSpeed;
+userSpeedSlider.addEventListener('input',()=>{
+  const val=Number(userSpeedSlider.value);
+  userBaseSpeed=val===0?Infinity:val;
+  userSpeed=userBaseSpeed;
+  localStorage.setItem('userSpeed',userBaseSpeed);
+});
+compSpeedSlider.addEventListener('input',()=>{
+  const val=Number(compSpeedSlider.value);
+  compBaseSpeed=val===0?Infinity:val;
+  compSpeed=compBaseSpeed;
+  localStorage.setItem('compSpeed',compBaseSpeed);
+});
 
 input.addEventListener('input',updateInput);
 input.addEventListener('keydown',e=>{
@@ -627,7 +665,7 @@ function blockHtml(block){
 }
 
 async function renderHackScreen(){
-  speed=1;
+  resetSpeeds();
   typing=true;
   header.innerHTML='';
   content.innerHTML='';
@@ -729,7 +767,7 @@ async function renderHackScreen(){
   await typeHtml(grid, gridHtml);
   stopScrollSound();
   typing=false;
-  speed=1;
+  resetSpeeds();
   grid.querySelectorAll('.char').forEach(span=>{
     span.addEventListener('mouseenter',()=>{
       span.classList.add('highlight');
@@ -1127,7 +1165,7 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function typeText(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    const delay=speed===Infinity?0:baseDelay/speed;
+    const delay=compSpeed===Infinity?0:baseDelay/compSpeed;
     if(delay>0) await sleep(delay);
   }
   el.textContent+='\n';
@@ -1140,7 +1178,7 @@ async function typeUserInput(el,text){
   for(let ch of text){
     el.textContent+=ch;
     playCharFocusSound();
-    if(speed!==Infinity) await sleep(baseDelay*10);
+    if(userSpeed!==Infinity) await sleep(baseDelay*10);
   }
   el.textContent+='\n';
   playEnterCharSound();
@@ -1181,7 +1219,7 @@ async function typeHtml(el,html){
     target.appendChild(textNode);
     for(const unit of units){
       textNode.data+=unit.startsWith('&')?decodeEntity(unit):unit;
-      const delay=speed===Infinity?0:baseDelay/speed;
+      const delay=compSpeed===Infinity?0:baseDelay/compSpeed;
       if(delay>0) await sleep(delay);
     }
   }
@@ -1204,7 +1242,8 @@ function waitForContinue(){
 document.addEventListener('mousedown',e=>{
   if(!typing) return;
   if(e.button===0){
-    speed=Infinity;
+    userSpeed=Infinity;
+    compSpeed=Infinity;
     skipNextClick=true;
     e.preventDefault();
   }
@@ -1233,7 +1272,7 @@ async function init(){
 
 async function showLockedBoot(){
   typing=true;
-  speed=1;
+  resetSpeeds();
   restoreInput();
   header.innerHTML='';
   content.innerHTML='';
@@ -1254,7 +1293,7 @@ async function showLockedBoot(){
   const l2=document.createElement('div');
   l2.textContent='>';
   header.appendChild(l2);
-  if(speed!==Infinity) await sleep(1500);
+  if(userSpeed!==Infinity) await sleep(1500);
   await typeUserInput(l2,'SET TERMINAL/INQUIRE');
   const br1=document.createElement('br');
   header.appendChild(br1);
@@ -1270,13 +1309,13 @@ async function showLockedBoot(){
   const l4=document.createElement('div');
   l4.textContent='>';
   header.appendChild(l4);
-  if(speed!==Infinity) await sleep(1500);
+  if(userSpeed!==Infinity) await sleep(1500);
   await typeUserInput(l4,'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F');
 
   const l5=document.createElement('div');
   l5.textContent='>';
   header.appendChild(l5);
-  if(speed!==Infinity) await sleep(1500);
+  if(userSpeed!==Infinity) await sleep(1500);
   await typeUserInput(l5,'SET HALT RESTART/MAINT');
   const br3=document.createElement('br');
   header.appendChild(br3);
@@ -1294,7 +1333,7 @@ async function showLockedBoot(){
   const lEnd=document.createElement('div');
   lEnd.textContent='>';
   header.appendChild(lEnd);
-  if(speed!==Infinity) await sleep(1500);
+  if(userSpeed!==Infinity) await sleep(1500);
   await typeUserInput(lEnd,'RUN DEBUG/ACCOUNTS.F');
 
   typing=false;
@@ -1302,7 +1341,7 @@ async function showLockedBoot(){
 
 async function showBoot(){
   typing=true;
-  speed=1;
+  resetSpeeds();
   restoreInput();
   header.innerHTML='';
   content.innerHTML='';
@@ -1320,7 +1359,7 @@ async function showBoot(){
   const line2=document.createElement('div');
   line2.textContent='>';
   header.appendChild(line2);
-  if(speed!==Infinity) await sleep(1500);
+  if(userSpeed!==Infinity) await sleep(1500);
   await typeUserInput(line2,'Logon Admin');
   const brBoot=document.createElement('br');
   header.appendChild(brBoot);
@@ -1334,16 +1373,16 @@ async function showBoot(){
   const line4=document.createElement('div');
   line4.textContent='>';
   header.appendChild(line4);
-  if(speed!==Infinity) await sleep(1500);
+  if(userSpeed!==Infinity) await sleep(1500);
   await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
-  if(speed!==Infinity) await sleep(500);
+  if(userSpeed!==Infinity) await sleep(500);
   typing=false;
   await showIntro();
 }
 
 async function showIntro(){
   typing=true;
-  speed=1;
+  resetSpeeds();
   restoreInput();
   startScrollSound();
   header.innerHTML='';
@@ -1382,7 +1421,7 @@ async function showScreen(name){
   const lines=screens[name];
   let i=0;
   while(i<lines.length){
-    speed=1;
+    resetSpeeds();
     typing=true;
     startScrollSound();
     while(i<lines.length){
@@ -1475,7 +1514,7 @@ powerButton.addEventListener('click',async()=>{
     prevWidth=window.innerWidth;
     prevHeight=window.innerHeight;
     terminal.classList.add('powered');
-    audioMenu.style.display='flex';
+    prefContainer.style.display='flex';
     startFanHum();
     if(!terminalLocked){
       header.innerHTML='';
@@ -1502,8 +1541,8 @@ powerButton.addEventListener('click',async()=>{
     prevWidth=window.innerWidth;
     prevHeight=window.innerHeight;
     terminal.classList.remove('powered');
-    audioMenu.style.display='none';
-    volumeControls.style.display='none';
+    prefContainer.style.display='none';
+    prefMenu.style.display='none';
     hackingActive=false;
     hackingData=null;
     powered=false;

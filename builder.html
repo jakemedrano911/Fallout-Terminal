@@ -137,13 +137,20 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   const locked = document.getElementById('locked').checked;
   const textColor = document.getElementById('text-color').value;
   const backgroundColor = document.getElementById('bg-color').value;
-  const scale = parseFloat(document.getElementById('scale').value) || 1;
+  const scaleInput = document.getElementById('scale').value.trim();
+  const style = { textColor, backgroundColor };
+  if (scaleInput !== '') {
+    const scale = parseFloat(scaleInput);
+    if (!isNaN(scale) && scale !== 1) {
+      style.scale = scale;
+    }
+  }
 
   const config = {
     titleLines: titles,
     headerLines: headers,
     screens: screensObj,
-    style: { textColor, backgroundColor, scale },
+    style,
     locked,
     hacking: {
       difficulty,

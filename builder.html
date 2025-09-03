@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Terminal Config Builder</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem; }
+    fieldset { margin-bottom: 1rem; }
+    .menu-item { margin-bottom: 0.5rem; }
+    .menu-item input { margin-right: 0.5rem; }
+    iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+<h1>Config Builder</h1>
+<form id="builder-form">
+  <fieldset>
+    <legend>Titles</legend>
+    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line"></textarea>
+  </fieldset>
+  <fieldset>
+    <legend>Headers</legend>
+    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line"></textarea>
+  </fieldset>
+  <fieldset>
+    <legend>Menu Items</legend>
+    <div id="menu-items"></div>
+    <button type="button" id="add-menu-item">Add Menu Item</button>
+  </fieldset>
+  <fieldset>
+    <legend>Hacking</legend>
+    <label>Difficulty:
+      <select id="difficulty">
+        <option>Very Easy</option>
+        <option>Easy</option>
+        <option selected>Average</option>
+        <option>Hard</option>
+        <option>Very Hard</option>
+      </select>
+    </label>
+    <label>Password: <input type="text" id="password"></label>
+    <label>Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
+  </fieldset>
+  <button type="submit">Generate Config</button>
+</form>
+<a id="download-link" style="display:none" download="config.json">Download config.json</a>
+<iframe id="preview"></iframe>
+<script>
+const defaultDifficulties = [
+  { name: "Very Easy", wordCount: [8,10], length: [4,5] },
+  { name: "Easy", wordCount: [10,12], length: [6,7] },
+  { name: "Average", wordCount: [12,14], length: [8,9] },
+  { name: "Hard", wordCount: [15,17], length: [10,11] },
+  { name: "Very Hard", wordCount: [17,20], length: [12,15] }
+];
+
+function addMenuItem(text='', screen='') {
+  const div = document.createElement('div');
+  div.className = 'menu-item';
+  div.innerHTML = '<input type="text" class="menu-text" placeholder="Menu text">' +
+                  '<input type="text" class="menu-screen" placeholder="Screen id">' +
+                  '<button type="button" class="remove-item">Remove</button>';
+  div.querySelector('.menu-text').value = text;
+  div.querySelector('.menu-screen').value = screen;
+  document.getElementById('menu-items').appendChild(div);
+}
+
+document.getElementById('add-menu-item').addEventListener('click', () => addMenuItem());
+
+document.getElementById('menu-items').addEventListener('click', e => {
+  if (e.target.classList.contains('remove-item')) {
+    e.target.parentElement.remove();
+  }
+});
+
+addMenuItem();
+
+document.getElementById('builder-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const titles = document.getElementById('titles').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const headers = document.getElementById('headers').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const menuItems = Array.from(document.querySelectorAll('#menu-items .menu-item')).map(item => {
+    const text = item.querySelector('.menu-text').value.trim();
+    const screen = item.querySelector('.menu-screen').value.trim();
+    return text && screen ? { text, screen } : null;
+  }).filter(Boolean);
+  const difficulty = document.getElementById('difficulty').value;
+  const password = document.getElementById('password').value.trim();
+  const dudWords = document.getElementById('dud-words').value.split(',').map(s => s.trim()).filter(Boolean);
+
+  const config = {
+    titleLines: titles,
+    headerLines: headers,
+    screens: { menu: menuItems },
+    hacking: {
+      difficulty,
+      password,
+      dudWords,
+      difficulties: defaultDifficulties
+    }
+  };
+
+  const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const dl = document.getElementById('download-link');
+  dl.href = url;
+  dl.style.display = 'inline';
+
+  updatePreview(config);
+});
+
+function updatePreview(config) {
+  fetch('index.html').then(res => res.text()).then(html => {
+    const configBlob = new Blob([JSON.stringify(config, null, 2)], {type:'application/json'});
+    const configUrl = URL.createObjectURL(configBlob);
+    let modified = html.replace('config.json', configUrl);
+    modified = modified.replace('<head>', '<head><base href="." />');
+    const previewFrame = document.getElementById('preview');
+    const htmlBlob = new Blob([modified], {type:'text/html'});
+    previewFrame.src = URL.createObjectURL(htmlBlob);
+  });
+}
+</script>
+</body>
+</html>

@@ -111,6 +111,11 @@
       { "text": "> RETURN", "screen": "menu" }
     ]
   },
+  "style": {
+    "textColor": "#7aff7a",
+    "backgroundColor": "#041204",
+    "scale": 1
+  },
   "locked": true,
   "hacking": {
     "difficulty": "Average",

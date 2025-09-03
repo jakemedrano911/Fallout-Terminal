@@ -13,6 +13,8 @@
   }
   :root{
     --scale:1;
+    --text-color:#7aff7a;
+    --terminal-bg:#041204;
   }
   html{
     overflow:auto;
@@ -21,7 +23,7 @@
     margin:0;
     overflow:auto;
     background:#000;
-    color:#7aff7a;
+    color:var(--text-color);
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:calc(24px * var(--scale) * 0.9);
     letter-spacing:calc(.75px * var(--scale) * 0.9);
@@ -45,7 +47,7 @@
     display:flex;
     justify-content:center;
     align-items:center;
-    color:#7aff7a;
+    color:var(--text-color);
   }
   #terminal{
     position:relative;
@@ -58,7 +60,7 @@
     overflow:hidden;
     display:none;
     flex-direction:column;
-    background:#041204;
+    background:var(--terminal-bg);
     background-image:repeating-linear-gradient(
       rgba(0,0,0,0.55) 0px,
       rgba(0,0,0,0.55) 1px,
@@ -85,7 +87,7 @@
     flex-direction:column;
     align-items:center;
   }
-  #controls-container span{color:#7aff7a;}
+  #controls-container span{color:var(--text-color);}
   #audio-menu span{
     margin-top:calc(5px * var(--scale));
   }
@@ -123,9 +125,9 @@
     bottom:calc(100% + (5px * var(--scale)));
     left:50%;
     transform:translateX(-50%);
-    background:#041204;
+    background:var(--terminal-bg);
     border:calc(2px * var(--scale)) solid #008800;
-    color:#7aff7a;
+    color:var(--text-color);
     padding:calc(5px * var(--scale));
     z-index:1;
   }
@@ -232,18 +234,18 @@
   }
   .option:hover, .option:focus, .option.selected{
     background:#008800;
-    color:#041204;
+    color:var(--terminal-bg);
   }
   #hack-wrap{display:flex;justify-content:flex-start;align-items:flex-start;width:100%;gap:2ch;}
   #hacking{white-space:pre;font:inherit;flex-shrink:0;}
   #hacking .word{cursor:pointer;}
   #hacking .char:hover,
-  #hacking .char.highlight{background:#008800;color:#041204;}
+  #hacking .char.highlight{background:#008800;color:var(--terminal-bg);}
   #hacking .word:hover,
-  #hacking .word.highlight{background:#008800;color:#041204;}
+  #hacking .word.highlight{background:#008800;color:var(--terminal-bg);}
   #hacking .bracket{cursor:pointer;}
   #hacking .bracket:hover,
-  #hacking .bracket.highlight{background:#008800;color:#041204;}
+  #hacking .bracket.highlight{background:#008800;color:var(--terminal-bg);}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;overflow:hidden;}
   #hack-messages #input{margin-top:0;align-self:flex-start;}
   #hack-prompt{margin-top:calc(4px * var(--scale));}
@@ -331,6 +333,12 @@ async function loadConfig(){
   headerLines=cfg.headerLines;
   screens=cfg.screens;
   hacking=cfg.hacking;
+  if(cfg.style){
+    const {textColor, backgroundColor, scale}=cfg.style;
+    if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
+    if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
+    if(scale) document.documentElement.style.setProperty('--scale', scale);
+  }
   startLocked=cfg.locked!==undefined?cfg.locked:true;
   if(hasHacked) startLocked=false;
 }

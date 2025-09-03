@@ -42,8 +42,9 @@
   <fieldset title="Configure hacking settings for locked terminals.">
     <legend>Hacking</legend>
     <label title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked> Locked</label>
-    <label title="Select the difficulty for the hacking minigame, such as 'Very Easy' or 'Hard'.">Difficulty:
+    <label id="difficulty-label">Difficulty:
       <select id="difficulty">
+        <option>Random</option>
         <option>Very Easy</option>
         <option>Easy</option>
         <option selected>Average</option>
@@ -67,6 +68,14 @@ const defaultDifficulties = [
   { name: "Hard", wordCount: [15,17], length: [10,11] },
   { name: "Very Hard", wordCount: [17,20], length: [12,15] }
 ];
+
+const difficultyLabel = document.getElementById('difficulty-label');
+const difficultySelect = document.getElementById('difficulty');
+const difficultyTip = defaultDifficulties
+  .map(d => `${d.name} (${d.length[0]}-${d.length[1]} letters, ${d.wordCount[0]}-${d.wordCount[1]} words)`)
+  .join('; ') + '; Random selects any difficulty.';
+difficultyLabel.title = 'Select the difficulty for the hacking minigame. ' + difficultyTip;
+difficultySelect.title = difficultyLabel.title;
 
 function addScreen(id='') {
   const fs = document.createElement('fieldset');
@@ -126,7 +135,8 @@ function loadConfig(config) {
   document.getElementById('border-color').value = style.borderColor || '#008800';
 
   document.getElementById('locked').checked = config.locked || false;
-  document.getElementById('difficulty').value = config.hacking?.difficulty || 'Average';
+  const diff = config.hacking?.difficulty;
+  document.getElementById('difficulty').value = diff === undefined ? 'Random' : diff;
   document.getElementById('password').value = config.hacking?.password || '';
   document.getElementById('dud-words').value = (config.hacking?.dudWords || []).join(', ');
 }
@@ -248,31 +258,29 @@ document.getElementById('builder-form').addEventListener('submit', e => {
       });
       screensObj[id] = items;
     });
-    const difficulty = document.getElementById('difficulty').value;
-    let password = passwordEl.value.trim();
+    const diffValue = document.getElementById('difficulty').value;
+    const difficulty = diffValue === 'Random' ? undefined : diffValue;
+    const password = passwordEl.value.trim();
     const dudWords = dudWordsEl.value.split(',').map(s => s.trim()).filter(Boolean);
-    if (!password && dudWords.length) {
-      password = dudWords[Math.floor(Math.random() * dudWords.length)];
-    }
     const locked = document.getElementById('locked').checked;
     const textColor = document.getElementById('text-color').value;
     const backgroundColor = document.getElementById('bg-color').value;
     const borderColor = document.getElementById('border-color').value;
-      const style = { textColor, backgroundColor, borderColor };
+    const style = { textColor, backgroundColor, borderColor };
 
-      const config = {
-        titleLines: titles,
-        headerLines: headers,
-        bootLines,
-        screens: screensObj,
-        style,
-        locked,
-        hacking: {
-          difficulty,
-        password,
-        dudWords,
-        difficulties: defaultDifficulties
-      }
+    const hacking = { difficulties: defaultDifficulties };
+    if (difficulty) hacking.difficulty = difficulty;
+    if (password) hacking.password = password;
+    if (dudWords.length) hacking.dudWords = dudWords;
+
+    const config = {
+      titleLines: titles,
+      headerLines: headers,
+      bootLines,
+      screens: screensObj,
+      style,
+      locked,
+      hacking
     };
 
     const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});

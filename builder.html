@@ -29,6 +29,7 @@
   </fieldset>
   <fieldset>
     <legend>Hacking</legend>
+    <label><input type="checkbox" id="locked" checked> Locked</label>
     <label>Difficulty:
       <select id="difficulty">
         <option>Very Easy</option>
@@ -87,11 +88,13 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   const difficulty = document.getElementById('difficulty').value;
   const password = document.getElementById('password').value.trim();
   const dudWords = document.getElementById('dud-words').value.split(',').map(s => s.trim()).filter(Boolean);
+  const locked = document.getElementById('locked').checked;
 
   const config = {
     titleLines: titles,
     headerLines: headers,
     screens: { menu: menuItems },
+    locked,
     hacking: {
       difficulty,
       password,

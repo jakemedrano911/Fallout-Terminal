@@ -101,6 +101,7 @@
       { "text": "> RETURN", "screen": "menu" }
     ]
   },
+  "locked": true,
   "hacking": {
     "difficulty": "Average",
     "password": "HARDWARE",

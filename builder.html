@@ -104,23 +104,29 @@ addScreen('menu');
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
-  const titles = document.getElementById('titles').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const headers = document.getElementById('headers').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const rawTitles = document.getElementById('titles').value.split('\n');
+  const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
+  const rawHeaders = document.getElementById('headers').value.split('\n');
+  const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
   const screensObj = {};
   Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
     const id = screenEl.querySelector('.screen-id').value.trim();
     if(!id) return;
-    const items = Array.from(screenEl.querySelectorAll('.menu-item')).map(item => {
+    const items = [];
+    Array.from(screenEl.querySelectorAll('.menu-item')).forEach(item => {
       const textEl = item.querySelector('.menu-text');
       const text = textEl.value.trimEnd();
       const screen = item.querySelector('.menu-screen').value.trim();
       const command = item.querySelector('.menu-command').value.trim();
+      if(!text && !screen && !command) {
+        return;
+      }
       if(screen){
-        return { text, screen };
+        items.push({ text, screen });
       }else if(command){
-        return { text, command };
+        items.push({ text, command });
       }else{
-        return text;
+        items.push(text);
       }
     });
     screensObj[id] = items;

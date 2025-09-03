@@ -98,8 +98,8 @@ addScreen('menu');
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
-  const titles = document.getElementById('titles').value.split('\n');
-  const headers = document.getElementById('headers').value.split('\n');
+  const titles = document.getElementById('titles').value.split(/\r?\n/);
+  const headers = document.getElementById('headers').value.split(/\r?\n/);
   const screensObj = {};
   Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
     const id = screenEl.querySelector('.screen-id').value.trim();

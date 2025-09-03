@@ -4,19 +4,26 @@
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem; }
-    fieldset { margin-bottom: 1rem; }
-    .menu-item { margin-bottom: 0.5rem; }
-    .menu-item input, .menu-item textarea { margin-right: 0.5rem; }
-    .difficulty-item { margin-bottom: 0.5rem; }
-    .difficulty-item input { margin-right: 0.5rem; }
-    iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 1rem; }
+    body { font-family: sans-serif; margin: 0; padding: 1rem; }
+    fieldset { margin-bottom: 0.5rem; }
+    .menu-item, .difficulty-item { margin-bottom: 0.25rem; }
+    .menu-item input, .menu-item textarea, .difficulty-item input { margin-right: 0.25rem; }
+    .remove-screen, .remove-item, .remove-diff { color:#000; }
+    #builder-layout { display:flex; align-items:flex-start; gap:1rem; }
+    #builder-form { flex:1; }
+    iframe { flex:1; height:600px; border:1px solid #ccc; }
+    legend { display:flex; align-items:center; gap:0.25rem; }
+    @media (max-width:800px){
+      #builder-layout{flex-direction:column;}
+      iframe{width:100%;}
+    }
   </style>
 </head>
 <body>
 <h1>Config Builder</h1>
 <button type="button" id="load-config" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
 <input type="file" id="config-file" accept="application/json" style="display:none">
+<div id="builder-layout">
 <form id="builder-form">
   <fieldset title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
     <legend>Titles</legend>
@@ -64,16 +71,18 @@
     <label title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password"></label>
     <label title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
     <div id="dud-warning" style="color:red"></div>
-    <fieldset title="Define hacking difficulty levels. Each level has a name, word count range, and password length range.">
+    <button type="button" id="toggle-difficulties" title="Edit difficulty levels">Customize Difficulties</button>
+    <fieldset id="difficulties-fieldset" style="display:none" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range.">
       <legend>Difficulties</legend>
       <div id="difficulties"></div>
       <button type="button" id="add-difficulty" title="Add a new difficulty level">Add Difficulty</button>
     </fieldset>
   </fieldset>
   <button type="submit" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
+  <a id="download-link" style="display:none" download="config.json">Download config.json</a>
 </form>
-<a id="download-link" style="display:none" download="config.json">Download config.json</a>
 <iframe id="preview"></iframe>
+</div>
 <script>
 const defaultDifficulties = [
   { name: "Very Easy", wordCount: [8,10], length: [4,5] },
@@ -85,6 +94,7 @@ const defaultDifficulties = [
 
 const difficultyLabel = document.getElementById('difficulty-label');
 const difficultySelect = document.getElementById('difficulty');
+let previewLoaded = false;
 
 function addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
   const div=document.createElement('div');
@@ -95,7 +105,7 @@ function addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
     '<label>Length: <input type="number" class="len-min" min="1"> - <input type="number" class="len-max" min="1"></label>'+
     '<button type="button" class="move-diff-up" title="Move this difficulty up">▲</button>'+
     '<button type="button" class="move-diff-down" title="Move this difficulty down">▼</button>'+
-    '<button type="button" class="remove-diff" title="Remove this difficulty">Remove</button>';
+    '<button type="button" class="remove-diff" title="Remove this difficulty">&#128465;&#65038;</button>';
   div.querySelector('.diff-name').value=d.name||'';
   div.querySelector('.word-min').value=d.wordCount[0];
   div.querySelector('.word-max').value=d.wordCount[1];
@@ -123,13 +133,12 @@ function updateDifficultySelect(){
 function addScreen(id='') {
   const fs = document.createElement('fieldset');
   fs.className = 'screen';
-  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items. Example: menu or help.">Screen</legend>' +
-                 '<label title="Unique identifier for this screen, e.g., menu">ID: <input type="text" class="screen-id"></label>' +
+  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items. Example: menu or help.">Screen ID: <input type="text" class="screen-id">'+
+                 '<button type="button" class="move-screen-up" title="Move this screen up">▲</button>'+ 
+                 '<button type="button" class="move-screen-down" title="Move this screen down">▼</button>'+ 
+                 '<button type="button" class="remove-screen" title="Remove this screen from the configuration">&#128465;&#65038;</button></legend>'+
                  '<div class="menu-items"></div>' +
-                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>' +
-                 '<button type="button" class="move-screen-up" title="Move this screen up">▲</button>' +
-                 '<button type="button" class="move-screen-down" title="Move this screen down">▼</button>' +
-                 '<button type="button" class="remove-screen" title="Remove this screen from the configuration">Remove Screen</button>';
+                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>';
   fs.querySelector('.screen-id').value = id;
   document.getElementById('screens').appendChild(fs);
   addMenuItem(fs);
@@ -143,7 +152,7 @@ function addMenuItem(screenEl, text='', screen='', command='') {
                   '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected, e.g., Maintenance mode engaged">' +
                   '<button type="button" class="move-item-up" title="Move this item up">▲</button>' +
                   '<button type="button" class="move-item-down" title="Move this item down">▼</button>' +
-                  '<button type="button" class="remove-item" title="Remove this menu item from the screen">Remove</button>';
+                  '<button type="button" class="remove-item" title="Remove this menu item from the screen">&#128465;&#65038;</button>';
   div.querySelector('.menu-text').value = text;
   div.querySelector('.menu-screen').value = screen;
   div.querySelector('.menu-command').value = command;
@@ -245,6 +254,10 @@ document.getElementById('difficulties').addEventListener('click',e=>{
   updateDifficultySelect();
 });
 document.getElementById('difficulties').addEventListener('input',updateDifficultySelect);
+document.getElementById('toggle-difficulties').addEventListener('click',()=>{
+  const fs=document.getElementById('difficulties-fieldset');
+  fs.style.display=fs.style.display==='none'?'block':'none';
+});
 
 document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
 const passwordEl = document.getElementById('password');
@@ -279,7 +292,7 @@ function validateDudWords() {
 passwordEl.addEventListener('input', validateDudWords);
 dudWordsEl.addEventListener('input', validateDudWords);
 
-  document.getElementById('config-file').addEventListener('change', e => {
+document.getElementById('config-file').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -374,15 +387,17 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   });
 
 function updatePreview(config) {
-  fetch('index.html').then(res => res.text()).then(html => {
-    const configBlob = new Blob([JSON.stringify(config, null, 2)], {type:'application/json'});
-    const configUrl = URL.createObjectURL(configBlob);
-    let modified = html.replace('config.json', configUrl);
-    modified = modified.replace('<head>', '<head><base href="." />');
-    const previewFrame = document.getElementById('preview');
-    const htmlBlob = new Blob([modified], {type:'text/html'});
-    previewFrame.src = URL.createObjectURL(htmlBlob);
-  });
+  const previewFrame = document.getElementById('preview');
+  const url = new URL('index.html', location.href).href;
+  if (!previewLoaded) {
+    previewFrame.src = url;
+    previewFrame.onload = () => {
+      previewLoaded = true;
+      previewFrame.contentWindow.postMessage(config, '*');
+    };
+  } else {
+    previewFrame.contentWindow.postMessage(config, '*');
+  }
 }
 </script>
 </body>

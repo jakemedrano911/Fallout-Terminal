@@ -1232,6 +1232,9 @@ async function showLockedBoot(){
   await typeText(l1,'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK');
   stopScrollSound();
 
+  const br0=document.createElement('div');
+  header.appendChild(br0);
+
   const l2=document.createElement('div');
   l2.textContent='>';
   header.appendChild(l2);
@@ -1245,6 +1248,9 @@ async function showLockedBoot(){
   await typeText(l3,'RIT-V300');
   stopScrollSound();
 
+  const br2=document.createElement('div');
+  header.appendChild(br2);
+
   const l4=document.createElement('div');
   l4.textContent='>';
   header.appendChild(l4);
@@ -1256,8 +1262,8 @@ async function showLockedBoot(){
   header.appendChild(l5);
   if(speed!==Infinity) await sleep(1500);
   await typeUserInput(l5,'SET HALT RESTART/MAINT');
-  const br2=document.createElement('div');
-  header.appendChild(br2);
+  const br3=document.createElement('div');
+  header.appendChild(br3);
   startScrollSound();
   for(const text of bootLines){
     const div=document.createElement('div');
@@ -1265,6 +1271,9 @@ async function showLockedBoot(){
     await typeText(div,text);
   }
   stopScrollSound();
+
+  const br4=document.createElement('div');
+  header.appendChild(br4);
 
   const lEnd=document.createElement('div');
   lEnd.textContent='>';

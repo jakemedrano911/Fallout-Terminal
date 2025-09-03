@@ -106,10 +106,9 @@ document.getElementById('builder-form').addEventListener('submit', e => {
     if(!id) return;
     const items = Array.from(screenEl.querySelectorAll('.menu-item')).map(item => {
       const textEl = item.querySelector('.menu-text');
-      const text = textEl.value;
+      const text = textEl.value.trimEnd();
       const screen = item.querySelector('.menu-screen').value.trim();
       const command = item.querySelector('.menu-command').value.trim();
-      if(!text.trim() && !screen && !command) return null;
       if(screen){
         return { text, screen };
       }else if(command){
@@ -117,7 +116,7 @@ document.getElementById('builder-form').addEventListener('submit', e => {
       }else{
         return text;
       }
-    }).filter(x => x !== null);
+    });
     screensObj[id] = items;
   });
   const difficulty = document.getElementById('difficulty').value;

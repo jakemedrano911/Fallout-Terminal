@@ -98,8 +98,8 @@ addScreen('menu');
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
-  const titles = document.getElementById('titles').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const headers = document.getElementById('headers').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const titles = document.getElementById('titles').value.split('\n');
+  const headers = document.getElementById('headers').value.split('\n');
   const screensObj = {};
   Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
     const id = screenEl.querySelector('.screen-id').value.trim();
@@ -109,7 +109,7 @@ document.getElementById('builder-form').addEventListener('submit', e => {
       const text = textEl.value;
       const screen = item.querySelector('.menu-screen').value.trim();
       const command = item.querySelector('.menu-command').value.trim();
-      if(!text.trim() && !screen && !command) return null;
+      if(text === '' && !screen && !command) return null;
       if(screen){
         return { text, screen };
       }else if(command){

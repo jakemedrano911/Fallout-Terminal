@@ -14,23 +14,23 @@
 <body>
 <h1>Config Builder</h1>
 <form id="builder-form">
-  <fieldset>
+  <fieldset title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line.">
     <legend>Titles</legend>
-    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line"></textarea>
+    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line" title="Each line becomes a title line"></textarea>
   </fieldset>
-  <fieldset>
+  <fieldset title="Enter header text shown beneath the title. Each line becomes its own header line.">
     <legend>Headers</legend>
-    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line"></textarea>
+    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line" title="Each line becomes a header line"></textarea>
   </fieldset>
-  <fieldset>
+  <fieldset title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text.">
     <legend>Screens</legend>
     <div id="screens"></div>
-    <button type="button" id="add-screen">Add Screen</button>
+    <button type="button" id="add-screen" title="Add a new screen">Add Screen</button>
   </fieldset>
-  <fieldset>
+  <fieldset title="Configure hacking settings for locked terminals.">
     <legend>Hacking</legend>
-    <label><input type="checkbox" id="locked" checked> Locked</label>
-    <label>Difficulty:
+    <label title="If checked, the terminal starts locked and requires hacking."><input type="checkbox" id="locked" checked> Locked</label>
+    <label title="Select the difficulty for the hacking minigame.">Difficulty:
       <select id="difficulty">
         <option>Very Easy</option>
         <option>Easy</option>
@@ -39,10 +39,10 @@
         <option>Very Hard</option>
       </select>
     </label>
-    <label>Password: <input type="text" id="password"></label>
-    <label>Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
+    <label title="Password needed to unlock the terminal after hacking.">Password: <input type="text" id="password"></label>
+    <label title="Comma-separated words that will be removed as duds during hacking.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
   </fieldset>
-  <button type="submit">Generate Config</button>
+  <button type="submit" title="Generate the configuration file and update the preview">Generate Config</button>
 </form>
 <a id="download-link" style="display:none" download="config.json">Download config.json</a>
 <iframe id="preview"></iframe>
@@ -58,11 +58,11 @@ const defaultDifficulties = [
 function addScreen(id='') {
   const fs = document.createElement('fieldset');
   fs.className = 'screen';
-  fs.innerHTML = '<legend>Screen</legend>' +
-                 '<label>ID: <input type="text" class="screen-id"></label>' +
+  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items.">Screen</legend>' +
+                 '<label title="Unique identifier for this screen">ID: <input type="text" class="screen-id"></label>' +
                  '<div class="menu-items"></div>' +
-                 '<button type="button" class="add-menu-item">Add Menu Item</button>' +
-                 '<button type="button" class="remove-screen">Remove Screen</button>';
+                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text">Add Menu Item</button>' +
+                 '<button type="button" class="remove-screen" title="Remove this screen">Remove Screen</button>';
   fs.querySelector('.screen-id').value = id;
   document.getElementById('screens').appendChild(fs);
   addMenuItem(fs);
@@ -71,10 +71,10 @@ function addScreen(id='') {
 function addMenuItem(screenEl, text='', screen='', command='') {
   const div = document.createElement('div');
   div.className = 'menu-item';
-  div.innerHTML = '<input type="text" class="menu-text" placeholder="Menu text">' +
-                  '<input type="text" class="menu-screen" placeholder="Screen id">' +
-                  '<input type="text" class="menu-command" placeholder="Command message">' +
-                  '<button type="button" class="remove-item">Remove</button>';
+  div.innerHTML = '<input type="text" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line">' +
+                  '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected">' +
+                  '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected">' +
+                  '<button type="button" class="remove-item" title="Remove this menu item">Remove</button>';
   div.querySelector('.menu-text').value = text;
   div.querySelector('.menu-screen').value = screen;
   div.querySelector('.menu-command').value = command;

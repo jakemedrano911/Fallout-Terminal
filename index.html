@@ -540,9 +540,11 @@ async function startHacking(){
     usedDuds=Array.from(new Set(usedDuds.filter(w=>wordList.includes(w))));
     shuffle(wordList);
     const password=fixedPassword|| (usedDuds.length?usedDuds[Math.floor(Math.random()*usedDuds.length)]:wordList[Math.floor(Math.random()*wordList.length)]);
+    const attempts = hacking.attempts ?? 4;
+    const maxAttempts = hacking.maxAttempts ?? 4;
     hackingData={
-      attempts:4,
-      maxAttempts:4,
+      attempts,
+      maxAttempts,
       password,
       wordList,
       difficulty:diff.name,

@@ -128,6 +128,8 @@
   "locked": true,
   "hacking": {
     "difficulty": "Average",
+    "attempts": 4,
+    "maxAttempts": 4,
     "difficulties": [
       { "name": "Very Easy", "wordCount": [8, 10], "length": [4, 5] },
       { "name": "Easy", "wordCount": [10, 12], "length": [6, 7] },

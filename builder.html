@@ -52,6 +52,8 @@
         <option>Very Hard</option>
       </select>
     </label>
+    <label title="Starting number of attempts available to the user.">Attempts: <input type="number" id="attempts" min="1" value="4"></label>
+    <label title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4"></label>
     <label title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password"></label>
     <label title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
     <div id="dud-warning" style="color:red"></div>
@@ -137,6 +139,8 @@ function loadConfig(config) {
   document.getElementById('locked').checked = config.locked || false;
   const diff = config.hacking?.difficulty;
   document.getElementById('difficulty').value = diff === undefined ? 'Random' : diff;
+  attemptsEl.value = config.hacking?.attempts ?? 4;
+  maxAttemptsEl.value = config.hacking?.maxAttempts ?? 4;
   document.getElementById('password').value = config.hacking?.password || '';
   document.getElementById('dud-words').value = (config.hacking?.dudWords || []).join(', ');
 }
@@ -182,6 +186,8 @@ document.getElementById('load-config').addEventListener('click', () => document.
 const passwordEl = document.getElementById('password');
 const dudWordsEl = document.getElementById('dud-words');
 const dudWarningEl = document.getElementById('dud-warning');
+const attemptsEl = document.getElementById('attempts');
+const maxAttemptsEl = document.getElementById('max-attempts');
 
 function validateDudWords() {
   const password = passwordEl.value.trim();
@@ -262,6 +268,8 @@ document.getElementById('builder-form').addEventListener('submit', e => {
     const difficulty = diffValue === 'Random' ? undefined : diffValue;
     const password = passwordEl.value.trim();
     const dudWords = dudWordsEl.value.split(',').map(s => s.trim()).filter(Boolean);
+    const attempts = parseInt(attemptsEl.value, 10);
+    const maxAttempts = parseInt(maxAttemptsEl.value, 10);
     const locked = document.getElementById('locked').checked;
     const textColor = document.getElementById('text-color').value;
     const backgroundColor = document.getElementById('bg-color').value;
@@ -270,6 +278,8 @@ document.getElementById('builder-form').addEventListener('submit', e => {
 
     const hacking = { difficulties: defaultDifficulties };
     if (difficulty) hacking.difficulty = difficulty;
+    if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
+    if (!isNaN(maxAttempts) && maxAttempts !== 4) hacking.maxAttempts = maxAttempts;
     if (password) hacking.password = password;
     if (dudWords.length) hacking.dudWords = dudWords;
 

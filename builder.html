@@ -75,6 +75,8 @@ function addScreen(id='') {
                  '<label title="Unique identifier for this screen, e.g., menu">ID: <input type="text" class="screen-id"></label>' +
                  '<div class="menu-items"></div>' +
                  '<button type="button" class="add-menu-item" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>' +
+                 '<button type="button" class="move-screen-up" title="Move this screen up">▲</button>' +
+                 '<button type="button" class="move-screen-down" title="Move this screen down">▼</button>' +
                  '<button type="button" class="remove-screen" title="Remove this screen from the configuration">Remove Screen</button>';
   fs.querySelector('.screen-id').value = id;
   document.getElementById('screens').appendChild(fs);
@@ -87,6 +89,8 @@ function addMenuItem(screenEl, text='', screen='', command='') {
   div.innerHTML = '<textarea rows="2" cols="30" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line, e.g., > ACCESS LOGS"></textarea>' +
                   '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected, like logs">' +
                   '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected, e.g., Maintenance mode engaged">' +
+                  '<button type="button" class="move-item-up" title="Move this item up">▲</button>' +
+                  '<button type="button" class="move-item-down" title="Move this item down">▼</button>' +
                   '<button type="button" class="remove-item" title="Remove this menu item from the screen">Remove</button>';
   div.querySelector('.menu-text').value = text;
   div.querySelector('.menu-screen').value = screen;
@@ -129,16 +133,40 @@ function loadConfig(config) {
 
 document.getElementById('add-screen').addEventListener('click', () => addScreen());
 
-document.getElementById('screens').addEventListener('click', e => {
-  if (e.target.classList.contains('remove-item')) {
-    e.target.parentElement.remove();
-  } else if (e.target.classList.contains('add-menu-item')) {
-    const screenEl = e.target.closest('.screen');
-    addMenuItem(screenEl);
-  } else if (e.target.classList.contains('remove-screen')) {
-    e.target.closest('.screen').remove();
-  }
-});
+  document.getElementById('screens').addEventListener('click', e => {
+    if (e.target.classList.contains('remove-item')) {
+      e.target.parentElement.remove();
+    } else if (e.target.classList.contains('add-menu-item')) {
+      const screenEl = e.target.closest('.screen');
+      addMenuItem(screenEl);
+    } else if (e.target.classList.contains('move-item-up')) {
+      const item = e.target.closest('.menu-item');
+      const prev = item.previousElementSibling;
+      if (prev) {
+        item.parentElement.insertBefore(item, prev);
+      }
+    } else if (e.target.classList.contains('move-item-down')) {
+      const item = e.target.closest('.menu-item');
+      const next = item.nextElementSibling;
+      if (next) {
+        item.parentElement.insertBefore(next, item);
+      }
+    } else if (e.target.classList.contains('remove-screen')) {
+      e.target.closest('.screen').remove();
+    } else if (e.target.classList.contains('move-screen-up')) {
+      const screen = e.target.closest('.screen');
+      const prev = screen.previousElementSibling;
+      if (prev) {
+        screen.parentElement.insertBefore(screen, prev);
+      }
+    } else if (e.target.classList.contains('move-screen-down')) {
+      const screen = e.target.closest('.screen');
+      const next = screen.nextElementSibling;
+      if (next) {
+        screen.parentElement.insertBefore(next, screen);
+      }
+    }
+  });
 
 document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
 const passwordEl = document.getElementById('password');

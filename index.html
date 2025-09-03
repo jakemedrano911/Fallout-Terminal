@@ -420,29 +420,57 @@ async function startHacking(){
       (byLen[l]||(byLen[l]=new Set())).add(w);
     }
     const difficulties=hacking.difficulties;
-    const diff=difficulties[Math.floor(Math.random()*difficulties.length)];
+    if(!Array.isArray(difficulties)||!difficulties.length) throw new Error('Invalid hacking configuration');
+    let diff;
+    if(hacking.difficulty){
+      diff=difficulties.find(d=>d.name===hacking.difficulty);
+      if(!diff) throw new Error('Invalid hacking configuration');
+    }else{
+      diff=difficulties[Math.floor(Math.random()*difficulties.length)];
+    }
     let pool=[];
     for(let l=diff.length[0]; l<=diff.length[1]; l++){
       if(byLen[l]) pool=pool.concat(Array.from(byLen[l]));
     }
-    if(pool.length<diff.wordCount[0]) throw new Error('Insufficient words');
+    const fixedPassword=hacking.password?hacking.password.toUpperCase():null;
+    const fixedDuds=(hacking.dudWords||[]).map(w=>w.toUpperCase());
+    if(fixedPassword){
+      if(fixedPassword.length<diff.length[0]||fixedPassword.length>diff.length[1]) throw new Error('Invalid hacking configuration');
+      if(!byLen[fixedPassword.length]||!byLen[fixedPassword.length].has(fixedPassword)) throw new Error('Invalid hacking configuration');
+    }
+    for(const w of fixedDuds){
+      if(w===fixedPassword) throw new Error('Invalid hacking configuration');
+      if(w.length<diff.length[0]||w.length>diff.length[1]) throw new Error('Invalid hacking configuration');
+      if(!byLen[w.length]||!byLen[w.length].has(w)) throw new Error('Invalid hacking configuration');
+    }
+    const maxCount=diff.wordCount[1];
+    const minCount=Math.max(diff.wordCount[0],fixedDuds.length+1);
+    if(minCount>maxCount) throw new Error('Invalid hacking configuration');
+    let count=minCount+Math.floor(Math.random()*(maxCount-minCount+1));
+    pool=pool.filter(w=>w!==fixedPassword && !fixedDuds.includes(w));
+    if(pool.length<count-fixedDuds.length-(fixedPassword?1:0)) throw new Error('Insufficient words');
     shuffle(pool);
-      const count=diff.wordCount[0]+Math.floor(Math.random()*(diff.wordCount[1]-diff.wordCount[0]+1));
-      const wordList=pool.slice(0,count);
-      const password=wordList[Math.floor(Math.random()*wordList.length)];
-      hackingData={
-        attempts:4,
-        maxAttempts:4,
-        password,
-        wordList,
-        difficulty:diff.name,
-        activeWords:wordList.filter(w=>w!==password)
-      };
+    let wordList=fixedDuds.concat(pool.slice(0,count-fixedDuds.length-(fixedPassword?1:0)));
+    if(fixedPassword) wordList.push(fixedPassword);
+    shuffle(wordList);
+    const password=fixedPassword||wordList[Math.floor(Math.random()*wordList.length)];
+    hackingData={
+      attempts:4,
+      maxAttempts:4,
+      password,
+      wordList,
+      difficulty:diff.name,
+      activeWords:wordList.filter(w=>w!==password)
+    };
     await renderHackScreen();
   }catch(err){
-    console.error('Failed to load words',err);
+    console.error('Failed to start hacking',err);
     hackingActive=false;
-    displayMessage('WORD LIST UNAVAILABLE');
+    if(err.message==='Invalid hacking configuration'){
+      displayMessage('INVALID HACKING CONFIG');
+    }else{
+      displayMessage('WORD LIST UNAVAILABLE');
+    }
   }
 }
 

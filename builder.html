@@ -27,6 +27,12 @@
     <div id="screens"></div>
     <button type="button" id="add-screen" title="Add a new screen">Add Screen</button>
   </fieldset>
+  <fieldset title="Customize terminal appearance.">
+    <legend>Style</legend>
+    <label title="Color of text displayed in the terminal.">Text Color: <input type="color" id="text-color" value="#7aff7a"></label>
+    <label title="Background color of the terminal window.">Background Color: <input type="color" id="bg-color" value="#041204"></label>
+    <label title="Overall scale factor for the terminal UI.">Scale: <input type="number" id="scale" value="1" step="0.1"></label>
+  </fieldset>
   <fieldset title="Configure hacking settings for locked terminals.">
     <legend>Hacking</legend>
     <label title="If checked, the terminal starts locked and requires hacking."><input type="checkbox" id="locked" checked> Locked</label>
@@ -124,11 +130,15 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   const password = document.getElementById('password').value.trim();
   const dudWords = document.getElementById('dud-words').value.split(',').map(s => s.trim()).filter(Boolean);
   const locked = document.getElementById('locked').checked;
+  const textColor = document.getElementById('text-color').value;
+  const backgroundColor = document.getElementById('bg-color').value;
+  const scale = parseFloat(document.getElementById('scale').value) || 1;
 
   const config = {
     titleLines: titles,
     headerLines: headers,
     screens: screensObj,
+    style: { textColor, backgroundColor, scale },
     locked,
     hacking: {
       difficulty,

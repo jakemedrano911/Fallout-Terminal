@@ -343,12 +343,11 @@ async function loadConfig(){
   headerLines=cfg.headerLines;
   screens=cfg.screens;
   hacking=cfg.hacking;
-  if(cfg.style){
-    const {textColor, backgroundColor}=cfg.style;
-    if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
-    if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
-    if('scale' in cfg.style) document.documentElement.style.setProperty('--scale', cfg.style.scale);
-  }
+    if(cfg.style){
+      const {textColor, backgroundColor}=cfg.style;
+      if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
+      if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
+    }
   startLocked=cfg.locked!==undefined?cfg.locked:true;
   if(hasHacked) startLocked=false;
 }

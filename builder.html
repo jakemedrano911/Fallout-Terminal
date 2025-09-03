@@ -31,7 +31,6 @@
     <legend>Style</legend>
     <label title="Color of text displayed in the terminal.">Text Color: <input type="color" id="text-color" value="#7aff7a"></label>
     <label title="Background color of the terminal window.">Background Color: <input type="color" id="bg-color" value="#041204"></label>
-    <label title="Overall scale factor for the terminal UI.">Scale: <input type="number" id="scale" value="1" step="0.1"></label>
   </fieldset>
   <fieldset title="Configure hacking settings for locked terminals.">
     <legend>Hacking</legend>
@@ -137,14 +136,7 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   const locked = document.getElementById('locked').checked;
   const textColor = document.getElementById('text-color').value;
   const backgroundColor = document.getElementById('bg-color').value;
-  const scaleInput = document.getElementById('scale').value.trim();
   const style = { textColor, backgroundColor };
-  if (scaleInput !== '') {
-    const scale = parseFloat(scaleInput);
-    if (!isNaN(scale) && scale !== 1) {
-      style.scale = scale;
-    }
-  }
 
   const config = {
     titleLines: titles,

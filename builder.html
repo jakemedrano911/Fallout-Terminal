@@ -53,6 +53,7 @@
     </label>
     <label title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password"></label>
     <label title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
+    <div id="dud-warning" style="color:red"></div>
   </fieldset>
   <button type="submit" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
 </form>
@@ -140,6 +141,35 @@ document.getElementById('screens').addEventListener('click', e => {
 });
 
 document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
+const passwordEl = document.getElementById('password');
+const dudWordsEl = document.getElementById('dud-words');
+const dudWarningEl = document.getElementById('dud-warning');
+
+function validateDudWords() {
+  const password = passwordEl.value.trim();
+  const duds = dudWordsEl.value.split(',').map(s => s.trim()).filter(Boolean);
+  let msg = '';
+  if (duds.length > 0) {
+    if (password) {
+      const len = password.length;
+      if (duds.some(w => w.length !== len)) {
+        msg = 'Dud words must match the password length.';
+      }
+    } else {
+      const len = duds[0].length;
+      if (duds.some(w => w.length !== len)) {
+        msg = 'All dud words must be the same length.';
+      }
+    }
+  }
+  dudWordsEl.setCustomValidity(msg);
+  dudWarningEl.textContent = msg;
+  dudWarningEl.style.display = msg ? 'block' : 'none';
+  return !msg;
+}
+
+passwordEl.addEventListener('input', validateDudWords);
+dudWordsEl.addEventListener('input', validateDudWords);
 
   document.getElementById('config-file').addEventListener('change', e => {
     const file = e.target.files[0];
@@ -157,6 +187,10 @@ document.getElementById('load-config').addEventListener('click', () => document.
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
+  if (!validateDudWords()) {
+    dudWordsEl.reportValidity();
+    return;
+  }
     const rawTitles = document.getElementById('titles').value.split('\n');
     const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
     const rawHeaders = document.getElementById('headers').value.split('\n');
@@ -164,60 +198,63 @@ document.getElementById('builder-form').addEventListener('submit', e => {
     const rawBoot = document.getElementById('boot-lines').value.split('\n');
     const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
     const screensObj = {};
-  Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
-    const id = screenEl.querySelector('.screen-id').value.trim();
-    if(!id) return;
-    const items = [];
-    Array.from(screenEl.querySelectorAll('.menu-item')).forEach(item => {
-      const textEl = item.querySelector('.menu-text');
-      const text = textEl.value.trimEnd();
-      const screen = item.querySelector('.menu-screen').value.trim();
-      const command = item.querySelector('.menu-command').value.trim();
-      if(!text && !screen && !command) {
-        return;
-      }
-      if(screen){
-        items.push({ text, screen });
-      }else if(command){
-        items.push({ text, command });
-      }else{
-        items.push(text);
-      }
+    Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
+      const id = screenEl.querySelector('.screen-id').value.trim();
+      if(!id) return;
+      const items = [];
+      Array.from(screenEl.querySelectorAll('.menu-item')).forEach(item => {
+        const textEl = item.querySelector('.menu-text');
+        const text = textEl.value.trimEnd();
+        const screen = item.querySelector('.menu-screen').value.trim();
+        const command = item.querySelector('.menu-command').value.trim();
+        if(!text && !screen && !command) {
+          return;
+        }
+        if(screen){
+          items.push({ text, screen });
+        }else if(command){
+          items.push({ text, command });
+        }else{
+          items.push(text);
+        }
+      });
+      screensObj[id] = items;
     });
-    screensObj[id] = items;
-  });
-  const difficulty = document.getElementById('difficulty').value;
-  const password = document.getElementById('password').value.trim();
-  const dudWords = document.getElementById('dud-words').value.split(',').map(s => s.trim()).filter(Boolean);
-  const locked = document.getElementById('locked').checked;
-  const textColor = document.getElementById('text-color').value;
-  const backgroundColor = document.getElementById('bg-color').value;
-  const borderColor = document.getElementById('border-color').value;
-    const style = { textColor, backgroundColor, borderColor };
-
-    const config = {
-      titleLines: titles,
-      headerLines: headers,
-      bootLines,
-      screens: screensObj,
-      style,
-      locked,
-      hacking: {
-        difficulty,
-      password,
-      dudWords,
-      difficulties: defaultDifficulties
+    const difficulty = document.getElementById('difficulty').value;
+    let password = passwordEl.value.trim();
+    const dudWords = dudWordsEl.value.split(',').map(s => s.trim()).filter(Boolean);
+    if (!password && dudWords.length) {
+      password = dudWords[Math.floor(Math.random() * dudWords.length)];
     }
-  };
+    const locked = document.getElementById('locked').checked;
+    const textColor = document.getElementById('text-color').value;
+    const backgroundColor = document.getElementById('bg-color').value;
+    const borderColor = document.getElementById('border-color').value;
+      const style = { textColor, backgroundColor, borderColor };
 
-  const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const dl = document.getElementById('download-link');
-  dl.href = url;
-  dl.style.display = 'inline';
+      const config = {
+        titleLines: titles,
+        headerLines: headers,
+        bootLines,
+        screens: screensObj,
+        style,
+        locked,
+        hacking: {
+          difficulty,
+        password,
+        dudWords,
+        difficulties: defaultDifficulties
+      }
+    };
 
-  updatePreview(config);
-});
+    const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const dl = document.getElementById('download-link');
+    dl.href = url;
+    dl.style.display = 'inline';
+
+    updatePreview(config);
+  });
 
 function updatePreview(config) {
   fetch('index.html').then(res => res.text()).then(html => {

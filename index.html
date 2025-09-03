@@ -354,7 +354,7 @@ async function loadConfig(){
   headerLines=cfg.headerLines;
   bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
   screens=cfg.screens;
-  hacking=cfg.hacking;
+  hacking = cfg.hacking || {};
     if(cfg.style){
       const {textColor, backgroundColor, borderColor}=cfg.style;
       if(textColor) document.documentElement.style.setProperty('--text-color', textColor);

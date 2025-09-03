@@ -1113,9 +1113,10 @@ async function typeUserInput(el,text){
   for(let ch of text){
     el.textContent+=ch;
     playCharFocusSound();
-    await sleep(baseDelay*10);
+    if(speed!==Infinity) await sleep(baseDelay*10);
   }
   el.textContent+='\n';
+  playEnterCharSound();
 }
 
 function splitEntities(str){
@@ -1225,7 +1226,8 @@ async function showLockedBoot(){
   header.appendChild(l2);
   if(speed!==Infinity) await sleep(1500);
   await typeUserInput(l2,'SET TERMINAL/INQUIRE');
-
+  const br1=document.createElement('div');
+  header.appendChild(br1);
   startScrollSound();
   const l3=document.createElement('div');
   header.appendChild(l3);
@@ -1243,7 +1245,8 @@ async function showLockedBoot(){
   header.appendChild(l5);
   if(speed!==Infinity) await sleep(1500);
   await typeUserInput(l5,'SET HALT RESTART/MAINT');
-
+  const br2=document.createElement('div');
+  header.appendChild(br2);
   const sysLines=[
     'Initializing Robco Industries (TM) MF Boot Agent v2.3.0',
     'RETROS BIOS',
@@ -1290,6 +1293,8 @@ async function showBoot(){
   header.appendChild(line2);
   if(speed!==Infinity) await sleep(1500);
   await typeUserInput(line2,'Logon Admin');
+  const brBoot=document.createElement('div');
+  header.appendChild(brBoot);
   const line3=document.createElement('div');
   header.appendChild(line3);
   startScrollSound();
@@ -1306,6 +1311,8 @@ async function showBoot(){
 }
 
 async function showIntro(){
+  typing=true;
+  speed=1;
   restoreInput();
   startScrollSound();
   header.innerHTML='';
@@ -1327,6 +1334,7 @@ async function showIntro(){
     await typeText(div,line);
   }
   stopScrollSound();
+  typing=false;
   showScreen('menu');
 }
 

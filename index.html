@@ -1210,7 +1210,14 @@ async function showScreen(name){
         div.className='option';
         div.tabIndex=0;
         await typeText(div,line.text);
-        div.addEventListener('click',()=>{playSelectSound();showScreen(line.screen);});
+        div.addEventListener('click',()=>{
+          playSelectSound();
+          if(line.screen){
+            showScreen(line.screen);
+          }else if(line.command){
+            displayMessage(line.command);
+          }
+        });
         div.addEventListener('mouseenter',()=>{
           if(selected>=0){
             currentOptions[selected].classList.remove('selected');

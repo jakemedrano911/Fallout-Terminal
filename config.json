@@ -102,6 +102,9 @@
     ]
   },
   "hacking": {
+    "difficulty": "Average",
+    "password": "HARDWARE",
+    "dudWords": ["RESEARCH", "SCIENTIST"],
     "difficulties": [
       { "name": "Very Easy", "wordCount": [8, 10], "length": [4, 5] },
       { "name": "Easy", "wordCount": [10, 12], "length": [6, 7] },

@@ -23,9 +23,9 @@
     <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line"></textarea>
   </fieldset>
   <fieldset>
-    <legend>Menu Items</legend>
-    <div id="menu-items"></div>
-    <button type="button" id="add-menu-item">Add Menu Item</button>
+    <legend>Screens</legend>
+    <div id="screens"></div>
+    <button type="button" id="add-screen">Add Screen</button>
   </fieldset>
   <fieldset>
     <legend>Hacking</legend>
@@ -55,36 +55,70 @@ const defaultDifficulties = [
   { name: "Very Hard", wordCount: [17,20], length: [12,15] }
 ];
 
-function addMenuItem(text='', screen='') {
+function addScreen(id='') {
+  const fs = document.createElement('fieldset');
+  fs.className = 'screen';
+  fs.innerHTML = '<legend>Screen</legend>' +
+                 '<label>ID: <input type="text" class="screen-id"></label>' +
+                 '<div class="menu-items"></div>' +
+                 '<button type="button" class="add-menu-item">Add Menu Item</button>' +
+                 '<button type="button" class="remove-screen">Remove Screen</button>';
+  fs.querySelector('.screen-id').value = id;
+  document.getElementById('screens').appendChild(fs);
+  addMenuItem(fs);
+}
+
+function addMenuItem(screenEl, text='', screen='', command='') {
   const div = document.createElement('div');
   div.className = 'menu-item';
   div.innerHTML = '<input type="text" class="menu-text" placeholder="Menu text">' +
                   '<input type="text" class="menu-screen" placeholder="Screen id">' +
+                  '<input type="text" class="menu-command" placeholder="Command message">' +
                   '<button type="button" class="remove-item">Remove</button>';
   div.querySelector('.menu-text').value = text;
   div.querySelector('.menu-screen').value = screen;
-  document.getElementById('menu-items').appendChild(div);
+  div.querySelector('.menu-command').value = command;
+  screenEl.querySelector('.menu-items').appendChild(div);
 }
 
-document.getElementById('add-menu-item').addEventListener('click', () => addMenuItem());
+document.getElementById('add-screen').addEventListener('click', () => addScreen());
 
-document.getElementById('menu-items').addEventListener('click', e => {
+document.getElementById('screens').addEventListener('click', e => {
   if (e.target.classList.contains('remove-item')) {
     e.target.parentElement.remove();
+  } else if (e.target.classList.contains('add-menu-item')) {
+    const screenEl = e.target.closest('.screen');
+    addMenuItem(screenEl);
+  } else if (e.target.classList.contains('remove-screen')) {
+    e.target.closest('.screen').remove();
   }
 });
 
-addMenuItem();
+addScreen('menu');
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
   const titles = document.getElementById('titles').value.split('\n').map(s => s.trim()).filter(Boolean);
   const headers = document.getElementById('headers').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const menuItems = Array.from(document.querySelectorAll('#menu-items .menu-item')).map(item => {
-    const text = item.querySelector('.menu-text').value.trim();
-    const screen = item.querySelector('.menu-screen').value.trim();
-    return text && screen ? { text, screen } : null;
-  }).filter(Boolean);
+  const screensObj = {};
+  Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
+    const id = screenEl.querySelector('.screen-id').value.trim();
+    if(!id) return;
+    const items = Array.from(screenEl.querySelectorAll('.menu-item')).map(item => {
+      const text = item.querySelector('.menu-text').value.trim();
+      const screen = item.querySelector('.menu-screen').value.trim();
+      const command = item.querySelector('.menu-command').value.trim();
+      if(!text && !screen && !command) return null;
+      if(screen){
+        return { text, screen };
+      }else if(command){
+        return { text, command };
+      }else{
+        return text;
+      }
+    }).filter(x => x !== null);
+    screensObj[id] = items;
+  });
   const difficulty = document.getElementById('difficulty').value;
   const password = document.getElementById('password').value.trim();
   const dudWords = document.getElementById('dud-words').value.split(',').map(s => s.trim()).filter(Boolean);
@@ -93,7 +127,7 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   const config = {
     titleLines: titles,
     headerLines: headers,
-    screens: { menu: menuItems },
+    screens: screensObj,
     locked,
     hacking: {
       difficulty,

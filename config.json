@@ -16,6 +16,8 @@
       { "text": "> Mr. Handy Service Records", "screen": "handy" },
       { "text": "> Assaultron Combat Models", "screen": "assaultron" },
       { "text": "> Securitron Systems Control", "screen": "securitron" },
+      { "text": "> Turret Controls", "screen": "turret" },
+      { "text": "> Run Protectron Maintenance Mode", "command": "Maintenance mode Engaged" },
       { "text": "> Experimental Robotics Files", "screen": "experimental" },
       "",
       ""
@@ -73,6 +75,14 @@
       "",
       "Systems stable. Last crash report: NONE.",
       "All Securitron units in storage. Awaiting deployment order.",
+      "",
+      { "text": "> RETURN", "screen": "menu" }
+    ],
+    "turret": [
+      "== TURRET CONTROLS ==",
+      "",
+      { "text": "> Activate Turrets", "command": "Live fire mode engaged" },
+      { "text": "> Deactivate Turrets", "command": "Turrets placed in standby mode" },
       "",
       { "text": "> RETURN", "screen": "menu" }
     ],

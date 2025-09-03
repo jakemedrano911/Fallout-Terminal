@@ -361,6 +361,8 @@ const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
+const isTouch=('ontouchstart' in window || navigator.maxTouchPoints>0 || window.matchMedia('(pointer: coarse)').matches);
+function focusInput(){if(!isTouch) input.focus();}
 const configFile=document.getElementById('config-file');
 const configButton=document.getElementById('config-button');
 const historyEl=content;
@@ -731,7 +733,7 @@ async function renderHackScreen(){
   hackingData.blocks=blocks;
   hackingData.messages=messages;
   hackingData.grid=grid;
-  input.focus();
+  focusInput();
 }
 
 function updateAttempts(){
@@ -827,7 +829,7 @@ function processGuess(guess,playSound=true){
   input.textContent='';
   inputText='';
   updateInput();
-  input.focus();
+  focusInput();
 }
 
 function addHackMessage(text){
@@ -932,7 +934,7 @@ function handleCommand(cmd){
   input.textContent='';
   inputText='';
   updateInput();
-  input.focus();
+  focusInput();
 }
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();

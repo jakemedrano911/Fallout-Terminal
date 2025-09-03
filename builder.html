@@ -9,40 +9,40 @@
     .menu-item { margin-bottom: 0.5rem; }
     .menu-item input, .menu-item textarea { margin-right: 0.5rem; }
     iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 1rem; }
-    .tooltip-wrapper { position: relative; display: inline-block; }
-    .tooltip-icon { margin-left: 0.25rem; cursor: help; background: #ccc; border-radius: 50%; width: 1em; height: 1em; display: inline-flex; align-items: center; justify-content: center; font-size: 0.8em; }
-    .tooltip-text { visibility: hidden; background-color: #333; color: #fff; border-radius: 4px; padding: 0.5em; position: absolute; z-index: 1; bottom: 125%; left: 50%; transform: translateX(-50%); width: 200px; }
-    .tooltip-wrapper:hover .tooltip-text { visibility: visible; }
   </style>
 </head>
 <body>
 <h1>Config Builder</h1>
-<button type="button" id="load-config" title="Load configuration from JSON">Load Config</button>
+<button type="button" id="load-config" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
 <input type="file" id="config-file" accept="application/json" style="display:none">
 <form id="builder-form">
-  <fieldset title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line.">
+  <fieldset title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
     <legend>Titles</legend>
-    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line" title="Each line becomes a title line"></textarea>
+    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line" title="Each line becomes a title line, e.g., ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM"></textarea>
   </fieldset>
-  <fieldset title="Enter header text shown beneath the title. Each line becomes its own header line.">
+  <fieldset title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
     <legend>Headers</legend>
-    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line" title="Each line becomes a header line"></textarea>
+    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
   </fieldset>
-  <fieldset title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text.">
+  <fieldset title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
+    <legend>Boot Animation Text</legend>
+    <textarea id="boot-lines" rows="4" cols="50" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
+  </fieldset>
+  <fieldset title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
     <legend>Screens</legend>
     <div id="screens"></div>
-    <button type="button" id="add-screen" title="Add a new screen">Add Screen</button>
+    <button type="button" id="add-screen" title="Add a new screen, e.g., a settings screen">Add Screen</button>
   </fieldset>
   <fieldset title="Customize terminal appearance.">
     <legend>Style</legend>
-    <label title="Color of text displayed in the terminal.">Text Color: <input type="color" id="text-color" value="#7aff7a"></label>
-    <label title="Background color of the terminal window.">Background Color: <input type="color" id="bg-color" value="#041204"></label>
-    <label title="Color of the terminal window outline.">Outline Color: <input type="color" id="border-color" value="#008800"></label>
+    <label title="Color of text displayed in the terminal, e.g., #7aff7a.">Text Color: <input type="color" id="text-color" value="#7aff7a"></label>
+    <label title="Background color of the terminal window, e.g., #041204.">Background Color: <input type="color" id="bg-color" value="#041204"></label>
+    <label title="Color of the terminal window outline, e.g., #008800.">Outline Color: <input type="color" id="border-color" value="#008800"></label>
   </fieldset>
   <fieldset title="Configure hacking settings for locked terminals.">
     <legend>Hacking</legend>
-    <label title="If checked, the terminal starts locked and requires hacking."><input type="checkbox" id="locked" checked> Locked</label>
-    <label title="Select the difficulty for the hacking minigame.">Difficulty:
+    <label title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked> Locked</label>
+    <label title="Select the difficulty for the hacking minigame, such as 'Very Easy' or 'Hard'.">Difficulty:
       <select id="difficulty">
         <option>Very Easy</option>
         <option>Easy</option>
@@ -51,10 +51,10 @@
         <option>Very Hard</option>
       </select>
     </label>
-    <label title="Password needed to unlock the terminal after hacking.">Password: <input type="text" id="password"></label>
-    <label title="Comma-separated words that will be removed as duds during hacking.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
+    <label title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password"></label>
+    <label title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
   </fieldset>
-  <button type="submit" title="Generate the configuration file and update the preview">Generate Config</button>
+  <button type="submit" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
 </form>
 <a id="download-link" style="display:none" download="config.json">Download config.json</a>
 <iframe id="preview"></iframe>
@@ -67,63 +67,36 @@ const defaultDifficulties = [
   { name: "Very Hard", wordCount: [17,20], length: [12,15] }
 ];
 
-function createTooltip(el) {
-  const text = el.getAttribute('title');
-  if (!text) return;
-  el.removeAttribute('title');
-  const wrapper = document.createElement('span');
-  wrapper.className = 'tooltip-wrapper';
-  const icon = document.createElement('span');
-  icon.className = 'tooltip-icon';
-  icon.textContent = '?';
-  const tip = document.createElement('span');
-  tip.className = 'tooltip-text';
-  tip.textContent = text;
-  wrapper.appendChild(icon);
-  wrapper.appendChild(tip);
-  if (el.tagName === 'FIELDSET') {
-    const legend = el.querySelector('legend');
-    legend.appendChild(wrapper);
-  } else {
-    el.parentNode.insertBefore(wrapper, el.nextSibling);
-  }
-}
-
-function applyTooltipsWithin(root) {
-  root.querySelectorAll('[title]').forEach(el => createTooltip(el));
-}
-
 function addScreen(id='') {
   const fs = document.createElement('fieldset');
   fs.className = 'screen';
-  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items.">Screen</legend>' +
-                 '<label title="Unique identifier for this screen">ID: <input type="text" class="screen-id"></label>' +
+  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items. Example: menu or help.">Screen</legend>' +
+                 '<label title="Unique identifier for this screen, e.g., menu">ID: <input type="text" class="screen-id"></label>' +
                  '<div class="menu-items"></div>' +
-                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text">Add Menu Item</button>' +
-                 '<button type="button" class="remove-screen" title="Remove this screen">Remove Screen</button>';
+                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>' +
+                 '<button type="button" class="remove-screen" title="Remove this screen from the configuration">Remove Screen</button>';
   fs.querySelector('.screen-id').value = id;
   document.getElementById('screens').appendChild(fs);
   addMenuItem(fs);
-  applyTooltipsWithin(fs);
 }
 
 function addMenuItem(screenEl, text='', screen='', command='') {
   const div = document.createElement('div');
   div.className = 'menu-item';
-  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line"></textarea>' +
-                  '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected">' +
-                  '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected">' +
-                  '<button type="button" class="remove-item" title="Remove this menu item">Remove</button>';
+  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line, e.g., > ACCESS LOGS"></textarea>' +
+                  '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected, like logs">' +
+                  '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected, e.g., Maintenance mode engaged">' +
+                  '<button type="button" class="remove-item" title="Remove this menu item from the screen">Remove</button>';
   div.querySelector('.menu-text').value = text;
   div.querySelector('.menu-screen').value = screen;
   div.querySelector('.menu-command').value = command;
   screenEl.querySelector('.menu-items').appendChild(div);
-  applyTooltipsWithin(div);
 }
 
 function loadConfig(config) {
   document.getElementById('titles').value = (config.titleLines || []).join('\n');
   document.getElementById('headers').value = (config.headerLines || []).join('\n');
+  document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
 
   const screensDiv = document.getElementById('screens');
   screensDiv.innerHTML = '';
@@ -168,28 +141,29 @@ document.getElementById('screens').addEventListener('click', e => {
 
 document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
 
-document.getElementById('config-file').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const config = JSON.parse(reader.result);
-    loadConfig(config);
-    updatePreview(config);
-  };
-  reader.readAsText(file);
-});
+  document.getElementById('config-file').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const config = JSON.parse(reader.result);
+      loadConfig(config);
+      updatePreview(config);
+    };
+    reader.readAsText(file);
+  });
 
-addScreen('menu');
-applyTooltipsWithin(document);
+  addScreen('menu');
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
-  const rawTitles = document.getElementById('titles').value.split('\n');
-  const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
-  const rawHeaders = document.getElementById('headers').value.split('\n');
-  const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
-  const screensObj = {};
+    const rawTitles = document.getElementById('titles').value.split('\n');
+    const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
+    const rawHeaders = document.getElementById('headers').value.split('\n');
+    const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
+    const rawBoot = document.getElementById('boot-lines').value.split('\n');
+    const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
+    const screensObj = {};
   Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
     const id = screenEl.querySelector('.screen-id').value.trim();
     if(!id) return;
@@ -219,16 +193,17 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   const textColor = document.getElementById('text-color').value;
   const backgroundColor = document.getElementById('bg-color').value;
   const borderColor = document.getElementById('border-color').value;
-  const style = { textColor, backgroundColor, borderColor };
+    const style = { textColor, backgroundColor, borderColor };
 
-  const config = {
-    titleLines: titles,
-    headerLines: headers,
-    screens: screensObj,
-    style,
-    locked,
-    hacking: {
-      difficulty,
+    const config = {
+      titleLines: titles,
+      headerLines: headers,
+      bootLines,
+      screens: screensObj,
+      style,
+      locked,
+      hacking: {
+        difficulty,
       password,
       dudWords,
       difficulties: defaultDifficulties

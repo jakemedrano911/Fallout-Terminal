@@ -1091,7 +1091,7 @@ async function typeUserInput(el,text){
   for(let ch of text){
     el.textContent+=ch;
     playCharFocusSound();
-    await sleep(baseDelay*2);
+    await sleep(baseDelay*10);
   }
   el.textContent+='\n';
 }
@@ -1196,6 +1196,7 @@ async function showBoot(){
   const line2=document.createElement('div');
   line2.textContent='>';
   header.appendChild(line2);
+  await sleep(1500);
   await typeUserInput(line2,'Logon Admin');
   const line3=document.createElement('div');
   header.appendChild(line3);
@@ -1205,6 +1206,7 @@ async function showBoot(){
   const line4=document.createElement('div');
   line4.textContent='>';
   header.appendChild(line4);
+  await sleep(1500);
   await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
   await sleep(500);
   await showIntro();

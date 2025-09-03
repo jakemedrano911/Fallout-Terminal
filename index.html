@@ -299,7 +299,7 @@
   </div>
 </div>
 <script>
-function updateScale(width=document.documentElement.offsetWidth, height=document.documentElement.offsetHeight){
+function updateScale(width=window.innerWidth, height=window.innerHeight){
   const scale=Math.min(
     3,
     Math.max(
@@ -312,11 +312,11 @@ function updateScale(width=document.documentElement.offsetWidth, height=document
   );
   document.documentElement.style.setProperty('--scale',scale);
 }
-let prevWidth=document.documentElement.offsetWidth;
-let prevHeight=document.documentElement.offsetHeight;
+let prevWidth=window.innerWidth;
+let prevHeight=window.innerHeight;
 window.addEventListener('resize',()=>{
-  const w=document.documentElement.offsetWidth;
-  const h=document.documentElement.offsetHeight;
+  const w=window.innerWidth;
+  const h=window.innerHeight;
   if(w!==prevWidth || h!==prevHeight){
     prevWidth=w;
     prevHeight=h;
@@ -1358,6 +1358,9 @@ powerButton.addEventListener('click',async()=>{
     const powerSound=new Audio('Terminal 3/poweron.mp3');
     powerSound.play();
     powerScreen.style.display='none';
+    updateScale();
+    prevWidth=window.innerWidth;
+    prevHeight=window.innerHeight;
     terminal.classList.add('powered');
     audioMenu.style.display='flex';
     startFanHum();
@@ -1382,6 +1385,9 @@ powerButton.addEventListener('click',async()=>{
     stopFanHum();
     stopScrollSound();
     powerScreen.style.display='flex';
+    updateScale();
+    prevWidth=window.innerWidth;
+    prevHeight=window.innerHeight;
     terminal.classList.remove('powered');
     audioMenu.style.display='none';
     volumeControls.style.display='none';

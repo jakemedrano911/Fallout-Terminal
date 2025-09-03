@@ -79,7 +79,7 @@
     align-items:center;
     justify-content:flex-end;
   }
-  #power-container, #audio-menu{
+  #power-container, #audio-menu, #config-container{
     position:relative;
     display:flex;
     flex-direction:column;
@@ -87,6 +87,9 @@
   }
   #controls-container span{color:#7aff7a;}
   #audio-menu span{
+    margin-top:calc(5px * var(--scale));
+  }
+  #config-container span{
     margin-top:calc(5px * var(--scale));
   }
   #power-container span{
@@ -277,6 +280,10 @@
         <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
       </div>
     </div>
+    <div id="config-container">
+      <input type="file" id="config-file" accept="application/json">
+      <span>Config</span>
+    </div>
     <div id="power-container">
       <button id="power-button" aria-label="Power">&#x23FB;</button>
       <span>Power</span>
@@ -304,14 +311,20 @@ let headerLines=[];
 let screens={};
 let hacking={};
 
-const configPromise=fetch('config.json')
-  .then(res=>res.json())
-  .then(cfg=>{
-    titleLines=cfg.titleLines;
-    headerLines=cfg.headerLines;
-    screens=cfg.screens;
-    hacking=cfg.hacking;
-  });
+let uploadedConfig=null;
+
+async function loadConfig(){
+  let cfg;
+  if(uploadedConfig){
+    cfg=uploadedConfig;
+  }else{
+    cfg=await fetch('config.json').then(res=>res.json());
+  }
+  titleLines=cfg.titleLines;
+  headerLines=cfg.headerLines;
+  screens=cfg.screens;
+  hacking=cfg.hacking;
+}
 
 const terminal=document.getElementById('terminal');
 const terminalScreen=document.getElementById('terminal-screen');
@@ -320,7 +333,21 @@ const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
+const configFile=document.getElementById('config-file');
 const historyEl=content;
+
+configFile.addEventListener('change',async e=>{
+  const file=e.target.files[0];
+  if(file){
+    try{
+      const text=await file.text();
+      uploadedConfig=JSON.parse(text);
+    }catch(err){
+      console.error('Invalid configuration file',err);
+      uploadedConfig=null;
+    }
+  }
+});
 let currentOptions=[];
 let selected=-1;
 let typing=false;
@@ -1255,7 +1282,7 @@ powerButton.addEventListener('click',async()=>{
       updateInput();
       hackingActive=false;
       hackingData=null;
-      await configPromise;
+      await loadConfig();
       loadScrollSound().then(init);
     }
     powered=true;

@@ -111,10 +111,11 @@
       { "text": "> RETURN", "screen": "menu" }
     ]
   },
-  "style": {
-    "textColor": "#7aff7a",
-    "backgroundColor": "#041204"
-  },
+    "style": {
+      "textColor": "#7aff7a",
+      "backgroundColor": "#041204",
+      "borderColor": "#008800"
+    },
   "locked": true,
   "hacking": {
     "difficulty": "Average",

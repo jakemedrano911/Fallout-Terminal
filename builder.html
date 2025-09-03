@@ -31,6 +31,7 @@
     <legend>Style</legend>
     <label title="Color of text displayed in the terminal.">Text Color: <input type="color" id="text-color" value="#7aff7a"></label>
     <label title="Background color of the terminal window.">Background Color: <input type="color" id="bg-color" value="#041204"></label>
+    <label title="Color of the terminal window outline.">Outline Color: <input type="color" id="border-color" value="#008800"></label>
   </fieldset>
   <fieldset title="Configure hacking settings for locked terminals.">
     <legend>Hacking</legend>
@@ -136,7 +137,8 @@ document.getElementById('builder-form').addEventListener('submit', e => {
   const locked = document.getElementById('locked').checked;
   const textColor = document.getElementById('text-color').value;
   const backgroundColor = document.getElementById('bg-color').value;
-  const style = { textColor, backgroundColor };
+  const borderColor = document.getElementById('border-color').value;
+  const style = { textColor, backgroundColor, borderColor };
 
   const config = {
     titleLines: titles,

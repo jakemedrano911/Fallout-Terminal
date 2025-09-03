@@ -15,6 +15,7 @@
     --scale:1;
     --text-color:#7aff7a;
     --terminal-bg:#041204;
+    --border-color:#008800;
   }
   html{
     overflow:auto;
@@ -53,7 +54,7 @@
     position:relative;
     width:100%;
     height:100%;
-    border:calc(4px * var(--scale)) solid #008800;
+    border:calc(4px * var(--scale)) solid var(--border-color);
     box-sizing:border-box;
     padding:calc(6px * var(--scale));
     padding-left:calc(6px * var(--scale) + 4ch);
@@ -103,7 +104,7 @@
   #power-button, #audio-toggle, #config-button{
     background:#b3410e;
     color:#fff;
-    border:calc(2px * var(--scale)) solid #008800;
+    border:calc(2px * var(--scale)) solid var(--border-color);
     width:max(44px, calc(40px * var(--scale)));
     height:max(44px, calc(40px * var(--scale)));
     border-radius:0;
@@ -126,7 +127,7 @@
     left:50%;
     transform:translateX(-50%);
     background:var(--terminal-bg);
-    border:calc(2px * var(--scale)) solid #008800;
+    border:calc(2px * var(--scale)) solid var(--border-color);
     color:var(--text-color);
     padding:calc(5px * var(--scale));
     z-index:1;
@@ -233,19 +234,19 @@
     margin-top:calc(4px * var(--scale));
   }
   .option:hover, .option:focus, .option.selected{
-    background:#008800;
+    background:var(--border-color);
     color:var(--terminal-bg);
   }
   #hack-wrap{display:flex;justify-content:flex-start;align-items:flex-start;width:100%;gap:2ch;}
   #hacking{white-space:pre;font:inherit;flex-shrink:0;}
   #hacking .word{cursor:pointer;}
   #hacking .char:hover,
-  #hacking .char.highlight{background:#008800;color:var(--terminal-bg);}
+  #hacking .char.highlight{background:var(--border-color);color:var(--terminal-bg);}
   #hacking .word:hover,
-  #hacking .word.highlight{background:#008800;color:var(--terminal-bg);}
+  #hacking .word.highlight{background:var(--border-color);color:var(--terminal-bg);}
   #hacking .bracket{cursor:pointer;}
   #hacking .bracket:hover,
-  #hacking .bracket.highlight{background:#008800;color:var(--terminal-bg);}
+  #hacking .bracket.highlight{background:var(--border-color);color:var(--terminal-bg);}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;overflow:hidden;}
   #hack-messages #input{margin-top:0;align-self:flex-start;}
   #hack-prompt{margin-top:calc(4px * var(--scale));}
@@ -344,9 +345,10 @@ async function loadConfig(){
   screens=cfg.screens;
   hacking=cfg.hacking;
     if(cfg.style){
-      const {textColor, backgroundColor}=cfg.style;
+      const {textColor, backgroundColor, borderColor}=cfg.style;
       if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
       if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
+      if(borderColor) document.documentElement.style.setProperty('--border-color', borderColor);
     }
   startLocked=cfg.locked!==undefined?cfg.locked:true;
   if(hasHacked) startLocked=false;

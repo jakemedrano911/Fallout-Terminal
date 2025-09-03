@@ -299,21 +299,31 @@
   </div>
 </div>
 <script>
-function updateScale(){
+function updateScale(width=document.documentElement.offsetWidth, height=document.documentElement.offsetHeight){
   const scale=Math.min(
     3,
     Math.max(
       0.7,
-        Math.min(
-          window.innerWidth*0.98/621,
-          window.innerHeight*0.98/660
-        )*0.93
+      Math.min(
+        width*0.98/621,
+        height*0.98/660
+      )*0.93
     )
   );
   document.documentElement.style.setProperty('--scale',scale);
 }
-window.addEventListener('resize',updateScale);
-updateScale();
+let prevWidth=document.documentElement.offsetWidth;
+let prevHeight=document.documentElement.offsetHeight;
+window.addEventListener('resize',()=>{
+  const w=document.documentElement.offsetWidth;
+  const h=document.documentElement.offsetHeight;
+  if(w!==prevWidth || h!==prevHeight){
+    prevWidth=w;
+    prevHeight=h;
+    updateScale(w,h);
+  }
+});
+updateScale(prevWidth,prevHeight);
 let titleLines=[];
 let headerLines=[];
 let screens={};

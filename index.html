@@ -331,6 +331,7 @@ async function loadConfig(){
   screens=cfg.screens;
   hacking=cfg.hacking;
   startLocked=cfg.locked!==undefined?cfg.locked:true;
+  if(hasHacked) startLocked=false;
 }
 
 const terminal=document.getElementById('terminal');
@@ -370,6 +371,8 @@ const MAX_INPUT_CHARS=64;
 let hackingActive=false;
 let hackingData=null;
 let terminalLocked=false;
+let hasHacked=false;
+let hackedPasswordLength=0;
 
 function restoreInput(){
   if(input.parentElement!==terminalScreen){
@@ -781,6 +784,8 @@ function processGuess(guess,playSound=true){
     hackingData.warningEl.textContent='';
     hackingData.attemptsEl.textContent='';
     playPasswordResult(true);
+    hackedPasswordLength=hackingData.password.length;
+    hasHacked=true;
     setTimeout(()=>showIntro(),500);
   }else{
     let like=0;
@@ -1082,6 +1087,15 @@ async function typeText(el,text){
   }
 }
 
+async function typeUserInput(el,text){
+  for(let ch of text){
+    el.textContent+=ch;
+    playCharFocusSound();
+    await sleep(baseDelay*2);
+  }
+  el.textContent+='\n';
+}
+
 function splitEntities(str){
   const div=document.createElement('div');
   div.textContent=str;
@@ -1157,11 +1171,43 @@ async function init(){
   startScrollSound();
   header.innerHTML='';
   stopScrollSound();
-  if(startLocked){
+  if(hasHacked){
+    await showBoot();
+  }else if(startLocked){
     await startHacking();
   }else{
     await showIntro();
   }
+}
+
+async function showBoot(){
+  restoreInput();
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.remove('hack-header');
+  content.classList.remove('hack-content');
+  header.style.marginLeft='-2ch';
+  header.style.textAlign='left';
+  startScrollSound();
+  const line1=document.createElement('div');
+  header.appendChild(line1);
+  await typeText(line1,'Welcome to RobCo Industries (TM) Termlink');
+  stopScrollSound();
+  const line2=document.createElement('div');
+  line2.textContent='>';
+  header.appendChild(line2);
+  await typeUserInput(line2,'Logon Admin');
+  const line3=document.createElement('div');
+  header.appendChild(line3);
+  startScrollSound();
+  await typeText(line3,'Enter Password');
+  stopScrollSound();
+  const line4=document.createElement('div');
+  line4.textContent='>';
+  header.appendChild(line4);
+  await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
+  await sleep(500);
+  await showIntro();
 }
 
 async function showIntro(){

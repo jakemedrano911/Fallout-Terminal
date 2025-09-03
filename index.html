@@ -344,6 +344,7 @@ let hacking={};
 let startLocked=true;
 
 let uploadedConfig=null;
+window.addEventListener('message', e => { uploadedConfig = e.data; loadConfig(); });
 
 async function loadConfig(){
   let cfg;

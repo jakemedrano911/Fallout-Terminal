@@ -98,8 +98,9 @@ addScreen('menu');
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
-  const titles = document.getElementById('titles').value.split(/\r?\n/);
-  const headers = document.getElementById('headers').value.split(/\r?\n/);
+    // Split on CRLF or LF without trimming to preserve explicit blank lines
+    const titles = document.getElementById('titles').value.split(/\r\n|\n/);
+    const headers = document.getElementById('headers').value.split(/\r\n|\n/);
   const screensObj = {};
   Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
     const id = screenEl.querySelector('.screen-id').value.trim();

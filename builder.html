@@ -90,10 +90,11 @@
       <legend class="flex items-center gap-1">Screens</legend>
       <div id="screens-container">
         <template v-for="(screen, sIdx) in screens">
-          <div :key="screen.uid" class="screen mb-4 border border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2">
+          <div :key="screen.uid" class="screen mb-4 border border-l-4 border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" :style="{borderLeftColor: screen.color}">
             <div class="flex items-center mb-2">
               <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
+              <input type="color" v-model="screen.color" class="screen-color w-6 h-6 p-0 border rounded mr-2" title="Color is for organization only and does not affect terminal appearance">
               <span class="cursor-move text-xl mr-2">↕</span>
               <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
             </div>
@@ -197,7 +198,7 @@ const app = Vue.createApp({
   },
   methods: {
       addScreen(id='') {
-        this.screens.push({id, items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.screens.push({id, color:'#cccccc', items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
         this.$nextTick(this.initSortables);
       },
       removeScreen(idx) {
@@ -218,12 +219,15 @@ const app = Vue.createApp({
           this.screenSortable = new Sortable(document.getElementById('screens-container'), {
             handle: '.cursor-move',
             animation: 150,
+            forceFallback: true,
             ghostClass: 'drag-ghost',
             chosenClass: 'drag-chosen',
             onEnd: evt => {
+              if (evt.newIndex === undefined || evt.newIndex === null) { this.$nextTick(this.initSortables); return; }
               if (evt.oldIndex === evt.newIndex) return;
               const moved = this.screens.splice(evt.oldIndex, 1)[0];
               this.screens.splice(evt.newIndex, 0, moved);
+              this.$nextTick(this.initSortables);
             }
           });
 
@@ -232,12 +236,15 @@ const app = Vue.createApp({
           if (diffEl) {
             this.difficultySortable = new Sortable(diffEl, {
               animation: 150,
+              forceFallback: true,
               ghostClass: 'drag-ghost',
               chosenClass: 'drag-chosen',
               onEnd: evt => {
+                if (evt.newIndex === undefined || evt.newIndex === null) { this.$nextTick(this.initSortables); return; }
                 if (evt.oldIndex === evt.newIndex) return;
                 const moved = this.difficulties.splice(evt.oldIndex, 1)[0];
                 this.difficulties.splice(evt.newIndex, 0, moved);
+                this.$nextTick(this.initSortables);
               }
             });
           }
@@ -248,14 +255,17 @@ const app = Vue.createApp({
             const sortable = new Sortable(container, {
               group: 'items',
               animation: 150,
+              forceFallback: true,
               ghostClass: 'drag-ghost',
               chosenClass: 'drag-chosen',
               onEnd: evt => {
                 const fromSIdx = parseInt(evt.from.dataset.sidx, 10);
                 const toSIdx = parseInt(evt.to.dataset.sidx, 10);
+                if (isNaN(toSIdx)) { this.$nextTick(this.initSortables); return; }
                 if (fromSIdx === toSIdx && evt.oldIndex === evt.newIndex) return;
                 const moved = this.screens[fromSIdx].items.splice(evt.oldIndex, 1)[0];
                 this.screens[toSIdx].items.splice(evt.newIndex, 0, moved);
+                this.$nextTick(this.initSortables);
               }
             });
             this.itemSortables.push(sortable);
@@ -276,7 +286,7 @@ const app = Vue.createApp({
       document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
       this.screens = [];
       Object.entries(config.screens || {}).forEach(([id, items]) => {
-        const screen = {id, items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()};
+        const screen = {id, color:'#cccccc', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()};
         items.forEach(item=>{
           if (typeof item === 'string') {
             screen.items.push({text:item, screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});

@@ -35,97 +35,115 @@
       border-color: #374151;
       color: #f3f4f6;
     }
+    ::placeholder {
+      color: #4b5563;
+      opacity: 1;
+    }
+    .dark ::placeholder {
+      color: #9ca3af;
+    }
   </style>
 </head>
 <body class="font-sans m-0 p-4">
 <h1 class="text-2xl font-bold mb-4">Config Builder</h1>
-<div class="mb-4 flex gap-2">
+<div class="mb-4 flex gap-2 items-center">
   <button type="button" id="load-config" class="px-2 py-1 border rounded" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
+  <button type="submit" form="builder-form" class="px-2 py-1 border rounded" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
+  <a id="download-link" class="hidden text-blue-600 underline" download="config.json">Download config.json</a>
   <button type="button" id="dark-toggle" class="px-2 py-1 border rounded" title="Toggle dark mode">Toggle Dark Mode</button>
 </div>
 <input type="file" id="config-file" accept="application/json" class="hidden">
 <div id="builder-layout" class="flex flex-col lg:flex-row items-start gap-4">
-<form id="builder-form" class="flex-1 space-y-4">
-  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
-    <legend class="flex items-center gap-1">Titles</legend>
-    <textarea id="titles" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a title line" title="Each line becomes a title line, e.g., ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM"></textarea>
-  </fieldset>
-  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
-    <legend class="flex items-center gap-1">Headers</legend>
-    <textarea id="headers" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
-  </fieldset>
-  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
-    <legend class="flex items-center gap-1">Boot Animation Text</legend>
-    <textarea id="boot-lines" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
-  </fieldset>
-  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
-    <legend class="flex items-center gap-1">Screens</legend>
-    <div>
-      <div v-for="(screen, sIdx) in screens" :key="screen.uid" class="screen mb-4 border rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" draggable="true" @dragstart="drag('screen', sIdx)" @drop="drop('screen', sIdx)" @dragover.prevent>
-        <div class="flex items-center mb-2">
-          <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
-          <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
-          <span class="cursor-move text-xl mr-2">↕</span>
-          <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
-        </div>
-        <div v-show="screen.open" class="pl-6">
-          <div v-for="(item, iIdx) in screen.items" :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-100 dark:bg-green-800 p-1 rounded" draggable="true" @dragstart="drag('item', sIdx, iIdx)" @drop="drop('item', sIdx, iIdx)" @dragover.prevent>
-            <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
-            <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
-            <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
-            <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="text-red-600" title="Remove item">🗑️</button>
-          </div>
-          <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
-        </div>
-      </div>
-      <button type="button" @click="addScreen()" class="mt-2 px-2 py-1 border rounded">Add Screen</button>
-    </div>
-  </fieldset>
-  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Customize terminal appearance.">
-    <legend class="flex items-center gap-1">Style</legend>
-    <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Text Color: <input type="color" id="text-color" value="#7aff7a" class="ml-2"></label>
-    <label class="block" title="Background color of the terminal window, e.g., #041204.">Background Color: <input type="color" id="bg-color" value="#041204" class="ml-2"></label>
-    <label class="block" title="Color of the terminal window outline, e.g., #008800.">Outline Color: <input type="color" id="border-color" value="#008800" class="ml-2"></label>
-  </fieldset>
-  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Default typing speeds. 0 skips the animation.">
-    <legend class="flex items-center gap-1">Typing Speeds</legend>
-    <label class="block">User Speed: <input type="number" id="user-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
-    <label class="block">Computer Speed: <input type="number" id="comp-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
-  </fieldset>
-  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Configure hacking settings for locked terminals.">
-    <legend class="flex items-center gap-1">Hacking</legend>
-    <label class="block" title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked class="mr-1"> Locked</label>
-    <label id="difficulty-label" class="block" :title="difficultyTitle">Difficulty:
-      <select id="difficulty" v-model="difficultyChoice" class="border rounded p-1 ml-2" :title="difficultyTitle">
-        <option v-for="opt in difficultyOptions" :key="opt">{{ opt }}</option>
-      </select>
-    </label>
-    <label class="block" title="Starting number of attempts available to the user.">Attempts: <input type="number" id="attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
-    <label class="block" title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
-    <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
-    <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
-    <div id="dud-warning" class="text-red-600 hidden"></div>
-    <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
-    <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
-      <legend class="flex items-center gap-1">Difficulties</legend>
+<form id="builder-form" class="flex-1">
+  <div class="mb-4 border-b flex gap-4">
+    <button type="button" @click="activeTab='content'" :class="['px-2 py-1', activeTab==='content' ? 'border-b-2' : 'text-gray-500']">Terminal Content</button>
+    <button type="button" @click="activeTab='hacking'" :class="['px-2 py-1', activeTab==='hacking' ? 'border-b-2' : 'text-gray-500']">Hacking</button>
+    <button type="button" @click="activeTab='prefs'" :class="['px-2 py-1', activeTab==='prefs' ? 'border-b-2' : 'text-gray-500']">Preferences</button>
+  </div>
+  <div v-show="activeTab==='content'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow" title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
+      <legend class="flex items-center gap-1">Titles</legend>
+      <textarea id="titles" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a title line" title="Each line becomes a title line, e.g., ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM"></textarea>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow" title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
+      <legend class="flex items-center gap-1">Headers</legend>
+      <textarea id="headers" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow" title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
+      <legend class="flex items-center gap-1">Boot Animation Text</legend>
+      <textarea id="boot-lines" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
+      <legend class="flex items-center gap-1">Screens</legend>
       <div>
-        <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800" draggable="true" @dragstart="drag('difficulty', idx)" @drop="drop('difficulty', idx)" @dragover.prevent>
+        <div v-for="(screen, sIdx) in screens" :key="screen.uid" class="screen mb-4 border border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" draggable="true" @dragstart="drag('screen', sIdx)" @drop="drop('screen', sIdx)" @dragover.prevent>
           <div class="flex items-center mb-2">
-            <button type="button" @click="d.open = !d.open" class="mr-2">{{ d.open ? '▼' : '►' }}</button>
-            <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
-            <button type="button" @click="removeDifficulty(idx)" class="text-red-600" title="Remove difficulty">🗑️</button>
+            <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
+            <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
+            <span class="cursor-move text-xl mr-2">↕</span>
+            <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
           </div>
-          <div v-show="d.open" class="pl-6 space-y-1">
-            <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>
-            <label class="block">Length: <input type="number" v-model.number="d.length[0]" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.length[1]" class="len-max border rounded p-1 w-16" min="1"></label>
+          <div v-show="screen.open" class="pl-6">
+            <div v-for="(item, iIdx) in screen.items" :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-50 border border-green-100 dark:bg-green-800 dark:border-green-700 p-1 rounded" draggable="true" @dragstart="drag('item', sIdx, iIdx)" @drop="drop('item', sIdx, iIdx)" @dragover.prevent>
+              <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
+              <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
+              <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
+              <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="text-red-600" title="Remove item">🗑️</button>
+            </div>
+            <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
           </div>
         </div>
-        <button type="button" @click="addDifficulty()" class="mt-2 px-2 py-1 border rounded">Add Difficulty</button>
+        <button type="button" @click="addScreen()" class="mt-2 px-2 py-1 border rounded">Add Screen</button>
       </div>
     </fieldset>
-  </fieldset>
-  <button type="submit" class="px-4 py-2 border rounded" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
-  <a id="download-link" class="hidden text-blue-600 underline" download="config.json">Download config.json</a>
+  </div>
+  <div v-show="activeTab==='hacking'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow" title="Configure hacking settings for locked terminals.">
+      <legend class="flex items-center gap-1">Hacking</legend>
+      <label class="block" title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked class="mr-1"> Locked</label>
+      <label id="difficulty-label" class="block" :title="difficultyTitle">Difficulty:
+        <select id="difficulty" v-model="difficultyChoice" class="border rounded p-1 ml-2" :title="difficultyTitle">
+          <option v-for="opt in difficultyOptions" :key="opt">{{ opt }}</option>
+        </select>
+      </label>
+      <label class="block" title="Starting number of attempts available to the user.">Attempts: <input type="number" id="attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
+      <label class="block" title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
+      <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
+      <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
+      <div id="dud-warning" class="text-red-600 hidden"></div>
+      <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
+      <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
+        <legend class="flex items-center gap-1">Difficulties</legend>
+        <div>
+          <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800" draggable="true" @dragstart="drag('difficulty', idx)" @drop="drop('difficulty', idx)" @dragover.prevent>
+            <div class="flex items-center mb-2">
+              <button type="button" @click="d.open = !d.open" class="mr-2">{{ d.open ? '▼' : '►' }}</button>
+              <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
+              <button type="button" @click="removeDifficulty(idx)" class="text-red-600" title="Remove difficulty">🗑️</button>
+            </div>
+            <div v-show="d.open" class="pl-6 space-y-1">
+              <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>
+              <label class="block">Length: <input type="number" v-model.number="d.length[0]" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.length[1]" class="len-max border rounded p-1 w-16" min="1"></label>
+            </div>
+          </div>
+          <button type="button" @click="addDifficulty()" class="mt-2 px-2 py-1 border rounded">Add Difficulty</button>
+        </div>
+      </fieldset>
+    </fieldset>
+  </div>
+  <div v-show="activeTab==='prefs'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow" title="Customize terminal appearance.">
+      <legend class="flex items-center gap-1">Style</legend>
+      <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Text Color: <input type="color" id="text-color" value="#7aff7a" class="ml-2"></label>
+      <label class="block" title="Background color of the terminal window, e.g., #041204.">Background Color: <input type="color" id="bg-color" value="#041204" class="ml-2"></label>
+      <label class="block" title="Color of the terminal window outline, e.g., #008800.">Outline Color: <input type="color" id="border-color" value="#008800" class="ml-2"></label>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow" title="Default typing speeds. 0 skips the animation.">
+      <legend class="flex items-center gap-1">Typing Speeds</legend>
+      <label class="block">User Speed: <input type="number" id="user-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
+      <label class="block">Computer Speed: <input type="number" id="comp-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
+    </fieldset>
+  </div>
 </form>
 <iframe id="preview" class="flex-1 h-[600px] border border-gray-300 w-full"></iframe>
 </div>
@@ -141,6 +159,7 @@ const defaultDifficulties = [
 const app = Vue.createApp({
   data() {
     return {
+      activeTab: 'content',
       screens: [],
       difficulties: [],
       difficultyChoice: 'Average',

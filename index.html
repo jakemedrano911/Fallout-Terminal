@@ -1180,13 +1180,16 @@ async function typeText(el,text){
 }
 
 async function typeUserInput(el,text){
+  const shouldPlay=userSpeed!==Infinity&&userSpeed>0;
   for(let ch of text){
     el.textContent+=ch;
-    playCharFocusSound();
-    if(userSpeed!==Infinity) await sleep(baseDelay*10);
+    if(shouldPlay){
+      playCharFocusSound();
+      await sleep(baseDelay*10);
+    }
   }
   el.textContent+='\n';
-  playEnterCharSound();
+  if(shouldPlay) playEnterCharSound();
 }
 
 function splitEntities(str){

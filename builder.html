@@ -8,6 +8,7 @@
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     body {
       background-color: #f9fafb;
@@ -42,6 +43,18 @@
     .dark ::placeholder {
       color: #9ca3af;
     }
+    .screen, .menu-item, .difficulty-item {
+      transition: transform 0.2s;
+      touch-action: none;
+    }
+    .drag-chosen {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .drag-ghost {
+      opacity: 0.4;
+      border: 2px dashed #34d399;
+    }
   </style>
 </head>
 <body class="font-sans m-0 p-4">
@@ -75,32 +88,28 @@
     </fieldset>
     <fieldset class="p-4 border rounded-lg shadow" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
       <legend class="flex items-center gap-1">Screens</legend>
-      <div @dragover.prevent.stop="over('screen', screens.length)" @drop.stop="drop()">
+      <div id="screens-container">
         <template v-for="(screen, sIdx) in screens">
-          <div v-if="dragging && dragging.type==='screen' && dragging.toSIdx===sIdx" :key="'screen-placeholder-'+sIdx" class="screen mb-4 border-2 border-dashed border-green-400 rounded p-2" @dragover.prevent.stop="over('screen', sIdx)" @drop.stop="drop()"></div>
-          <div :key="screen.uid" class="screen mb-4 border border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" draggable="true" @dragstart="drag('screen', sIdx)" @dragover.prevent.stop="over('screen', sIdx)" @drop.stop="drop()">
+          <div :key="screen.uid" class="screen mb-4 border border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2">
             <div class="flex items-center mb-2">
               <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
               <span class="cursor-move text-xl mr-2">↕</span>
               <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
             </div>
-            <div v-show="screen.open" class="pl-6" @dragover.prevent.stop="over('item', sIdx, screen.items.length)" @drop.stop="drop()">
+            <div v-show="screen.open" class="pl-6 items-container" :data-sidx="sIdx" :id="'items-'+screen.uid">
               <template v-for="(item, iIdx) in screen.items">
-                <div v-if="dragging && dragging.type==='item' && dragging.toSIdx===sIdx && dragging.toIIdx===iIdx" :key="'item-placeholder-'+sIdx+'-'+iIdx" class="menu-item mb-1 border-2 border-dashed border-green-400 p-1 rounded" @dragover.prevent.stop="over('item', sIdx, iIdx)" @drop.stop="drop()"></div>
-                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-50 border border-green-100 dark:bg-green-800 dark:border-green-700 p-1 rounded" draggable="true" @dragstart="drag('item', sIdx, iIdx)" @dragover.prevent.stop="over('item', sIdx, iIdx)" @drop.stop="drop()">
+                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-50 border border-green-100 dark:bg-green-800 dark:border-green-700 p-1 rounded">
                   <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
                   <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
                   <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
                   <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="text-red-600" title="Remove item">🗑️</button>
                 </div>
               </template>
-              <div v-if="dragging && dragging.type==='item' && dragging.toSIdx===sIdx && dragging.toIIdx===screen.items.length" :key="'item-placeholder-'+sIdx+'-end'" class="menu-item mb-1 border-2 border-dashed border-green-400 p-1 rounded" @dragover.prevent.stop="over('item', sIdx, screen.items.length)" @drop.stop="drop()"></div>
               <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
             </div>
           </div>
         </template>
-        <div v-if="dragging && dragging.type==='screen' && dragging.toSIdx===screens.length" :key="'screen-placeholder-end'" class="screen mb-4 border-2 border-dashed border-green-400 rounded p-2" @dragover.prevent.stop="over('screen', screens.length)" @drop.stop="drop()"></div>
         <button type="button" @click="addScreen()" class="mt-2 px-2 py-1 border rounded">Add Screen</button>
       </div>
     </fieldset>
@@ -120,23 +129,23 @@
       <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
       <div id="dud-warning" class="text-red-600 hidden"></div>
       <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
-      <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
-        <legend class="flex items-center gap-1">Difficulties</legend>
-        <div @dragover.prevent.stop="over('difficulty', difficulties.length)">
-          <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800" draggable="true" @dragstart="drag('difficulty', idx)" @dragover.prevent.stop="over('difficulty', idx)" @drop.stop="drop()">
-            <div class="flex items-center mb-2">
-              <button type="button" @click="d.open = !d.open" class="mr-2">{{ d.open ? '▼' : '►' }}</button>
-              <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
-              <button type="button" @click="removeDifficulty(idx)" class="text-red-600" title="Remove difficulty">🗑️</button>
+        <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
+          <legend class="flex items-center gap-1">Difficulties</legend>
+          <div id="difficulties-container">
+            <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800">
+              <div class="flex items-center mb-2">
+                <button type="button" @click="d.open = !d.open" class="mr-2">{{ d.open ? '▼' : '►' }}</button>
+                <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
+                <button type="button" @click="removeDifficulty(idx)" class="text-red-600" title="Remove difficulty">🗑️</button>
+              </div>
+              <div v-show="d.open" class="pl-6 space-y-1">
+                <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>
+                <label class="block">Length: <input type="number" v-model.number="d.length[0]" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.length[1]" class="len-max border rounded p-1 w-16" min="1"></label>
+              </div>
             </div>
-            <div v-show="d.open" class="pl-6 space-y-1">
-              <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>
-              <label class="block">Length: <input type="number" v-model.number="d.length[0]" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.length[1]" class="len-max border rounded p-1 w-16" min="1"></label>
-            </div>
+            <button type="button" @click="addDifficulty()" class="mt-2 px-2 py-1 border rounded">Add Difficulty</button>
           </div>
-          <button type="button" @click="addDifficulty()" class="mt-2 px-2 py-1 border rounded">Add Difficulty</button>
-        </div>
-      </fieldset>
+        </fieldset>
     </fieldset>
   </div>
   <div v-show="activeTab==='prefs'" class="space-y-4">
@@ -167,15 +176,17 @@ const defaultDifficulties = [
 const app = Vue.createApp({
   data() {
     return {
-      activeTab: 'content',
-      screens: [],
-      difficulties: [],
-      difficultyChoice: 'Average',
-      showDifficulties: false,
-      previewLoaded: false,
-      dragging: null
-    };
-  },
+        activeTab: 'content',
+        screens: [],
+        difficulties: [],
+        difficultyChoice: 'Average',
+        showDifficulties: false,
+        previewLoaded: false,
+        screenSortable: null,
+        itemSortables: [],
+        difficultySortable: null
+      };
+    },
   computed: {
     difficultyOptions() {
       return ['Random', ...this.difficulties.map(d => d.name)];
@@ -185,56 +196,80 @@ const app = Vue.createApp({
     }
   },
   methods: {
-    addScreen(id='') {
-      this.screens.push({id, items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-    },
-    removeScreen(idx) {
-      this.screens.splice(idx,1);
-    },
-    addMenuItem(screen) {
-      screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-    },
-    removeMenuItem(sIdx, iIdx) {
-      this.screens[sIdx].items.splice(iIdx,1);
-    },
-    drag(type, sIdx, iIdx=null) {
-      this.dragging = {type, fromSIdx:sIdx, fromIIdx:iIdx, toSIdx:sIdx, toIIdx:iIdx};
-    },
-    over(type, sIdx, iIdx=null) {
-      if(!this.dragging || this.dragging.type!==type) return;
-      if(type==='screen'){
-        this.dragging.toSIdx = sIdx;
-      } else if(type==='item'){
-        this.dragging.toSIdx = sIdx;
-        this.dragging.toIIdx = iIdx;
-      } else if(type==='difficulty'){
-        this.dragging.toSIdx = sIdx;
-      }
-    },
-    drop() {
-      const d = this.dragging;
-      if(!d) return;
-      if(d.type==='screen'){
-        const [m] = this.screens.splice(d.fromSIdx,1);
-        this.screens.splice(d.toSIdx,0,m);
-      } else if(d.type==='item'){
-        const from = this.screens[d.fromSIdx].items;
-        const [m] = from.splice(d.fromIIdx,1);
-        let to = this.screens[d.toSIdx].items;
-        if(d.fromSIdx===d.toSIdx && d.toIIdx>d.fromIIdx) d.toIIdx--;
-        to.splice(d.toIIdx,0,m);
-      } else if(d.type==='difficulty'){
-        const [m] = this.difficulties.splice(d.fromSIdx,1);
-        this.difficulties.splice(d.toSIdx,0,m);
-      }
-      this.dragging=null;
-    },
-    addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
-      this.difficulties.push({...d, open:false, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-    },
-    removeDifficulty(idx) {
-      this.difficulties.splice(idx,1);
-    },
+      addScreen(id='') {
+        this.screens.push({id, items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.$nextTick(this.initSortables);
+      },
+      removeScreen(idx) {
+        this.screens.splice(idx,1);
+        this.$nextTick(this.initSortables);
+      },
+      addMenuItem(screen) {
+        screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.$nextTick(this.initSortables);
+      },
+      removeMenuItem(sIdx, iIdx) {
+        this.screens[sIdx].items.splice(iIdx,1);
+        this.$nextTick(this.initSortables);
+      },
+      initSortables() {
+        this.$nextTick(() => {
+          if (this.screenSortable) this.screenSortable.destroy();
+          this.screenSortable = new Sortable(document.getElementById('screens-container'), {
+            handle: '.cursor-move',
+            animation: 150,
+            ghostClass: 'drag-ghost',
+            chosenClass: 'drag-chosen',
+            onEnd: evt => {
+              if (evt.oldIndex === evt.newIndex) return;
+              const moved = this.screens.splice(evt.oldIndex, 1)[0];
+              this.screens.splice(evt.newIndex, 0, moved);
+            }
+          });
+
+          if (this.difficultySortable) this.difficultySortable.destroy();
+          const diffEl = document.getElementById('difficulties-container');
+          if (diffEl) {
+            this.difficultySortable = new Sortable(diffEl, {
+              animation: 150,
+              ghostClass: 'drag-ghost',
+              chosenClass: 'drag-chosen',
+              onEnd: evt => {
+                if (evt.oldIndex === evt.newIndex) return;
+                const moved = this.difficulties.splice(evt.oldIndex, 1)[0];
+                this.difficulties.splice(evt.newIndex, 0, moved);
+              }
+            });
+          }
+
+          this.itemSortables.forEach(s => s.destroy());
+          this.itemSortables = [];
+          document.querySelectorAll('.items-container').forEach(container => {
+            const sortable = new Sortable(container, {
+              group: 'items',
+              animation: 150,
+              ghostClass: 'drag-ghost',
+              chosenClass: 'drag-chosen',
+              onEnd: evt => {
+                const fromSIdx = parseInt(evt.from.dataset.sidx, 10);
+                const toSIdx = parseInt(evt.to.dataset.sidx, 10);
+                if (fromSIdx === toSIdx && evt.oldIndex === evt.newIndex) return;
+                const moved = this.screens[fromSIdx].items.splice(evt.oldIndex, 1)[0];
+                this.screens[toSIdx].items.splice(evt.newIndex, 0, moved);
+              }
+            });
+            this.itemSortables.push(sortable);
+          });
+        });
+      },
+      addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
+        this.difficulties.push({...d, open:false, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.$nextTick(this.initSortables);
+      },
+      removeDifficulty(idx) {
+        this.difficulties.splice(idx,1);
+        this.$nextTick(this.initSortables);
+      },
     loadConfig(config) {
       document.getElementById('titles').value = (config.titleLines || []).join('\n');
       document.getElementById('headers').value = (config.headerLines || []).join('\n');
@@ -262,14 +297,15 @@ const app = Vue.createApp({
       document.getElementById('comp-speed').value = config.compSpeed ?? 1;
       document.getElementById('locked').checked = config.locked || false;
       const diffs = config.hacking?.difficulties || defaultDifficulties;
-      this.difficulties = [];
-      diffs.forEach(d=>this.addDifficulty(d));
-      this.difficultyChoice = config.hacking?.difficulty ?? 'Random';
-      attemptsEl.value = config.hacking?.attempts ?? 4;
-      maxAttemptsEl.value = config.hacking?.maxAttempts ?? 4;
-      passwordEl.value = config.hacking?.password || '';
-      dudWordsEl.value = (config.hacking?.dudWords || []).join(', ');
-    },
+        this.difficulties = [];
+        diffs.forEach(d=>this.addDifficulty(d));
+        this.difficultyChoice = config.hacking?.difficulty ?? 'Random';
+        attemptsEl.value = config.hacking?.attempts ?? 4;
+        maxAttemptsEl.value = config.hacking?.maxAttempts ?? 4;
+        passwordEl.value = config.hacking?.password || '';
+        dudWordsEl.value = (config.hacking?.dudWords || []).join(', ');
+        this.$nextTick(this.initSortables);
+      },
     updatePreview(config){
       const previewFrame = document.getElementById('preview');
       if (!this.previewLoaded) {
@@ -350,6 +386,7 @@ const app = Vue.createApp({
   mounted() {
     this.addScreen('menu');
     defaultDifficulties.forEach(d=>this.addDifficulty(d));
+    this.$nextTick(this.initSortables);
   }
 });
 

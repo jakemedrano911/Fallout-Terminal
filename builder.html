@@ -55,6 +55,9 @@
       opacity: 0.4;
       border: 2px dashed #34d399;
     }
+    .dragging {
+      user-select: none;
+    }
   </style>
 </head>
 <body class="font-sans m-0 p-4">
@@ -90,7 +93,7 @@
       <legend class="flex items-center gap-1">Screens</legend>
       <div id="screens-container">
         <template v-for="(screen, sIdx) in screens">
-          <div :key="screen.uid" class="screen mb-4 border border-l-4 border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" :style="{borderLeftColor: screen.color}">
+          <div :key="screen.uid" class="screen mb-4 border border-l-4 rounded p-2" :style="{borderColor: screen.color, backgroundColor: screen.color}">
             <div class="flex items-center mb-2">
               <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
@@ -100,7 +103,7 @@
             </div>
             <div v-show="screen.open" class="pl-6 items-container" :data-sidx="sIdx" :id="'items-'+screen.uid">
               <template v-for="(item, iIdx) in screen.items">
-                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-50 border border-green-100 dark:bg-green-800 dark:border-green-700 p-1 rounded">
+                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 border p-1 rounded" :style="{backgroundColor: screen.color, borderColor: screen.color}">
                   <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
                   <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
                   <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
@@ -222,7 +225,10 @@ const app = Vue.createApp({
             forceFallback: true,
             ghostClass: 'drag-ghost',
             chosenClass: 'drag-chosen',
+            draggable: '.screen',
+            onStart: () => document.body.classList.add('dragging'),
             onEnd: evt => {
+              document.body.classList.remove('dragging');
               if (evt.newIndex === undefined || evt.newIndex === null) { this.$nextTick(this.initSortables); return; }
               if (evt.oldIndex === evt.newIndex) return;
               const moved = this.screens.splice(evt.oldIndex, 1)[0];
@@ -239,7 +245,10 @@ const app = Vue.createApp({
               forceFallback: true,
               ghostClass: 'drag-ghost',
               chosenClass: 'drag-chosen',
+              draggable: '.difficulty-item',
+              onStart: () => document.body.classList.add('dragging'),
               onEnd: evt => {
+                document.body.classList.remove('dragging');
                 if (evt.newIndex === undefined || evt.newIndex === null) { this.$nextTick(this.initSortables); return; }
                 if (evt.oldIndex === evt.newIndex) return;
                 const moved = this.difficulties.splice(evt.oldIndex, 1)[0];
@@ -253,12 +262,15 @@ const app = Vue.createApp({
           this.itemSortables = [];
           document.querySelectorAll('.items-container').forEach(container => {
             const sortable = new Sortable(container, {
-              group: 'items',
+              group: { name: 'items', put: ['items'] },
               animation: 150,
               forceFallback: true,
               ghostClass: 'drag-ghost',
               chosenClass: 'drag-chosen',
+              draggable: '.menu-item',
+              onStart: () => document.body.classList.add('dragging'),
               onEnd: evt => {
+                document.body.classList.remove('dragging');
                 const fromSIdx = parseInt(evt.from.dataset.sidx, 10);
                 const toSIdx = parseInt(evt.to.dataset.sidx, 10);
                 if (isNaN(toSIdx)) { this.$nextTick(this.initSortables); return; }

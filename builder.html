@@ -75,32 +75,32 @@
     </fieldset>
     <fieldset class="p-4 border rounded-lg shadow" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
       <legend class="flex items-center gap-1">Screens</legend>
-      <div @dragover.prevent="over('screen', screens.length)" @drop="drop()">
+      <div @dragover.prevent.stop="over('screen', screens.length)" @drop.stop="drop()">
         <template v-for="(screen, sIdx) in screens">
-          <div v-if="dragging && dragging.type==='screen' && dragging.toSIdx===sIdx" :key="'screen-placeholder-'+sIdx" class="screen mb-4 border-2 border-dashed border-green-400 rounded p-2" @dragover.prevent="over('screen', sIdx)" @drop="drop()"></div>
-          <div :key="screen.uid" class="screen mb-4 border border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" draggable="true" @dragstart="drag('screen', sIdx)" @dragover.prevent="over('screen', sIdx)" @drop="drop()">
+          <div v-if="dragging && dragging.type==='screen' && dragging.toSIdx===sIdx" :key="'screen-placeholder-'+sIdx" class="screen mb-4 border-2 border-dashed border-green-400 rounded p-2" @dragover.prevent.stop="over('screen', sIdx)" @drop.stop="drop()"></div>
+          <div :key="screen.uid" class="screen mb-4 border border-green-100 rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" draggable="true" @dragstart="drag('screen', sIdx)" @dragover.prevent.stop="over('screen', sIdx)" @drop.stop="drop()">
             <div class="flex items-center mb-2">
               <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
               <span class="cursor-move text-xl mr-2">↕</span>
               <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
             </div>
-            <div v-show="screen.open" class="pl-6" @dragover.prevent="over('item', sIdx, screen.items.length)" @drop="drop()">
+            <div v-show="screen.open" class="pl-6" @dragover.prevent.stop="over('item', sIdx, screen.items.length)" @drop.stop="drop()">
               <template v-for="(item, iIdx) in screen.items">
-                <div v-if="dragging && dragging.type==='item' && dragging.toSIdx===sIdx && dragging.toIIdx===iIdx" :key="'item-placeholder-'+sIdx+'-'+iIdx" class="menu-item mb-1 border-2 border-dashed border-green-400 p-1 rounded" @dragover.prevent="over('item', sIdx, iIdx)" @drop="drop()"></div>
-                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-50 border border-green-100 dark:bg-green-800 dark:border-green-700 p-1 rounded" draggable="true" @dragstart="drag('item', sIdx, iIdx)" @dragover.prevent="over('item', sIdx, iIdx)" @drop="drop()">
+                <div v-if="dragging && dragging.type==='item' && dragging.toSIdx===sIdx && dragging.toIIdx===iIdx" :key="'item-placeholder-'+sIdx+'-'+iIdx" class="menu-item mb-1 border-2 border-dashed border-green-400 p-1 rounded" @dragover.prevent.stop="over('item', sIdx, iIdx)" @drop.stop="drop()"></div>
+                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-50 border border-green-100 dark:bg-green-800 dark:border-green-700 p-1 rounded" draggable="true" @dragstart="drag('item', sIdx, iIdx)" @dragover.prevent.stop="over('item', sIdx, iIdx)" @drop.stop="drop()">
                   <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
                   <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
                   <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
                   <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="text-red-600" title="Remove item">🗑️</button>
                 </div>
               </template>
-              <div v-if="dragging && dragging.type==='item' && dragging.toSIdx===sIdx && dragging.toIIdx===screen.items.length" :key="'item-placeholder-'+sIdx+'-end'" class="menu-item mb-1 border-2 border-dashed border-green-400 p-1 rounded" @dragover.prevent="over('item', sIdx, screen.items.length)" @drop="drop()"></div>
+              <div v-if="dragging && dragging.type==='item' && dragging.toSIdx===sIdx && dragging.toIIdx===screen.items.length" :key="'item-placeholder-'+sIdx+'-end'" class="menu-item mb-1 border-2 border-dashed border-green-400 p-1 rounded" @dragover.prevent.stop="over('item', sIdx, screen.items.length)" @drop.stop="drop()"></div>
               <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
             </div>
           </div>
         </template>
-        <div v-if="dragging && dragging.type==='screen' && dragging.toSIdx===screens.length" :key="'screen-placeholder-end'" class="screen mb-4 border-2 border-dashed border-green-400 rounded p-2" @dragover.prevent="over('screen', screens.length)" @drop="drop()"></div>
+        <div v-if="dragging && dragging.type==='screen' && dragging.toSIdx===screens.length" :key="'screen-placeholder-end'" class="screen mb-4 border-2 border-dashed border-green-400 rounded p-2" @dragover.prevent.stop="over('screen', screens.length)" @drop.stop="drop()"></div>
         <button type="button" @click="addScreen()" class="mt-2 px-2 py-1 border rounded">Add Screen</button>
       </div>
     </fieldset>
@@ -122,8 +122,8 @@
       <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
       <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
         <legend class="flex items-center gap-1">Difficulties</legend>
-        <div @dragover.prevent="over('difficulty', difficulties.length)">
-          <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800" draggable="true" @dragstart="drag('difficulty', idx)" @dragover.prevent="over('difficulty', idx)" @drop="drop()">
+        <div @dragover.prevent.stop="over('difficulty', difficulties.length)">
+          <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800" draggable="true" @dragstart="drag('difficulty', idx)" @dragover.prevent.stop="over('difficulty', idx)" @drop.stop="drop()">
             <div class="flex items-center mb-2">
               <button type="button" @click="d.open = !d.open" class="mr-2">{{ d.open ? '▼' : '►' }}</button>
               <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">

@@ -3,62 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
-  <style>
-    body { font-family: sans-serif; margin: 0; padding: 1rem; }
-    fieldset { margin-bottom: 0.5rem; }
-    .menu-item, .difficulty-item { margin-bottom: 0.25rem; }
-    .menu-item input, .menu-item textarea, .difficulty-item input { margin-right: 0.25rem; }
-    #builder-layout { display:flex; align-items:flex-start; gap:1rem; }
-    #builder-form { flex:1; }
-    iframe { flex:1; height:600px; border:1px solid #ccc; }
-    legend { display:flex; align-items:center; gap:0.25rem; }
-    .remove-item, .remove-screen, .remove-diff { color:#000; }
-    .trash-icon { width:1em; height:1em; fill:#000; vertical-align:middle; }
-    @media (max-width:800px){
-      #builder-layout{flex-direction:column;}
-      iframe{width:100%;}
-    }
-  </style>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-<h1>Config Builder</h1>
-<button type="button" id="load-config" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
-<input type="file" id="config-file" accept="application/json" style="display:none">
-<div id="builder-layout">
-<form id="builder-form">
-  <fieldset title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
-    <legend>Titles</legend>
-    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line" title="Each line becomes a title line, e.g., ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM"></textarea>
+<body class="font-sans m-0 p-4">
+<h1 class="text-2xl font-bold mb-4">Config Builder</h1>
+<button type="button" id="load-config" class="mb-4 px-2 py-1 border rounded" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
+<input type="file" id="config-file" accept="application/json" class="hidden">
+<div id="builder-layout" class="flex flex-col lg:flex-row items-start gap-4">
+<form id="builder-form" class="flex-1 space-y-4">
+  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
+    <legend class="flex items-center gap-1">Titles</legend>
+    <textarea id="titles" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a title line" title="Each line becomes a title line, e.g., ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM"></textarea>
   </fieldset>
-  <fieldset title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
-    <legend>Headers</legend>
-    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
+  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
+    <legend class="flex items-center gap-1">Headers</legend>
+    <textarea id="headers" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
   </fieldset>
-  <fieldset title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
-    <legend>Boot Animation Text</legend>
-    <textarea id="boot-lines" rows="4" cols="50" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
+  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
+    <legend class="flex items-center gap-1">Boot Animation Text</legend>
+    <textarea id="boot-lines" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
   </fieldset>
-  <fieldset title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
-    <legend>Screens</legend>
+  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
+    <legend class="flex items-center gap-1">Screens</legend>
     <div id="screens"></div>
-    <button type="button" id="add-screen" title="Add a new screen, e.g., a settings screen">Add Screen</button>
+    <button type="button" id="add-screen" class="mt-2 px-2 py-1 border rounded" title="Add a new screen, e.g., a settings screen">Add Screen</button>
   </fieldset>
-  <fieldset title="Customize terminal appearance.">
-    <legend>Style</legend>
-    <label title="Color of text displayed in the terminal, e.g., #7aff7a.">Text Color: <input type="color" id="text-color" value="#7aff7a"></label>
-    <label title="Background color of the terminal window, e.g., #041204.">Background Color: <input type="color" id="bg-color" value="#041204"></label>
-    <label title="Color of the terminal window outline, e.g., #008800.">Outline Color: <input type="color" id="border-color" value="#008800"></label>
+  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Customize terminal appearance.">
+    <legend class="flex items-center gap-1">Style</legend>
+    <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Text Color: <input type="color" id="text-color" value="#7aff7a" class="ml-2"></label>
+    <label class="block" title="Background color of the terminal window, e.g., #041204.">Background Color: <input type="color" id="bg-color" value="#041204" class="ml-2"></label>
+    <label class="block" title="Color of the terminal window outline, e.g., #008800.">Outline Color: <input type="color" id="border-color" value="#008800" class="ml-2"></label>
   </fieldset>
-  <fieldset title="Default typing speeds. 0 skips the animation.">
-    <legend>Typing Speeds</legend>
-    <label>User Speed: <input type="number" id="user-speed" min="0" max="5" value="1"></label>
-    <label>Computer Speed: <input type="number" id="comp-speed" min="0" max="5" value="1"></label>
+  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Default typing speeds. 0 skips the animation.">
+    <legend class="flex items-center gap-1">Typing Speeds</legend>
+    <label class="block">User Speed: <input type="number" id="user-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
+    <label class="block">Computer Speed: <input type="number" id="comp-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
   </fieldset>
-  <fieldset title="Configure hacking settings for locked terminals.">
-    <legend>Hacking</legend>
-    <label title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked> Locked</label>
-    <label id="difficulty-label">Difficulty:
-      <select id="difficulty">
+  <fieldset class="p-4 border rounded-lg shadow mb-4" title="Configure hacking settings for locked terminals.">
+    <legend class="flex items-center gap-1">Hacking</legend>
+    <label class="block" title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked class="mr-1"> Locked</label>
+    <label id="difficulty-label" class="block">Difficulty:
+      <select id="difficulty" class="border rounded p-1 ml-2">
         <option>Random</option>
         <option>Very Easy</option>
         <option>Easy</option>
@@ -67,22 +52,22 @@
         <option>Very Hard</option>
       </select>
     </label>
-    <label title="Starting number of attempts available to the user.">Attempts: <input type="number" id="attempts" min="1" value="4"></label>
-    <label title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4"></label>
-    <label title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password"></label>
-    <label title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
-    <div id="dud-warning" style="color:red"></div>
-    <button type="button" id="toggle-difficulties" title="Edit difficulty levels">Customize Difficulties</button>
-    <fieldset id="difficulties-fieldset" style="display:none" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range.">
-      <legend>Difficulties</legend>
+    <label class="block" title="Starting number of attempts available to the user.">Attempts: <input type="number" id="attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
+    <label class="block" title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
+    <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
+    <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
+    <div id="dud-warning" class="text-red-600 hidden"></div>
+    <button type="button" id="toggle-difficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
+    <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4 hidden" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range.">
+      <legend class="flex items-center gap-1">Difficulties</legend>
       <div id="difficulties"></div>
-      <button type="button" id="add-difficulty" title="Add a new difficulty level">Add Difficulty</button>
+      <button type="button" id="add-difficulty" class="mt-2 px-2 py-1 border rounded" title="Add a new difficulty level">Add Difficulty</button>
     </fieldset>
   </fieldset>
-  <button type="submit" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
-  <a id="download-link" style="display:none" download="config.json">Download config.json</a>
+  <button type="submit" class="px-4 py-2 border rounded" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
+  <a id="download-link" class="hidden text-blue-600 underline" download="config.json">Download config.json</a>
 </form>
-<iframe id="preview"></iframe>
+<iframe id="preview" class="flex-1 h-[600px] border border-gray-300 w-full"></iframe>
 </div>
 <script>
 const defaultDifficulties = [
@@ -99,14 +84,14 @@ let previewLoaded = false;
 
 function addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
   const div=document.createElement('div');
-  div.className='difficulty-item';
+  div.className='difficulty-item mb-1 flex flex-wrap items-center gap-1';
   div.innerHTML=
-    '<input type="text" class="diff-name" placeholder="Name">'+
-    '<label>Words: <input type="number" class="word-min" min="1"> - <input type="number" class="word-max" min="1"></label>'+
-    '<label>Length: <input type="number" class="len-min" min="1"> - <input type="number" class="len-max" min="1"></label>'+
-    '<button type="button" class="move-diff-up" title="Move this difficulty up">▲</button>'+
-    '<button type="button" class="move-diff-down" title="Move this difficulty down">▼</button>'+
-      '<button type="button" class="remove-diff" title="Remove this difficulty"><svg viewBox="0 0 24 24" class="trash-icon" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
+    '<input type="text" class="diff-name mr-1 border rounded p-1" placeholder="Name">'+
+    '<label class="mr-1">Words: <input type="number" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" class="word-max mr-1 border rounded p-1 w-16" min="1"></label>'+
+    '<label class="mr-1">Length: <input type="number" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" class="len-max mr-1 border rounded p-1 w-16" min="1"></label>'+
+    '<button type="button" class="move-diff-up mr-1" title="Move this difficulty up">▲</button>'+
+    '<button type="button" class="move-diff-down mr-1" title="Move this difficulty down">▼</button>'+
+      '<button type="button" class="remove-diff text-black" title="Remove this difficulty"><svg viewBox="0 0 24 24" class="trash-icon w-4 h-4 inline" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
   div.querySelector('.diff-name').value=d.name||'';
   div.querySelector('.word-min').value=d.wordCount[0];
   div.querySelector('.word-max').value=d.wordCount[1];
@@ -133,13 +118,13 @@ function updateDifficultySelect(){
 
 function addScreen(id='') {
   const fs = document.createElement('fieldset');
-  fs.className = 'screen';
-  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items. Example: menu or help.">Screen ID: <input type="text" class="screen-id">'+
-                 '<button type="button" class="move-screen-up" title="Move this screen up">▲</button>'+ 
-                 '<button type="button" class="move-screen-down" title="Move this screen down">▼</button>'+ 
-                 '<button type="button" class="remove-screen" title="Remove this screen from the configuration"><svg viewBox="0 0 24 24" class="trash-icon" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></legend>'+
+  fs.className = 'screen p-4 border rounded-lg shadow mb-4';
+  fs.innerHTML = '<legend class="flex items-center gap-1" title="A screen displays text and options. Use its ID to link from menu items. Example: menu or help.">Screen ID: <input type="text" class="screen-id ml-2 mr-1 border rounded p-1">'+
+                 '<button type="button" class="move-screen-up mr-1" title="Move this screen up">▲</button>'+
+                 '<button type="button" class="move-screen-down mr-1" title="Move this screen down">▼</button>'+
+                 '<button type="button" class="remove-screen text-black" title="Remove this screen from the configuration"><svg viewBox="0 0 24 24" class="trash-icon w-4 h-4 inline" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></legend>'+
                  '<div class="menu-items"></div>' +
-                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>';
+                 '<button type="button" class="add-menu-item mt-2 px-2 py-1 border rounded" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>';
   fs.querySelector('.screen-id').value = id;
   document.getElementById('screens').appendChild(fs);
   addMenuItem(fs);
@@ -147,13 +132,13 @@ function addScreen(id='') {
 
 function addMenuItem(screenEl, text='', screen='', command='') {
   const div = document.createElement('div');
-  div.className = 'menu-item';
-  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line, e.g., > ACCESS LOGS"></textarea>' +
-                  '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected, like logs">' +
-                  '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected, e.g., Maintenance mode engaged">' +
-                  '<button type="button" class="move-item-up" title="Move this item up">▲</button>' +
-                  '<button type="button" class="move-item-down" title="Move this item down">▼</button>' +
-                  '<button type="button" class="remove-item" title="Remove this menu item from the screen"><svg viewBox="0 0 24 24" class="trash-icon" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
+  div.className = 'menu-item mb-1 flex flex-wrap items-center gap-1';
+  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text mr-1 border rounded p-1" placeholder="Menu text" title="Text shown for this option or story line, e.g., > ACCESS LOGS"></textarea>' +
+                  '<input type="text" class="menu-screen mr-1 border rounded p-1" placeholder="Screen id" title="ID of the screen to display when selected, like logs">' +
+                  '<input type="text" class="menu-command mr-1 border rounded p-1" placeholder="Command message" title="Message to show when selected, e.g., Maintenance mode engaged">' +
+                  '<button type="button" class="move-item-up mr-1" title="Move this item up">▲</button>' +
+                  '<button type="button" class="move-item-down mr-1" title="Move this item down">▼</button>' +
+                  '<button type="button" class="remove-item text-black" title="Remove this menu item from the screen"><svg viewBox="0 0 24 24" class="trash-icon w-4 h-4 inline" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
   div.querySelector('.menu-text').value = text;
   div.querySelector('.menu-screen').value = screen;
   div.querySelector('.menu-command').value = command;
@@ -257,7 +242,7 @@ document.getElementById('difficulties').addEventListener('click',e=>{
 document.getElementById('difficulties').addEventListener('input',updateDifficultySelect);
 document.getElementById('toggle-difficulties').addEventListener('click',()=>{
   const fs=document.getElementById('difficulties-fieldset');
-  fs.style.display=fs.style.display==='none'?'block':'none';
+  fs.classList.toggle('hidden');
 });
 
 document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
@@ -286,7 +271,7 @@ function validateDudWords() {
   }
   dudWordsEl.setCustomValidity(msg);
   dudWarningEl.textContent = msg;
-  dudWarningEl.style.display = msg ? 'block' : 'none';
+  dudWarningEl.classList.toggle('hidden', !msg);
   return !msg;
 }
 
@@ -382,7 +367,7 @@ document.getElementById('builder-form').addEventListener('submit', e => {
     const url = URL.createObjectURL(blob);
     const dl = document.getElementById('download-link');
     dl.href = url;
-    dl.style.display = 'inline';
+    dl.classList.remove('hidden');
 
     updatePreview(config);
   });

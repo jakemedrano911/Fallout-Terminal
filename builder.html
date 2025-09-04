@@ -3,11 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 </head>
-<body class="font-sans m-0 p-4">
+<body class="font-sans m-0 p-4 bg-white dark:bg-gray-900 dark:text-gray-100">
 <h1 class="text-2xl font-bold mb-4">Config Builder</h1>
-<button type="button" id="load-config" class="mb-4 px-2 py-1 border rounded" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
+<div class="mb-4 flex gap-2">
+  <button type="button" id="load-config" class="px-2 py-1 border rounded" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
+  <button type="button" id="dark-toggle" class="px-2 py-1 border rounded" title="Toggle dark mode">Toggle Dark Mode</button>
+</div>
 <input type="file" id="config-file" accept="application/json" class="hidden">
 <div id="builder-layout" class="flex flex-col lg:flex-row items-start gap-4">
 <form id="builder-form" class="flex-1 space-y-4">
@@ -25,8 +32,26 @@
   </fieldset>
   <fieldset class="p-4 border rounded-lg shadow mb-4" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
     <legend class="flex items-center gap-1">Screens</legend>
-    <div id="screens"></div>
-    <button type="button" id="add-screen" class="mt-2 px-2 py-1 border rounded" title="Add a new screen, e.g., a settings screen">Add Screen</button>
+    <div>
+      <div v-for="(screen, sIdx) in screens" :key="screen.uid" class="screen mb-4 border rounded bg-green-50 dark:bg-green-900 dark:border-green-700 p-2" draggable="true" @dragstart="drag('screen', sIdx)" @drop="drop('screen', sIdx)" @dragover.prevent>
+        <div class="flex items-center mb-2">
+          <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
+          <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
+          <span class="cursor-move text-xl mr-2">↕</span>
+          <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
+        </div>
+        <div v-show="screen.open" class="pl-6">
+          <div v-for="(item, iIdx) in screen.items" :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 bg-green-100 dark:bg-green-800 p-1 rounded" draggable="true" @dragstart="drag('item', sIdx, iIdx)" @drop="drop('item', sIdx, iIdx)" @dragover.prevent>
+            <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
+            <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
+            <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
+            <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="text-red-600" title="Remove item">🗑️</button>
+          </div>
+          <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
+        </div>
+      </div>
+      <button type="button" @click="addScreen()" class="mt-2 px-2 py-1 border rounded">Add Screen</button>
+    </div>
   </fieldset>
   <fieldset class="p-4 border rounded-lg shadow mb-4" title="Customize terminal appearance.">
     <legend class="flex items-center gap-1">Style</legend>
@@ -42,14 +67,9 @@
   <fieldset class="p-4 border rounded-lg shadow mb-4" title="Configure hacking settings for locked terminals.">
     <legend class="flex items-center gap-1">Hacking</legend>
     <label class="block" title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked class="mr-1"> Locked</label>
-    <label id="difficulty-label" class="block">Difficulty:
-      <select id="difficulty" class="border rounded p-1 ml-2">
-        <option>Random</option>
-        <option>Very Easy</option>
-        <option>Easy</option>
-        <option selected>Average</option>
-        <option>Hard</option>
-        <option>Very Hard</option>
+    <label id="difficulty-label" class="block" :title="difficultyTitle">Difficulty:
+      <select id="difficulty" v-model="difficultyChoice" class="border rounded p-1 ml-2" :title="difficultyTitle">
+        <option v-for="opt in difficultyOptions" :key="opt">{{ opt }}</option>
       </select>
     </label>
     <label class="block" title="Starting number of attempts available to the user.">Attempts: <input type="number" id="attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
@@ -57,11 +77,23 @@
     <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
     <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
     <div id="dud-warning" class="text-red-600 hidden"></div>
-    <button type="button" id="toggle-difficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
-    <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4 hidden" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range.">
+    <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
+    <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
       <legend class="flex items-center gap-1">Difficulties</legend>
-      <div id="difficulties"></div>
-      <button type="button" id="add-difficulty" class="mt-2 px-2 py-1 border rounded" title="Add a new difficulty level">Add Difficulty</button>
+      <div>
+        <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800" draggable="true" @dragstart="drag('difficulty', idx)" @drop="drop('difficulty', idx)" @dragover.prevent>
+          <div class="flex items-center mb-2">
+            <button type="button" @click="d.open = !d.open" class="mr-2">{{ d.open ? '▼' : '►' }}</button>
+            <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
+            <button type="button" @click="removeDifficulty(idx)" class="text-red-600" title="Remove difficulty">🗑️</button>
+          </div>
+          <div v-show="d.open" class="pl-6 space-y-1">
+            <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>
+            <label class="block">Length: <input type="number" v-model.number="d.length[0]" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.length[1]" class="len-max border rounded p-1 w-16" min="1"></label>
+          </div>
+        </div>
+        <button type="button" @click="addDifficulty()" class="mt-2 px-2 py-1 border rounded">Add Difficulty</button>
+      </div>
     </fieldset>
   </fieldset>
   <button type="submit" class="px-4 py-2 border rounded" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
@@ -78,174 +110,200 @@ const defaultDifficulties = [
   { name: "Very Hard", wordCount: [17,20], length: [12,15] }
 ];
 
-const difficultyLabel = document.getElementById('difficulty-label');
-const difficultySelect = document.getElementById('difficulty');
-let previewLoaded = false;
-
-function addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
-  const div=document.createElement('div');
-  div.className='difficulty-item mb-1 flex flex-wrap items-center gap-1';
-  div.innerHTML=
-    '<input type="text" class="diff-name mr-1 border rounded p-1" placeholder="Name">'+
-    '<label class="mr-1">Words: <input type="number" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" class="word-max mr-1 border rounded p-1 w-16" min="1"></label>'+
-    '<label class="mr-1">Length: <input type="number" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" class="len-max mr-1 border rounded p-1 w-16" min="1"></label>'+
-    '<button type="button" class="move-diff-up mr-1" title="Move this difficulty up">▲</button>'+
-    '<button type="button" class="move-diff-down mr-1" title="Move this difficulty down">▼</button>'+
-      '<button type="button" class="remove-diff text-black" title="Remove this difficulty"><svg viewBox="0 0 24 24" class="trash-icon w-4 h-4 inline" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
-  div.querySelector('.diff-name').value=d.name||'';
-  div.querySelector('.word-min').value=d.wordCount[0];
-  div.querySelector('.word-max').value=d.wordCount[1];
-  div.querySelector('.len-min').value=d.length[0];
-  div.querySelector('.len-max').value=d.length[1];
-  document.getElementById('difficulties').appendChild(div);
-}
-
-function getDifficulties(){
-  return Array.from(document.querySelectorAll('#difficulties .difficulty-item')).map(div=>({
-    name:div.querySelector('.diff-name').value.trim(),
-    wordCount:[parseInt(div.querySelector('.word-min').value,10),parseInt(div.querySelector('.word-max').value,10)],
-    length:[parseInt(div.querySelector('.len-min').value,10),parseInt(div.querySelector('.len-max').value,10)]
-  })).filter(d=>d.name);
-}
-
-function updateDifficultySelect(){
-  const diffs=getDifficulties();
-  difficultySelect.innerHTML='<option>Random</option>'+diffs.map(d=>`<option>${d.name}</option>`).join('');
-  const tip=diffs.map(d=>`${d.name} (${d.length[0]}-${d.length[1]} letters, ${d.wordCount[0]}-${d.wordCount[1]} words)`).join('; ')+'; Random selects any difficulty.';
-  difficultyLabel.title='Select the difficulty for the hacking minigame. '+tip;
-  difficultySelect.title=difficultyLabel.title;
-}
-
-function addScreen(id='') {
-  const fs = document.createElement('fieldset');
-  fs.className = 'screen p-4 border rounded-lg shadow mb-4';
-  fs.innerHTML = '<legend class="flex items-center gap-1" title="A screen displays text and options. Use its ID to link from menu items. Example: menu or help.">Screen ID: <input type="text" class="screen-id ml-2 mr-1 border rounded p-1">'+
-                 '<button type="button" class="move-screen-up mr-1" title="Move this screen up">▲</button>'+
-                 '<button type="button" class="move-screen-down mr-1" title="Move this screen down">▼</button>'+
-                 '<button type="button" class="remove-screen text-black" title="Remove this screen from the configuration"><svg viewBox="0 0 24 24" class="trash-icon w-4 h-4 inline" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></legend>'+
-                 '<div class="menu-items"></div>' +
-                 '<button type="button" class="add-menu-item mt-2 px-2 py-1 border rounded" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>';
-  fs.querySelector('.screen-id').value = id;
-  document.getElementById('screens').appendChild(fs);
-  addMenuItem(fs);
-}
-
-function addMenuItem(screenEl, text='', screen='', command='') {
-  const div = document.createElement('div');
-  div.className = 'menu-item mb-1 flex flex-wrap items-center gap-1';
-  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text mr-1 border rounded p-1" placeholder="Menu text" title="Text shown for this option or story line, e.g., > ACCESS LOGS"></textarea>' +
-                  '<input type="text" class="menu-screen mr-1 border rounded p-1" placeholder="Screen id" title="ID of the screen to display when selected, like logs">' +
-                  '<input type="text" class="menu-command mr-1 border rounded p-1" placeholder="Command message" title="Message to show when selected, e.g., Maintenance mode engaged">' +
-                  '<button type="button" class="move-item-up mr-1" title="Move this item up">▲</button>' +
-                  '<button type="button" class="move-item-down mr-1" title="Move this item down">▼</button>' +
-                  '<button type="button" class="remove-item text-black" title="Remove this menu item from the screen"><svg viewBox="0 0 24 24" class="trash-icon w-4 h-4 inline" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
-  div.querySelector('.menu-text').value = text;
-  div.querySelector('.menu-screen').value = screen;
-  div.querySelector('.menu-command').value = command;
-  screenEl.querySelector('.menu-items').appendChild(div);
-}
-
-function loadConfig(config) {
-  document.getElementById('titles').value = (config.titleLines || []).join('\n');
-  document.getElementById('headers').value = (config.headerLines || []).join('\n');
-  document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
-
-  const screensDiv = document.getElementById('screens');
-  screensDiv.innerHTML = '';
-  Object.entries(config.screens || {}).forEach(([id, items]) => {
-    addScreen(id);
-    const screenEl = screensDiv.lastElementChild;
-    screenEl.querySelector('.menu-items').innerHTML = '';
-    items.forEach(item => {
-      if (typeof item === 'string') {
-        addMenuItem(screenEl, item);
-      } else if (item.screen) {
-        addMenuItem(screenEl, item.text || '', item.screen);
-      } else if (item.command) {
-        addMenuItem(screenEl, item.text || '', '', item.command);
-      }
-    });
-  });
-
-  const style = config.style || {};
-  document.getElementById('text-color').value = style.textColor || '#7aff7a';
-  document.getElementById('bg-color').value = style.backgroundColor || '#041204';
-  document.getElementById('border-color').value = style.borderColor || '#008800';
-
-  document.getElementById('user-speed').value = config.userSpeed ?? 1;
-  document.getElementById('comp-speed').value = config.compSpeed ?? 1;
-
-  document.getElementById('locked').checked = config.locked || false;
-  const diffs = config.hacking?.difficulties || defaultDifficulties;
-  const diffsDiv=document.getElementById('difficulties');
-  diffsDiv.innerHTML='';
-  diffs.forEach(addDifficulty);
-  updateDifficultySelect();
-  const diff = config.hacking?.difficulty;
-  document.getElementById('difficulty').value = diff === undefined ? 'Random' : diff;
-  attemptsEl.value = config.hacking?.attempts ?? 4;
-  maxAttemptsEl.value = config.hacking?.maxAttempts ?? 4;
-  document.getElementById('password').value = config.hacking?.password || '';
-  document.getElementById('dud-words').value = (config.hacking?.dudWords || []).join(', ');
-}
-
-document.getElementById('add-screen').addEventListener('click', () => addScreen());
-
-  document.getElementById('screens').addEventListener('click', e => {
-    if (e.target.classList.contains('remove-item')) {
-      e.target.parentElement.remove();
-    } else if (e.target.classList.contains('add-menu-item')) {
-      const screenEl = e.target.closest('.screen');
-      addMenuItem(screenEl);
-    } else if (e.target.classList.contains('move-item-up')) {
-      const item = e.target.closest('.menu-item');
-      const prev = item.previousElementSibling;
-      if (prev) {
-        item.parentElement.insertBefore(item, prev);
-      }
-    } else if (e.target.classList.contains('move-item-down')) {
-      const item = e.target.closest('.menu-item');
-      const next = item.nextElementSibling;
-      if (next) {
-        item.parentElement.insertBefore(next, item);
-      }
-    } else if (e.target.classList.contains('remove-screen')) {
-      e.target.closest('.screen').remove();
-    } else if (e.target.classList.contains('move-screen-up')) {
-      const screen = e.target.closest('.screen');
-      const prev = screen.previousElementSibling;
-      if (prev) {
-        screen.parentElement.insertBefore(screen, prev);
-      }
-    } else if (e.target.classList.contains('move-screen-down')) {
-      const screen = e.target.closest('.screen');
-      const next = screen.nextElementSibling;
-      if (next) {
-        screen.parentElement.insertBefore(next, screen);
-      }
+const app = Vue.createApp({
+  data() {
+    return {
+      screens: [],
+      difficulties: [],
+      difficultyChoice: 'Average',
+      showDifficulties: false,
+      previewLoaded: false,
+      dragging: null
+    };
+  },
+  computed: {
+    difficultyOptions() {
+      return ['Random', ...this.difficulties.map(d => d.name)];
+    },
+    difficultyTitle() {
+      return this.difficulties.map(d => `${d.name} (${d.length[0]}-${d.length[1]} letters, ${d.wordCount[0]}-${d.wordCount[1]} words)`).join('; ') + '; Random selects any difficulty.';
     }
-  });
-
-document.getElementById('add-difficulty').addEventListener('click',()=>{addDifficulty();updateDifficultySelect();});
-document.getElementById('difficulties').addEventListener('click',e=>{
-  if(e.target.classList.contains('remove-diff')){
-    e.target.closest('.difficulty-item').remove();
-  }else if(e.target.classList.contains('move-diff-up')){
-    const item=e.target.closest('.difficulty-item');
-    const prev=item.previousElementSibling; if(prev) item.parentElement.insertBefore(item,prev);
-  }else if(e.target.classList.contains('move-diff-down')){
-    const item=e.target.closest('.difficulty-item');
-    const next=item.nextElementSibling; if(next) item.parentElement.insertBefore(next,item);
+  },
+  methods: {
+    addScreen(id='') {
+      this.screens.push({id, items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+    },
+    removeScreen(idx) {
+      this.screens.splice(idx,1);
+    },
+    addMenuItem(screen) {
+      screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+    },
+    removeMenuItem(sIdx, iIdx) {
+      this.screens[sIdx].items.splice(iIdx,1);
+    },
+    drag(type, sIdx, iIdx=null) {
+      this.dragging = {type, sIdx, iIdx};
+    },
+    drop(type, sIdx, iIdx=null) {
+      if(!this.dragging || this.dragging.type!==type) return;
+      if(type==='screen'){
+        const [m] = this.screens.splice(this.dragging.sIdx,1);
+        this.screens.splice(sIdx,0,m);
+      } else if(type==='item'){
+        const items = this.screens[this.dragging.sIdx].items;
+        const [m] = items.splice(this.dragging.iIdx,1);
+        this.screens[sIdx].items.splice(iIdx,0,m);
+      } else if(type==='difficulty'){
+        const [m] = this.difficulties.splice(this.dragging.sIdx,1);
+        this.difficulties.splice(sIdx,0,m);
+      }
+      this.dragging=null;
+    },
+    addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
+      this.difficulties.push({...d, open:false, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+    },
+    removeDifficulty(idx) {
+      this.difficulties.splice(idx,1);
+    },
+    loadConfig(config) {
+      document.getElementById('titles').value = (config.titleLines || []).join('\n');
+      document.getElementById('headers').value = (config.headerLines || []).join('\n');
+      document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
+      this.screens = [];
+      Object.entries(config.screens || {}).forEach(([id, items]) => {
+        const screen = {id, items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()};
+        items.forEach(item=>{
+          if (typeof item === 'string') {
+            screen.items.push({text:item, screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+          } else if (item.screen) {
+            screen.items.push({text:item.text || '', screen:item.screen, command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+          } else if (item.command) {
+            screen.items.push({text:item.text || '', screen:'', command:item.command, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+          }
+        });
+        if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.screens.push(screen);
+      });
+      const style = config.style || {};
+      document.getElementById('text-color').value = style.textColor || '#7aff7a';
+      document.getElementById('bg-color').value = style.backgroundColor || '#041204';
+      document.getElementById('border-color').value = style.borderColor || '#008800';
+      document.getElementById('user-speed').value = config.userSpeed ?? 1;
+      document.getElementById('comp-speed').value = config.compSpeed ?? 1;
+      document.getElementById('locked').checked = config.locked || false;
+      const diffs = config.hacking?.difficulties || defaultDifficulties;
+      this.difficulties = [];
+      diffs.forEach(d=>this.addDifficulty(d));
+      this.difficultyChoice = config.hacking?.difficulty ?? 'Random';
+      attemptsEl.value = config.hacking?.attempts ?? 4;
+      maxAttemptsEl.value = config.hacking?.maxAttempts ?? 4;
+      passwordEl.value = config.hacking?.password || '';
+      dudWordsEl.value = (config.hacking?.dudWords || []).join(', ');
+    },
+    updatePreview(config){
+      const previewFrame = document.getElementById('preview');
+      if (!this.previewLoaded) {
+        previewFrame.src = 'index.html';
+        previewFrame.onload = () => {
+          this.previewLoaded = true;
+          previewFrame.contentWindow.postMessage(config, '*');
+        };
+      } else {
+        previewFrame.contentWindow.postMessage(config, '*');
+      }
+    },
+    handleSubmit() {
+      if (!validateDudWords()) {
+        dudWordsEl.reportValidity();
+        return;
+      }
+      const rawTitles = document.getElementById('titles').value.split('\n');
+      const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
+      const rawHeaders = document.getElementById('headers').value.split('\n');
+      const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
+      const rawBoot = document.getElementById('boot-lines').value.split('\n');
+      const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
+      const screensObj = {};
+      this.screens.forEach(scr=>{
+        const id = scr.id.trim();
+        if(!id) return;
+        const items=[];
+        scr.items.forEach(it=>{
+          const text=(it.text||'').trimEnd();
+          const screen=(it.screen||'').trim();
+          const command=(it.command||'').trim();
+          if(!text && !screen && !command) return;
+          if(screen){ items.push({text,screen}); }
+          else if(command){ items.push({text,command}); }
+          else { items.push(text); }
+        });
+        screensObj[id]=items;
+      });
+      const diffValue = this.difficultyChoice;
+      const difficulty = diffValue === 'Random' ? undefined : diffValue;
+      const password = passwordEl.value.trim();
+      const dudWords = dudWordsEl.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const attempts = parseInt(attemptsEl.value,10);
+      const maxAttempts = parseInt(maxAttemptsEl.value,10);
+      const locked = document.getElementById('locked').checked;
+      const textColor = document.getElementById('text-color').value;
+      const backgroundColor = document.getElementById('bg-color').value;
+      const borderColor = document.getElementById('border-color').value;
+      const style = { textColor, backgroundColor, borderColor };
+      const userSpeed = parseInt(document.getElementById('user-speed').value, 10);
+      const compSpeed = parseInt(document.getElementById('comp-speed').value, 10);
+      const hacking = { difficulties: this.difficulties.map(({name, wordCount, length})=>({name, wordCount, length})) };
+      if (difficulty) hacking.difficulty = difficulty;
+      if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
+      if (!isNaN(maxAttempts) && maxAttempts !== 4) hacking.maxAttempts = maxAttempts;
+      if (password) hacking.password = password;
+      if (dudWords.length) hacking.dudWords = dudWords;
+      const config = {
+        titleLines: titles,
+        headerLines: headers,
+        bootLines,
+        userSpeed: isNaN(userSpeed) ? 1 : userSpeed,
+        compSpeed: isNaN(compSpeed) ? 1 : compSpeed,
+        screens: screensObj,
+        style,
+        locked,
+        hacking
+      };
+      const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const dl = document.getElementById('download-link');
+      dl.href = url;
+      dl.classList.remove('hidden');
+      this.updatePreview(config);
+    }
+  },
+  mounted() {
+    this.addScreen('menu');
+    defaultDifficulties.forEach(d=>this.addDifficulty(d));
   }
-  updateDifficultySelect();
-});
-document.getElementById('difficulties').addEventListener('input',updateDifficultySelect);
-document.getElementById('toggle-difficulties').addEventListener('click',()=>{
-  const fs=document.getElementById('difficulties-fieldset');
-  fs.classList.toggle('hidden');
 });
 
+const vm = app.mount('#builder-form');
+
+document.getElementById('builder-form').addEventListener('submit', e => {
+  e.preventDefault();
+  vm.handleSubmit();
+});
 document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
+document.getElementById('config-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const config = JSON.parse(reader.result);
+    vm.loadConfig(config);
+    vm.updatePreview(config);
+  };
+  reader.readAsText(file);
+});
+document.getElementById('dark-toggle').addEventListener('click', ()=> document.documentElement.classList.toggle('dark'));
+
 const passwordEl = document.getElementById('password');
 const dudWordsEl = document.getElementById('dud-words');
 const dudWarningEl = document.getElementById('dud-warning');
@@ -277,113 +335,6 @@ function validateDudWords() {
 
 passwordEl.addEventListener('input', validateDudWords);
 dudWordsEl.addEventListener('input', validateDudWords);
-
-document.getElementById('config-file').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const config = JSON.parse(reader.result);
-      loadConfig(config);
-      updatePreview(config);
-    };
-    reader.readAsText(file);
-  });
-
-  addScreen('menu');
-  defaultDifficulties.forEach(addDifficulty);
-  updateDifficultySelect();
-
-document.getElementById('builder-form').addEventListener('submit', e => {
-  e.preventDefault();
-  if (!validateDudWords()) {
-    dudWordsEl.reportValidity();
-    return;
-  }
-    const rawTitles = document.getElementById('titles').value.split('\n');
-    const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
-    const rawHeaders = document.getElementById('headers').value.split('\n');
-    const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
-    const rawBoot = document.getElementById('boot-lines').value.split('\n');
-    const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
-    const screensObj = {};
-    Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
-      const id = screenEl.querySelector('.screen-id').value.trim();
-      if(!id) return;
-      const items = [];
-      Array.from(screenEl.querySelectorAll('.menu-item')).forEach(item => {
-        const textEl = item.querySelector('.menu-text');
-        const text = textEl.value.trimEnd();
-        const screen = item.querySelector('.menu-screen').value.trim();
-        const command = item.querySelector('.menu-command').value.trim();
-        if(!text && !screen && !command) {
-          return;
-        }
-        if(screen){
-          items.push({ text, screen });
-        }else if(command){
-          items.push({ text, command });
-        }else{
-          items.push(text);
-        }
-      });
-      screensObj[id] = items;
-    });
-    const diffValue = document.getElementById('difficulty').value;
-    const difficulty = diffValue === 'Random' ? undefined : diffValue;
-    const password = passwordEl.value.trim();
-    const dudWords = dudWordsEl.value.split(',').map(s => s.trim()).filter(Boolean);
-    const attempts = parseInt(attemptsEl.value, 10);
-    const maxAttempts = parseInt(maxAttemptsEl.value, 10);
-    const locked = document.getElementById('locked').checked;
-    const textColor = document.getElementById('text-color').value;
-    const backgroundColor = document.getElementById('bg-color').value;
-    const borderColor = document.getElementById('border-color').value;
-    const style = { textColor, backgroundColor, borderColor };
-
-    const userSpeed = parseInt(document.getElementById('user-speed').value, 10);
-    const compSpeed = parseInt(document.getElementById('comp-speed').value, 10);
-
-    const hacking = { difficulties: getDifficulties() };
-    if (difficulty) hacking.difficulty = difficulty;
-    if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
-    if (!isNaN(maxAttempts) && maxAttempts !== 4) hacking.maxAttempts = maxAttempts;
-    if (password) hacking.password = password;
-    if (dudWords.length) hacking.dudWords = dudWords;
-
-    const config = {
-      titleLines: titles,
-      headerLines: headers,
-      bootLines,
-      userSpeed: isNaN(userSpeed) ? 1 : userSpeed,
-      compSpeed: isNaN(compSpeed) ? 1 : compSpeed,
-      screens: screensObj,
-      style,
-      locked,
-      hacking
-    };
-
-    const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const dl = document.getElementById('download-link');
-    dl.href = url;
-    dl.classList.remove('hidden');
-
-    updatePreview(config);
-  });
-
-function updatePreview(config) {
-  const previewFrame = document.getElementById('preview');
-  if (!previewLoaded) {
-    previewFrame.src = 'index.html';
-    previewFrame.onload = () => {
-      previewLoaded = true;
-      previewFrame.contentWindow.postMessage(config, '*');
-    };
-  } else {
-    previewFrame.contentWindow.postMessage(config, '*');
-  }
-}
 </script>
 </body>
 </html>

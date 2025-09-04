@@ -97,7 +97,9 @@
             <div class="flex items-center mb-2">
               <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
-              <input type="color" v-model="screen.color" class="screen-color w-6 h-6 p-0 border rounded mr-2" title="Color is for organization only and does not affect terminal appearance">
+              <input type="color" v-model="screen.color" class="screen-color w-8 h-8 p-0 border-2 rounded mr-2 shadow cursor-pointer" title="Color is for organization only and does not affect terminal appearance">
+              <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1" title="Move up">▲</button>
+              <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1" title="Move down">▼</button>
               <span class="cursor-move text-xl mr-2">↕</span>
               <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
             </div>
@@ -107,6 +109,9 @@
                   <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
                   <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
                   <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
+                  <button type="button" @click="moveMenuItemUp(sIdx, iIdx)" :disabled="iIdx===0" class="mr-1" title="Move up">▲</button>
+                  <button type="button" @click="moveMenuItemDown(sIdx, iIdx)" :disabled="iIdx===screen.items.length-1" class="mr-1" title="Move down">▼</button>
+                  <span class="cursor-move text-xl mr-1">↕</span>
                   <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="text-red-600" title="Remove item">🗑️</button>
                 </div>
               </template>
@@ -201,23 +206,55 @@ const app = Vue.createApp({
   },
   methods: {
       addScreen(id='') {
-        this.screens.push({id, color:'#cccccc', items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        const palette = ['#f87171', '#fb923c', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa'];
+        const color = palette[Math.floor(Math.random() * palette.length)];
+        this.screens.push({
+          id,
+          color,
+          items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
+          open:true,
+          uid:crypto.randomUUID?crypto.randomUUID():Math.random()
+        });
         this.$nextTick(this.initSortables);
       },
       removeScreen(idx) {
         this.screens.splice(idx,1);
         this.$nextTick(this.initSortables);
       },
-      addMenuItem(screen) {
-        screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-        this.$nextTick(this.initSortables);
-      },
-      removeMenuItem(sIdx, iIdx) {
-        this.screens[sIdx].items.splice(iIdx,1);
-        this.$nextTick(this.initSortables);
-      },
-      initSortables() {
-        this.$nextTick(() => {
+        addMenuItem(screen) {
+          screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+          this.$nextTick(this.initSortables);
+        },
+        removeMenuItem(sIdx, iIdx) {
+          this.screens[sIdx].items.splice(iIdx,1);
+          this.$nextTick(this.initSortables);
+        },
+        moveScreenUp(idx) {
+          if (idx <= 0) return;
+          const arr = this.screens;
+          [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+          this.$nextTick(this.initSortables);
+        },
+        moveScreenDown(idx) {
+          if (idx >= this.screens.length - 1) return;
+          const arr = this.screens;
+          [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+          this.$nextTick(this.initSortables);
+        },
+        moveMenuItemUp(sIdx, iIdx) {
+          if (iIdx <= 0) return;
+          const items = this.screens[sIdx].items;
+          [items[iIdx - 1], items[iIdx]] = [items[iIdx], items[iIdx - 1]];
+          this.$nextTick(this.initSortables);
+        },
+        moveMenuItemDown(sIdx, iIdx) {
+          const items = this.screens[sIdx].items;
+          if (iIdx >= items.length - 1) return;
+          [items[iIdx], items[iIdx + 1]] = [items[iIdx + 1], items[iIdx]];
+          this.$nextTick(this.initSortables);
+        },
+        initSortables() {
+          this.$nextTick(() => {
           if (this.screenSortable) this.screenSortable.destroy();
           this.screenSortable = new Sortable(document.getElementById('screens-container'), {
             handle: '.cursor-move',
@@ -267,6 +304,7 @@ const app = Vue.createApp({
               forceFallback: true,
               ghostClass: 'drag-ghost',
               chosenClass: 'drag-chosen',
+              handle: '.cursor-move',
               draggable: '.menu-item',
               onStart: () => document.body.classList.add('dragging'),
               onEnd: evt => {

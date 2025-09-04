@@ -13,6 +13,7 @@
     iframe { flex:1; height:600px; border:1px solid #ccc; }
     legend { display:flex; align-items:center; gap:0.25rem; }
     .remove-item, .remove-screen, .remove-diff { color:#000; }
+    .trash-icon { width:1em; height:1em; fill:#000; vertical-align:middle; }
     @media (max-width:800px){
       #builder-layout{flex-direction:column;}
       iframe{width:100%;}
@@ -105,7 +106,7 @@ function addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
     '<label>Length: <input type="number" class="len-min" min="1"> - <input type="number" class="len-max" min="1"></label>'+
     '<button type="button" class="move-diff-up" title="Move this difficulty up">▲</button>'+
     '<button type="button" class="move-diff-down" title="Move this difficulty down">▼</button>'+
-    '<button type="button" class="remove-diff" title="Remove this difficulty">&#x1F5D1;&#xFE0E;</button>';
+      '<button type="button" class="remove-diff" title="Remove this difficulty"><svg viewBox="0 0 24 24" class="trash-icon" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
   div.querySelector('.diff-name').value=d.name||'';
   div.querySelector('.word-min').value=d.wordCount[0];
   div.querySelector('.word-max').value=d.wordCount[1];
@@ -136,7 +137,7 @@ function addScreen(id='') {
   fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items. Example: menu or help.">Screen ID: <input type="text" class="screen-id">'+
                  '<button type="button" class="move-screen-up" title="Move this screen up">▲</button>'+ 
                  '<button type="button" class="move-screen-down" title="Move this screen down">▼</button>'+ 
-                 '<button type="button" class="remove-screen" title="Remove this screen from the configuration">&#x1F5D1;&#xFE0E;</button></legend>'+
+                 '<button type="button" class="remove-screen" title="Remove this screen from the configuration"><svg viewBox="0 0 24 24" class="trash-icon" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button></legend>'+
                  '<div class="menu-items"></div>' +
                  '<button type="button" class="add-menu-item" title="Add a new menu option or line of text, such as a RETURN option">Add Menu Item</button>';
   fs.querySelector('.screen-id').value = id;
@@ -152,7 +153,7 @@ function addMenuItem(screenEl, text='', screen='', command='') {
                   '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected, e.g., Maintenance mode engaged">' +
                   '<button type="button" class="move-item-up" title="Move this item up">▲</button>' +
                   '<button type="button" class="move-item-down" title="Move this item down">▼</button>' +
-                  '<button type="button" class="remove-item" title="Remove this menu item from the screen">&#x1F5D1;&#xFE0E;</button>';
+                  '<button type="button" class="remove-item" title="Remove this menu item from the screen"><svg viewBox="0 0 24 24" class="trash-icon" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zm13-15h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>';
   div.querySelector('.menu-text').value = text;
   div.querySelector('.menu-screen').value = screen;
   div.querySelector('.menu-command').value = command;

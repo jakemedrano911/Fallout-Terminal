@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
@@ -161,29 +161,26 @@
       <div id="screens-container">
         <template v-for="(screen, sIdx) in screens">
           <div :key="screen.uid" class="screen mb-4 border border-l-4 rounded p-2 text-white" :style="{borderColor: screen.color, backgroundColor: screen.color}">
-            <div class="flex items-center mb-2">
+            <div class="flex flex-wrap items-center mb-2">
               <button type="button" @click="screen.open = !screen.open" class="mr-2 action-btn" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
+              <label class="flex items-center mr-2">Text:
+                <input type="color" v-model="screen.textColor" class="ml-1">
+                <input type="text" v-model="screen.textColor" class="ml-1 border rounded p-1 w-24">
+              </label>
+              <label class="flex items-center mr-2">Background:
+                <input type="color" v-model="screen.bgColor" class="ml-1">
+                <input type="text" v-model="screen.bgColor" class="ml-1 border rounded p-1 w-24">
+              </label>
+              <label class="flex items-center mr-2">Border:
+                <input type="color" v-model="screen.borderColor" class="ml-1">
+                <input type="text" v-model="screen.borderColor" class="ml-1 border rounded p-1 w-24">
+              </label>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
               <input type="color" v-model="screen.color" class="screen-color w-8 h-8 p-0 border-2 rounded mr-2 shadow cursor-pointer" title="Color is for organization only and does not affect terminal appearance">
               <input type="text" v-model="screen.color" class="w-20 p-1 border rounded mr-2" title="Color is for organization only and does not affect terminal appearance">
-              <button type="button" @click="screen.showAppearance = !screen.showAppearance" class="mr-2 action-btn" title="Toggle appearance options">Appearance</button>
               <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
               <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1 action-btn" title="Move down">▼</button>
               <button type="button" @click="removeScreen(sIdx)" class="action-btn" title="Remove screen"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
-            </div>
-            <div v-show="screen.showAppearance" class="pl-6 mb-2 space-y-1">
-              <label class="block">Text:
-                <input type="color" v-model="screen.textColor" class="ml-2">
-                <input type="text" v-model="screen.textColor" class="ml-2 border rounded p-1 w-24">
-              </label>
-              <label class="block">Background:
-                <input type="color" v-model="screen.bgColor" class="ml-2">
-                <input type="text" v-model="screen.bgColor" class="ml-2 border rounded p-1 w-24">
-              </label>
-              <label class="block">Border:
-                <input type="color" v-model="screen.borderColor" class="ml-2">
-                <input type="text" v-model="screen.borderColor" class="ml-2 border rounded p-1 w-24">
-              </label>
             </div>
             <div v-show="screen.open" class="pl-6 items-container" :data-sidx="sIdx" :id="'items-'+screen.uid">
               <template v-for="(item, iIdx) in screen.items">
@@ -337,8 +334,7 @@ const app = Vue.createApp({
           uid:crypto.randomUUID?crypto.randomUUID():Math.random(),
           textColor:text,
           bgColor:bg,
-          borderColor:border,
-          showAppearance:false
+          borderColor:border
         });
         this.$nextTick(this.initSortables);
       },
@@ -405,7 +401,7 @@ const app = Vue.createApp({
         this.hackBgColor = hackingStyle.backgroundColor || globalBg;
         this.hackBorderColor = hackingStyle.borderColor || globalBorder;
         Object.entries(config.screens || {}).forEach(([id, data]) => {
-          const screen = {id, color:'#0c2c5f', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
+          const screen = {id, color:'#0c2c5f', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder};
           const items = Array.isArray(data) ? data : (data.items || []);
           if(!Array.isArray(data) && data.style){
             if(data.style.textColor) screen.textColor = data.style.textColor;

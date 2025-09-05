@@ -210,14 +210,17 @@
       <legend class="flex items-center gap-1">Default Appearance</legend>
       <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Default Text Color:
         <input type="color" id="text-color" value="#7aff7a" class="ml-2">
+        <input type="checkbox" class="ml-1 color-apply" data-target="text-color">
         <input type="text" id="text-color-hex" value="#7aff7a" class="ml-2 border rounded p-1 w-24">
       </label>
       <label class="block" title="Color of the terminal window outline, e.g., #008800.">Default Outline Color:
         <input type="color" id="border-color" value="#008800" class="ml-2">
+        <input type="checkbox" class="ml-1 color-apply" data-target="border-color">
         <input type="text" id="border-color-hex" value="#008800" class="ml-2 border rounded p-1 w-24">
       </label>
       <label class="block" title="Background color of the terminal window, e.g., #041204.">Default Background Color:
         <input type="color" id="bg-color" value="#041204" class="ml-2">
+        <input type="checkbox" class="ml-1 color-apply" data-target="bg-color">
         <input type="text" id="bg-color-hex" value="#041204" class="ml-2 border rounded p-1 w-24">
       </label>
     </fieldset>
@@ -251,6 +254,7 @@ function linkColorHex(colorId, hexId){
     if(!val.startsWith('#')) val='#'+val;
     if(/^#[0-9a-fA-F]{6}$/.test(val)){
       colorInput.value=val;
+      colorInput.dispatchEvent(new Event('input'));
     }
   };
   colorInput.addEventListener('input', syncToHex);
@@ -258,6 +262,14 @@ function linkColorHex(colorId, hexId){
   syncToHex();
   return syncToHex;
 }
+
+document.querySelectorAll('.color-apply').forEach(cb=>{
+  cb.addEventListener('change',()=>{
+    const target=document.getElementById(cb.dataset.target);
+    if(target) target.dispatchEvent(new Event('input'));
+    cb.checked=false;
+  });
+});
 
 const syncTextColor = linkColorHex('text-color', 'text-color-hex');
 const syncBorderColor = linkColorHex('border-color', 'border-color-hex');

@@ -122,7 +122,12 @@
       { "text": "> RETURN", "screen": "menu" }
     ]
   },
-    "style": {
+  "style": {
+      "textColor": "#7aff7a",
+      "backgroundColor": "#041204",
+      "borderColor": "#008800"
+    },
+  "hackingStyle": {
       "textColor": "#7aff7a",
       "backgroundColor": "#041204",
       "borderColor": "#008800"

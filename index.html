@@ -16,6 +16,9 @@
     --text-color:#7aff7a;
     --terminal-bg:#041204;
     --border-color:#008800;
+    --hacking-text-color:var(--text-color);
+    --hacking-bg:var(--terminal-bg);
+    --hacking-border-color:var(--border-color);
   }
   html{
     overflow:auto;
@@ -120,6 +123,26 @@
   }
   #pref-menu input[type=range]{
     margin-left:calc(5px * var(--scale));
+    -webkit-appearance:none;
+    appearance:none;
+    background:var(--terminal-bg);
+    border:calc(1px * var(--scale)) solid var(--border-color);
+    height:calc(4px * var(--scale));
+  }
+  #pref-menu input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:calc(10px * var(--scale));
+    height:calc(10px * var(--scale));
+    background:var(--border-color);
+    cursor:pointer;
+  }
+  #pref-menu input[type=range]::-moz-range-thumb{
+    width:calc(10px * var(--scale));
+    height:calc(10px * var(--scale));
+    background:var(--border-color);
+    border:none;
+    cursor:pointer;
   }
   #config-container span{
     margin-top:calc(5px * var(--scale));
@@ -238,15 +261,15 @@
     color:var(--terminal-bg);
   }
   #hack-wrap{display:flex;justify-content:flex-start;align-items:flex-start;width:100%;gap:2ch;}
-  #hacking{white-space:pre;font:inherit;flex-shrink:0;}
+  #hacking{white-space:pre;font:inherit;flex-shrink:0;color:var(--hacking-text-color);background:var(--hacking-bg);}
   #hacking .word{cursor:pointer;}
   #hacking .char:hover,
-  #hacking .char.highlight{background:var(--border-color);color:var(--terminal-bg);}
+  #hacking .char.highlight{background:var(--hacking-border-color);color:var(--hacking-bg);}
   #hacking .word:hover,
-  #hacking .word.highlight{background:var(--border-color);color:var(--terminal-bg);}
+  #hacking .word.highlight{background:var(--hacking-border-color);color:var(--hacking-bg);}
   #hacking .bracket{cursor:pointer;}
   #hacking .bracket:hover,
-  #hacking .bracket.highlight{background:var(--border-color);color:var(--terminal-bg);}
+  #hacking .bracket.highlight{background:var(--hacking-border-color);color:var(--hacking-bg);}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;overflow:hidden;}
   #hack-messages #input{margin-top:0;align-self:flex-start;}
   #hack-prompt{margin-top:calc(4px * var(--scale));}
@@ -282,10 +305,10 @@
       <button id="pref-button" aria-label="Preferences">&#9881;</button>
       <span>Prefs</span>
       <div id="pref-menu">
-        <label>Hum <input type="range" min="0" max="10" value="1" id="hum-volume"></label>
-        <label>Scroll <input type="range" min="0" max="10" value="2" id="scroll-volume"></label>
-        <label>Focus <input type="range" min="0" max="10" value="2" id="focus-volume"></label>
-        <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
+        <label>Hum <input type="range" min="0" max="100" value="30" id="hum-volume"></label>
+        <label>Scroll <input type="range" min="0" max="100" value="20" id="scroll-volume"></label>
+        <label>Focus <input type="range" min="0" max="100" value="20" id="focus-volume"></label>
+        <label>Select <input type="range" min="0" max="100" value="50" id="select-volume"></label>
         <label>User Speed <input type="range" min="0" max="5" value="1" id="user-speed-slider"></label>
         <label>Computer Speed <input type="range" min="0" max="5" value="1" id="comp-speed-slider"></label>
       </div>
@@ -379,6 +402,12 @@ async function loadConfig(){
     if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
     if(borderColor) document.documentElement.style.setProperty('--border-color', borderColor);
   }
+  if(cfg.hackingStyle){
+    const {textColor, backgroundColor, borderColor}=cfg.hackingStyle;
+    if(textColor) document.documentElement.style.setProperty('--hacking-text-color', textColor);
+    if(backgroundColor) document.documentElement.style.setProperty('--hacking-bg', backgroundColor);
+    if(borderColor) document.documentElement.style.setProperty('--hacking-border-color', borderColor);
+  }
   const computed=getComputedStyle(document.documentElement);
   baseStyle={
     textColor:computed.getPropertyValue('--text-color').trim(),
@@ -403,12 +432,7 @@ const configButton=document.getElementById('config-button');
 const historyEl=content;
 
 function handleConfigLoaded(){
-  const sounds=[
-    'Terminal 4/Program Start/ProgramLoad_01.wav',
-    'Terminal 4/Program Start/ProgramLoad_02.wav',
-    'Terminal 4/Program Start/ProgramLoad_03.wav'
-  ];
-  const startSound=new Audio(sounds[Math.floor(Math.random()*sounds.length)]);
+  const startSound=new Audio('Terminal 4/Insert.wav');
   startSound.play();
   if(powered){
     powerButton.click();
@@ -429,7 +453,7 @@ configFile.addEventListener('change',async e=>{
   }
 });
 configButton.addEventListener('click',()=>{
-  new Audio('Terminal 4/Insert.wav').play();
+  new Audio('Terminal 4/Eject.wav').play();
   configFile.click();
 });
 window.addEventListener('message', e => { uploadedConfig = e.data; handleConfigLoaded(); });
@@ -487,19 +511,19 @@ prefButton.addEventListener('click',()=>{
   prefMenu.style.display=prefMenu.style.display==='flex'?'none':'flex';
 });
 
-let humVolume=humSlider.value/10;
-let scrollVolume=scrollSlider.value/10;
-let focusVolume=focusSlider.value/10;
-let selectVolume=selectSlider.value/10;
+let humVolume=Math.pow(humSlider.value/100,2);
+let scrollVolume=scrollSlider.value/100;
+let focusVolume=focusSlider.value/100;
+let selectVolume=selectSlider.value/100;
 let fanHumBuffer,fanHumSource,fanHumGain;
 
 humSlider.addEventListener('input',()=>{
-  humVolume=humSlider.value/10;
+  humVolume=Math.pow(humSlider.value/100,2);
   if(fanHumGain) fanHumGain.gain.value=humVolume;
 });
-scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;});
-focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
-selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
+scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/100;});
+focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/100;});
+selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/100;});
 userSpeedSlider.value=userSpeed===Infinity?0:userSpeed;
 compSpeedSlider.value=compSpeed===Infinity?0:compSpeed;
 userSpeedSlider.addEventListener('input',()=>{

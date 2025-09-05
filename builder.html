@@ -94,6 +94,36 @@
     .dark .top-line-btn:hover {
       background-color: #374151;
     }
+
+    .tab-btn {
+      padding: 0.25rem 0.5rem;
+      border: 2px solid #4b5563;
+      border-bottom-width: 2px;
+      border-radius: 0.25rem 0.25rem 0 0;
+      background-color: #f3f4f6;
+      color: #000000;
+      cursor: pointer;
+    }
+    .tab-btn:hover {
+      background-color: #e5e7eb;
+    }
+    .tab-btn-active {
+      background-color: #ffffff;
+      border-bottom-color: transparent;
+      margin-bottom: -2px;
+    }
+    .dark .tab-btn {
+      border-color: #9ca3af;
+      background-color: #1f2937;
+      color: #f3f4f6;
+    }
+    .dark .tab-btn:hover {
+      background-color: #374151;
+    }
+    .dark .tab-btn-active {
+      background-color: #111827;
+      border-bottom-color: transparent;
+    }
   </style>
 </head>
 <body class="font-sans m-0 p-4">
@@ -109,9 +139,9 @@
 <input type="file" id="config-file" accept="application/json" class="hidden">
 <form id="builder-form">
     <div class="mb-4 flex gap-2 border-b border-gray-300 dark:border-gray-700">
-      <button type="button" @click="activeTab='content'" :class="['px-2 py-1 border rounded-t', activeTab==='content' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Terminal Content</button>
-      <button type="button" @click="activeTab='hacking'" :class="['px-2 py-1 border rounded-t', activeTab==='hacking' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Hacking</button>
-      <button type="button" @click="activeTab='prefs'" :class="['px-2 py-1 border rounded-t', activeTab==='prefs' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Preferences</button>
+      <button type="button" @click="activeTab='content'" :class="['tab-btn', activeTab==='content' ? 'tab-btn-active' : '']">Terminal Content</button>
+      <button type="button" @click="activeTab='hacking'" :class="['tab-btn', activeTab==='hacking' ? 'tab-btn-active' : '']">Hacking</button>
+      <button type="button" @click="activeTab='prefs'" :class="['tab-btn', activeTab==='prefs' ? 'tab-btn-active' : '']">Preferences</button>
     </div>
   <div v-show="activeTab==='content'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow" title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
@@ -250,6 +280,18 @@ const defaultDifficulties = [
 const DEFAULT_TEXT_COLOR = '#7aff7a';
 const DEFAULT_BG_COLOR = '#041204';
 const DEFAULT_BORDER_COLOR = '#008800';
+const BASE_SCREEN_COLOR = '#0c2c5f';
+
+function shadeColor(col, amt) {
+  const num = parseInt(col.slice(1), 16);
+  let r = (num >> 16) + amt;
+  let g = (num >> 8 & 0x00ff) + amt;
+  let b = (num & 0x0000ff) + amt;
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return '#' + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
+}
 
 const app = Vue.createApp({
   data() {
@@ -280,7 +322,8 @@ const app = Vue.createApp({
         const text = this.textColor || DEFAULT_TEXT_COLOR;
         const bg = this.bgColor || DEFAULT_BG_COLOR;
         const border = this.borderColor || DEFAULT_BORDER_COLOR;
-        const color = '#0c2c5f';
+        const offset = (this.screens.length % 10) * 10;
+        const color = shadeColor(BASE_SCREEN_COLOR, offset);
         this.screens.push({
           id,
           color,

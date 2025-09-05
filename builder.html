@@ -430,10 +430,11 @@ const app = Vue.createApp({
       const maxAttempts = parseInt(maxAttemptsEl.value,10);
       const locked = document.getElementById('locked').checked;
       const style = { textColor, backgroundColor, borderColor };
-      const hackingStyle = {};
-      if(hackTextColor !== textColor) hackingStyle.textColor = hackTextColor;
-      if(hackBgColor !== backgroundColor) hackingStyle.backgroundColor = hackBgColor;
-      if(hackBorderColor !== borderColor) hackingStyle.borderColor = hackBorderColor;
+      const hackingStyle = {
+        textColor: hackTextColor,
+        backgroundColor: hackBgColor,
+        borderColor: hackBorderColor
+      };
       const hacking = { difficulties: this.difficulties.map(({name, wordCount, length})=>({name, wordCount, length})) };
       if (difficulty) hacking.difficulty = difficulty;
       if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
@@ -446,7 +447,7 @@ const app = Vue.createApp({
         bootLines,
         screens: screensObj,
         style,
-        hackingStyle: Object.keys(hackingStyle).length ? hackingStyle : undefined,
+        hackingStyle,
         locked,
         hacking
       };

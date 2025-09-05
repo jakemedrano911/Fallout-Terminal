@@ -369,8 +369,40 @@ let baseStyle={textColor:'#7aff7a',backgroundColor:'#041204',borderColor:'#00880
 
 let uploadedConfig=null;
 let powered=false;
+const activeTimeouts=new Set();
+const pendingWaits=new Set();
+const activeAudios=new Set();
+let currentCycle=0;
 
-async function loadConfig(){
+function setTrackedTimeout(fn,ms){
+  const id=setTimeout(()=>{activeTimeouts.delete(id);fn();},ms);
+  activeTimeouts.add(id);
+  return id;
+}
+function clearAllTimeouts(){
+  for(const id of activeTimeouts) clearTimeout(id);
+  activeTimeouts.clear();
+}
+function trackAudio(audio){
+  activeAudios.add(audio);
+  audio.addEventListener('ended',()=>activeAudios.delete(audio));
+  return audio;
+}
+function stopAllAudio(){
+  for(const audio of activeAudios){
+    audio.pause();
+    audio.currentTime=0;
+  }
+  activeAudios.clear();
+  stopScrollSound();
+  stopFanHum();
+}
+function cancelWaits(){
+  for(const cleanup of pendingWaits) cleanup();
+  pendingWaits.clear();
+}
+
+async function loadConfig(cycle=currentCycle){
   let cfg;
   if(uploadedConfig){
     cfg=uploadedConfig;
@@ -381,6 +413,7 @@ async function loadConfig(){
       cfg={};
     }
   }
+  if(cycle!==currentCycle) return;
   titleLines=cfg.titleLines;
   headerLines=cfg.headerLines;
   bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
@@ -432,7 +465,7 @@ const configButton=document.getElementById('config-button');
 const historyEl=content;
 
 function handleConfigLoaded(){
-  const startSound=new Audio('Terminal 4/Insert.wav');
+  const startSound=trackAudio(new Audio('Terminal 4/Insert.wav'));
   startSound.play();
   if(powered){
     powerButton.click();
@@ -453,7 +486,7 @@ configFile.addEventListener('change',async e=>{
   }
 });
 configButton.addEventListener('click',()=>{
-  new Audio('Terminal 4/Eject.wav').play();
+  trackAudio(new Audio('Terminal 4/Eject.wav')).play();
   configFile.click();
 });
 window.addEventListener('message', e => { uploadedConfig = e.data; handleConfigLoaded(); });
@@ -935,7 +968,7 @@ function processGuess(guess,playSound=true){
     playPasswordResult(true);
     hackedPasswordLength=hackingData.password.length;
     hasHacked=true;
-    setTimeout(()=>showIntro(),500);
+    setTrackedTimeout(()=>showIntro(),500);
   }else{
     let like=0;
     for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
@@ -1022,8 +1055,8 @@ function displayMessage(text){
   if(input.parentElement){
     input.parentElement.insertBefore(div,input);
   }
-  setTimeout(()=>div.classList.add('fade'),5000);
-  setTimeout(()=>div.remove(),6000);
+  setTrackedTimeout(()=>div.classList.add('fade'),5000);
+  setTrackedTimeout(()=>div.remove(),6000);
 }
 
 function clearResponses(){
@@ -1043,7 +1076,7 @@ function handleCommand(cmd){
   if(command==='syntaxhelper'){
     if(hackingActive){
       hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
-      setTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+      setTrackedTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
     }else{
       displayMessage('command unknown');
     }
@@ -1081,7 +1114,7 @@ async function loadScrollSound(){
 }
 
 function playScrollSound(){
-  if(!scrollBuffer) return;
+  if(!scrollBuffer || !powered) return;
   lastScrollTime=Date.now();
   const src=audioCtx.createBufferSource();
   src.buffer=scrollBuffer;
@@ -1089,15 +1122,15 @@ function playScrollSound(){
   gain.gain.value=scrollVolume;
   src.connect(gain).connect(audioCtx.destination);
   src.start();
-  scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs);
+  scrollTimeout=setTrackedTimeout(playScrollSound,scrollIntervalMs);
 }
 function startScrollSound(){
-  if(scrollTimeout) return;
+  if(scrollTimeout || !powered) return;
   const elapsed=Date.now()-lastScrollTime;
   if(elapsed>=scrollIntervalMs){
     playScrollSound();
   }else{
-    scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs-elapsed);
+    scrollTimeout=setTrackedTimeout(playScrollSound,scrollIntervalMs-elapsed);
   }
 }
 
@@ -1137,12 +1170,14 @@ function stopFanHum(){
 }
 
 function playFocusSound(){
-  const audio=new Audio('Terminal 3/menu/menu_focus.wav');
+  if(!powered) return;
+  const audio=trackAudio(new Audio('Terminal 3/menu/menu_focus.wav'));
   audio.volume=focusVolume;
   audio.play();
 }
 
 function playSelectSound(){
+  if(!powered) return;
   const files=[
     'Terminal 4/HDD/HDD1/HDD101.wav',
     'Terminal 4/HDD/HDD1/HDD102.wav',
@@ -1167,15 +1202,16 @@ function playSelectSound(){
   ];
   const hddSrc=files[Math.floor(Math.random()*files.length)];
   const enterSrc=enterFiles[Math.floor(Math.random()*enterFiles.length)];
-  const hddAudio=new Audio(hddSrc);
+  const hddAudio=trackAudio(new Audio(hddSrc));
   hddAudio.volume=selectVolume;
   hddAudio.play();
-  const enterAudio=new Audio(enterSrc);
+  const enterAudio=trackAudio(new Audio(enterSrc));
   enterAudio.volume=selectVolume;
   enterAudio.play();
 }
 
 function playCharFocusSound(){
+  if(!powered) return;
   const files=[
     'Terminal 3/single/charsingle_01.wav',
     'Terminal 3/single/charsingle_02.wav',
@@ -1185,12 +1221,13 @@ function playCharFocusSound(){
     'Terminal 3/single/charsingle_06.wav'
   ];
   const src=files[Math.floor(Math.random()*files.length)];
-  const audio=new Audio(src);
+  const audio=trackAudio(new Audio(src));
   audio.volume=focusVolume;
   audio.play();
 }
 
 function playWordFocusSound(){
+  if(!powered) return;
   const files=[
     'Terminal 3/multiple/charmultiple_01.wav',
     'Terminal 3/multiple/charmultiple_02.wav',
@@ -1198,31 +1235,33 @@ function playWordFocusSound(){
     'Terminal 3/multiple/charmultiple_04.wav'
   ];
   const src=files[Math.floor(Math.random()*files.length)];
-  const audio=new Audio(src);
+  const audio=trackAudio(new Audio(src));
   audio.volume=focusVolume;
   audio.play();
 }
 
 function playEnterCharSound(){
+  if(!powered) return;
   const files=[
     'Terminal 3/enter/charenter_01.wav',
     'Terminal 3/enter/charenter_02.wav',
     'Terminal 3/enter/charenter_03.wav'
   ];
   const src=files[Math.floor(Math.random()*files.length)];
-  const audio=new Audio(src);
+  const audio=trackAudio(new Audio(src));
   audio.volume=selectVolume;
   audio.play();
 }
 
 function playPasswordResult(correct){
+  if(!powered) return;
   const file=correct?'Terminal 3/passgood.wav':'Terminal 3/passbad.wav';
-  const audio=new Audio(file);
+  const audio=trackAudio(new Audio(file));
   audio.volume=selectVolume;
   audio.play();
 }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function sleep(ms){return new Promise(r=>setTrackedTimeout(r,ms));}
 
 async function typeText(el,text){
   for(let ch of text){
@@ -1298,8 +1337,10 @@ function waitForContinue(){
     }
     function cleanup(){
       document.removeEventListener('mousedown',handler);
+      pendingWaits.delete(cleanup);
       res();
     }
+    pendingWaits.add(cleanup);
     document.addEventListener('mousedown',handler);
   });
 }
@@ -1326,7 +1367,8 @@ document.addEventListener('click',e=>{
   }
 },true);
 
-async function init(){
+async function init(cycle=currentCycle){
+  if(cycle!==currentCycle || !powered) return;
   startScrollSound();
   header.innerHTML='';
   stopScrollSound();
@@ -1559,7 +1601,7 @@ async function showScreen(name){
 }
 
 document.addEventListener('keydown',e=>{
-  if(typing || !currentOptions.length) return;
+  if(!powered || typing || !currentOptions.length) return;
   if(e.key==='ArrowDown'){
     if(selected>=0) currentOptions[selected].classList.remove('selected');
     selected=selected<0?0:(selected+1)%currentOptions.length;
@@ -1578,6 +1620,7 @@ document.addEventListener('keydown',e=>{
 });
 
 document.addEventListener('keydown',e=>{
+  if(!powered) return;
   if(e.key==='Tab'){
     e.preventDefault();
     if(!typing) goBack();
@@ -1587,7 +1630,9 @@ document.addEventListener('keydown',e=>{
 powerButton.addEventListener('click',async()=>{
   await audioCtx.resume();
   if(!powered){
-    const powerSound=new Audio('Terminal 3/poweron.mp3');
+    currentCycle++;
+    const cycle=currentCycle;
+    const powerSound=trackAudio(new Audio('Terminal 3/poweron.mp3'));
     powerSound.play();
     powerScreen.style.display='none';
     updateScale();
@@ -1607,15 +1652,27 @@ powerButton.addEventListener('click',async()=>{
       updateInput();
       hackingActive=false;
       hackingData=null;
-      await loadConfig();
-      loadScrollSound().then(init);
+      await loadConfig(cycle);
+      loadScrollSound().then(()=>{if(currentCycle===cycle) init(cycle);});
     }
     powered=true;
   }else{
-    const powerSound=new Audio('Terminal 3/poweroff.mp3');
+    currentCycle++;
+    powered=false;
+    stopAllAudio();
+    clearAllTimeouts();
+    cancelWaits();
+    typing=false;
+    screenHistory=[];
+    currentOptions=[];
+    selected=-1;
+    inputText='';
+    input.textContent='';
+    header.innerHTML='';
+    content.innerHTML='';
+    applyScreenStyle(null);
+    const powerSound=trackAudio(new Audio('Terminal 3/poweroff.mp3'));
     powerSound.play();
-    stopFanHum();
-    stopScrollSound();
     powerScreen.style.display='flex';
     updateScale();
     prevWidth=window.innerWidth;
@@ -1625,7 +1682,6 @@ powerButton.addEventListener('click',async()=>{
     prefMenu.style.display='none';
     hackingActive=false;
     hackingData=null;
-    powered=false;
   }
 });
 </script>

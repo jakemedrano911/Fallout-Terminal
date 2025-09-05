@@ -93,7 +93,7 @@
   }
   #controls-container span{color:var(--text-color);}
   #pref-container{
-    display:none;
+    display:flex;
     margin-bottom:calc(10px * var(--scale));
   }
   #pref-container span{
@@ -494,8 +494,8 @@ let currentOptions=[];
 let selected=-1;
 let typing=false;
 let baseDelay=10;
-const savedUserSpeed=localStorage.getItem('userSpeed');
-const savedCompSpeed=localStorage.getItem('compSpeed');
+let savedUserSpeed=localStorage.getItem('userSpeed');
+let savedCompSpeed=localStorage.getItem('compSpeed');
 let userBaseSpeed=savedUserSpeed!==null?Number(savedUserSpeed):50;
 let compBaseSpeed=savedCompSpeed!==null?Number(savedCompSpeed):50;
 let userSpeed=userBaseSpeed;
@@ -564,12 +564,14 @@ userSpeedSlider.addEventListener('input',()=>{
   userBaseSpeed=val;
   userSpeed=userBaseSpeed;
   localStorage.setItem('userSpeed',userBaseSpeed);
+  savedUserSpeed=userBaseSpeed;
 });
 compSpeedSlider.addEventListener('input',()=>{
   const val=Number(compSpeedSlider.value);
   compBaseSpeed=val;
   compSpeed=compBaseSpeed;
   localStorage.setItem('compSpeed',compBaseSpeed);
+  savedCompSpeed=compBaseSpeed;
 });
 
 input.addEventListener('input',updateInput);
@@ -591,6 +593,7 @@ function updateInput(){
   placeCaretAtEnd(input);
 }
 updateInput();
+loadConfig();
 
 function placeCaretAtEnd(el){
   const range=document.createRange();
@@ -1266,7 +1269,7 @@ function sleep(ms){return new Promise(r=>setTrackedTimeout(r,ms));}
 async function typeText(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    const delay=(100-compSpeed)*baseDelay;
+    const delay=Math.pow(100-compSpeed,2)/100*baseDelay;
     if(delay>0) await sleep(delay);
   }
   el.textContent+='\n';
@@ -1278,7 +1281,7 @@ async function typeText(el,text){
 async function typeUserInput(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    const delay=(100-userSpeed)*baseDelay;
+    const delay=Math.pow(100-userSpeed,2)/100*baseDelay;
     if(delay>0){
       playCharFocusSound();
       await sleep(delay);
@@ -1323,7 +1326,7 @@ async function typeHtml(el,html){
     target.appendChild(textNode);
     for(const unit of units){
       textNode.data+=unit.startsWith('&')?decodeEntity(unit):unit;
-      const delay=(100-compSpeed)*baseDelay;
+      const delay=Math.pow(100-compSpeed,2)/100*baseDelay;
       if(delay>0) await sleep(delay);
     }
   }
@@ -1639,7 +1642,6 @@ powerButton.addEventListener('click',async()=>{
     prevWidth=window.innerWidth;
     prevHeight=window.innerHeight;
     terminal.classList.add('powered');
-    prefContainer.style.display='flex';
     startFanHum();
     if(!terminalLocked){
       header.innerHTML='';
@@ -1678,7 +1680,6 @@ powerButton.addEventListener('click',async()=>{
     prevWidth=window.innerWidth;
     prevHeight=window.innerHeight;
     terminal.classList.remove('powered');
-    prefContainer.style.display='none';
     prefMenu.style.display='none';
     hackingActive=false;
     hackingData=null;

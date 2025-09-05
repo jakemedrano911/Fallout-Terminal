@@ -342,6 +342,7 @@ let bootLines=defaultBootLines;
 let screens={};
 let hacking={};
 let startLocked=true;
+let baseStyle={textColor:'#7aff7a',backgroundColor:'#041204',borderColor:'#008800'};
 
 let uploadedConfig=null;
 window.addEventListener('message', e => { uploadedConfig = e.data; loadConfig(); });
@@ -360,7 +361,7 @@ async function loadConfig(){
   titleLines=cfg.titleLines;
   headerLines=cfg.headerLines;
   bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
-  screens=cfg.screens;
+  screens=cfg.screens || {};
   hacking = cfg.hacking || {};
   if(savedUserSpeed===null && cfg.userSpeed!==undefined){
     userBaseSpeed=cfg.userSpeed===0?Infinity:cfg.userSpeed;
@@ -372,12 +373,18 @@ async function loadConfig(){
     compSpeed=compBaseSpeed;
     if(compSpeedSlider) compSpeedSlider.value=compBaseSpeed===Infinity?0:compBaseSpeed;
   }
-    if(cfg.style){
-      const {textColor, backgroundColor, borderColor}=cfg.style;
-      if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
-      if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
-      if(borderColor) document.documentElement.style.setProperty('--border-color', borderColor);
-    }
+  if(cfg.style){
+    const {textColor, backgroundColor, borderColor}=cfg.style;
+    if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
+    if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
+    if(borderColor) document.documentElement.style.setProperty('--border-color', borderColor);
+  }
+  const computed=getComputedStyle(document.documentElement);
+  baseStyle={
+    textColor:computed.getPropertyValue('--text-color').trim(),
+    backgroundColor:computed.getPropertyValue('--terminal-bg').trim(),
+    borderColor:computed.getPropertyValue('--border-color').trim()
+  };
   startLocked=cfg.locked!==undefined?cfg.locked:true;
   if(hasHacked) startLocked=false;
 }
@@ -438,6 +445,15 @@ function restoreInput(){
   if(input.parentElement!==terminalScreen){
     terminalScreen.appendChild(input);
   }
+}
+
+function applyScreenStyle(style){
+  const t=style&&style.textColor?style.textColor:baseStyle.textColor;
+  const b=style&&style.backgroundColor?style.backgroundColor:baseStyle.backgroundColor;
+  const br=style&&style.borderColor?style.borderColor:baseStyle.borderColor;
+  document.documentElement.style.setProperty('--text-color',t);
+  document.documentElement.style.setProperty('--terminal-bg',b);
+  document.documentElement.style.setProperty('--border-color',br);
 }
 
 const prefContainer=document.getElementById('pref-container');
@@ -1426,7 +1442,16 @@ async function showScreen(name){
   content.innerHTML='';
   currentOptions=[];
   selected=-1;
-  const lines=screens[name];
+  const data=screens[name];
+  let lines=[];
+  let style=null;
+  if(Array.isArray(data)){
+    lines=data;
+  }else if(data){
+    lines=data.items||[];
+    style=data.style||null;
+  }
+  applyScreenStyle(style);
   let i=0;
   while(i<lines.length){
     resetSpeeds();

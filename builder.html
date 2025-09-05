@@ -365,10 +365,13 @@ const app = Vue.createApp({
           items.forEach(item=>{
             if (typeof item === 'string') {
               screen.items.push({text:item, screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-            } else if (item.screen) {
-              screen.items.push({text:item.text || '', screen:item.screen, command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-            } else if (item.command) {
-              screen.items.push({text:item.text || '', screen:'', command:item.command, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+            } else {
+              screen.items.push({
+                text: item.text || '',
+                screen: item.screen || '',
+                command: item.command || '',
+                uid: crypto.randomUUID?crypto.randomUUID():Math.random()
+              });
             }
           });
           if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
@@ -412,7 +415,8 @@ const app = Vue.createApp({
           const screen=(it.screen||'').trim();
           const command=(it.command||'').trim();
           if(!text && !screen && !command) return;
-          if(screen){ items.push({text,screen}); }
+          if(screen && command){ items.push({text,screen,command}); }
+          else if(screen){ items.push({text,screen}); }
           else if(command){ items.push({text,command}); }
           else { items.push(text); }
         });

@@ -58,6 +58,22 @@
     .dragging {
       user-select: none;
     }
+    .action-btn {
+      border: 1px solid #9ca3af;
+      border-radius: 0.25rem;
+      padding: 0 0.25rem;
+      background-color: #f3f4f6;
+    }
+    .action-btn:hover {
+      background-color: #e5e7eb;
+    }
+    .dark .action-btn {
+      border-color: #4b5563;
+      background-color: #1f2937;
+    }
+    .dark .action-btn:hover {
+      background-color: #374151;
+    }
   </style>
 </head>
 <body class="font-sans m-0 p-4">
@@ -71,10 +87,10 @@
 <input type="file" id="config-file" accept="application/json" class="hidden">
 <div id="builder-layout" class="flex flex-col lg:flex-row items-start gap-4">
 <form id="builder-form" class="flex-1">
-    <div class="mb-4 flex gap-2 border-b-2 border-gray-300 dark:border-gray-700">
-      <button type="button" @click="activeTab='content'" :class="['px-2 py-1 border-2 rounded-t', activeTab==='content' ? 'bg-gray-100 border-gray-600 dark:bg-gray-800 dark:border-gray-400' : 'bg-gray-50 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Terminal Content</button>
-      <button type="button" @click="activeTab='hacking'" :class="['px-2 py-1 border-2 rounded-t', activeTab==='hacking' ? 'bg-gray-100 border-gray-600 dark:bg-gray-800 dark:border-gray-400' : 'bg-gray-50 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Hacking</button>
-      <button type="button" @click="activeTab='prefs'" :class="['px-2 py-1 border-2 rounded-t', activeTab==='prefs' ? 'bg-gray-100 border-gray-600 dark:bg-gray-800 dark:border-gray-400' : 'bg-gray-50 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Preferences</button>
+    <div class="mb-4 flex gap-2 border-b border-gray-300 dark:border-gray-700">
+      <button type="button" @click="activeTab='content'" :class="['px-2 py-1 border rounded-t', activeTab==='content' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Terminal Content</button>
+      <button type="button" @click="activeTab='hacking'" :class="['px-2 py-1 border rounded-t', activeTab==='hacking' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Hacking</button>
+      <button type="button" @click="activeTab='prefs'" :class="['px-2 py-1 border rounded-t', activeTab==='prefs' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Preferences</button>
     </div>
   <div v-show="activeTab==='content'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow" title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
@@ -95,14 +111,14 @@
         <template v-for="(screen, sIdx) in screens">
           <div :key="screen.uid" class="screen mb-4 border border-l-4 rounded p-2" :style="{borderColor: screen.color, backgroundColor: screen.color}">
             <div class="flex items-center mb-2">
-              <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
+              <button type="button" @click="screen.open = !screen.open" class="mr-2 action-btn" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
               <input type="color" v-model="screen.color" class="screen-color w-8 h-8 p-0 border-2 rounded mr-2 shadow cursor-pointer" title="Color is for organization only and does not affect terminal appearance">
-              <button type="button" @click="screen.showAppearance = !screen.showAppearance" class="mr-2" title="Toggle appearance options">Appearance</button>
-              <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1" title="Move up">▲</button>
-              <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1" title="Move down">▼</button>
+              <button type="button" @click="screen.showAppearance = !screen.showAppearance" class="mr-2 action-btn" title="Toggle appearance options">Appearance</button>
+              <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
+              <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1 action-btn" title="Move down">▼</button>
               <span class="cursor-move text-xl mr-2">↕</span>
-              <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
+              <button type="button" @click="removeScreen(sIdx)" class="action-btn" title="Remove screen"><img src="trash.svg" alt="Remove" class="w-4 h-4"></button>
             </div>
             <div v-show="screen.showAppearance" class="pl-6 mb-2 space-y-1">
               <label class="block">Text: <input type="color" v-model="screen.textColor" class="ml-2"></label>
@@ -115,10 +131,10 @@
                   <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
                   <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
                   <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
-                  <button type="button" @click="moveMenuItemUp(sIdx, iIdx)" :disabled="iIdx===0" class="mr-1" title="Move up">▲</button>
-                  <button type="button" @click="moveMenuItemDown(sIdx, iIdx)" :disabled="iIdx===screen.items.length-1" class="mr-1" title="Move down">▼</button>
+                  <button type="button" @click="moveMenuItemUp(sIdx, iIdx)" :disabled="iIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
+                  <button type="button" @click="moveMenuItemDown(sIdx, iIdx)" :disabled="iIdx===screen.items.length-1" class="mr-1 action-btn" title="Move down">▼</button>
                   <span class="cursor-move text-xl mr-1">↕</span>
-                  <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="text-red-600" title="Remove item">🗑️</button>
+                  <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="action-btn" title="Remove item"><img src="trash.svg" alt="Remove item" class="w-4 h-4"></button>
                 </div>
               </template>
               <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
@@ -149,9 +165,9 @@
           <div id="difficulties-container">
             <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800">
               <div class="flex items-center mb-2">
-                <button type="button" @click="d.open = !d.open" class="mr-2">{{ d.open ? '▼' : '►' }}</button>
+                <button type="button" @click="d.open = !d.open" class="mr-2 action-btn">{{ d.open ? '▼' : '►' }}</button>
                 <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
-                <button type="button" @click="removeDifficulty(idx)" class="text-red-600" title="Remove difficulty">🗑️</button>
+                <button type="button" @click="removeDifficulty(idx)" class="action-btn" title="Remove difficulty"><img src="trash.svg" alt="Remove difficulty" class="w-4 h-4"></button>
               </div>
               <div v-show="d.open" class="pl-6 space-y-1">
                 <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>

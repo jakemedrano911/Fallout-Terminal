@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
@@ -57,19 +57,21 @@
     .dragging {
       user-select: none;
     }
-    .action-btn {
-      border: 1px solid #9ca3af;
-      border-radius: 0.25rem;
-      padding: 0 0.25rem;
-      background-color: #f3f4f6;
-    }
-    .action-btn:hover {
-      background-color: #e5e7eb;
-    }
-    .dark .action-btn {
-      border-color: #4b5563;
-      background-color: #1f2937;
-    }
+      .action-btn {
+        border: 1px solid #9ca3af;
+        border-radius: 0.25rem;
+        padding: 0 0.25rem;
+        background-color: #f3f4f6;
+        color: #000000;
+      }
+      .action-btn:hover {
+        background-color: #e5e7eb;
+      }
+      .dark .action-btn {
+        border-color: #4b5563;
+        background-color: #1f2937;
+        color: #f3f4f6;
+      }
     .dark .action-btn:hover {
       background-color: #374151;
     }
@@ -95,6 +97,7 @@
   </style>
 </head>
 <body class="font-sans m-0 p-4">
+<div class="max-w-4xl mx-auto">
 <h1 class="text-2xl font-bold mb-4">Config Builder</h1>
 <div class="mb-4 flex gap-2 items-center">
   <button type="button" id="load-config" class="top-line-btn" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
@@ -127,7 +130,7 @@
       <legend class="flex items-center gap-1">Screens</legend>
       <div id="screens-container">
         <template v-for="(screen, sIdx) in screens">
-          <div :key="screen.uid" class="screen mb-4 border border-l-4 rounded p-2" :style="{borderColor: screen.color, backgroundColor: screen.color}">
+          <div :key="screen.uid" class="screen mb-4 border border-l-4 rounded p-2 text-white" :style="{borderColor: screen.color, backgroundColor: screen.color}">
             <div class="flex items-center mb-2">
               <button type="button" @click="screen.open = !screen.open" class="mr-2 action-btn" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
@@ -136,7 +139,7 @@
               <button type="button" @click="screen.showAppearance = !screen.showAppearance" class="mr-2 action-btn" title="Toggle appearance options">Appearance</button>
               <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
               <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1 action-btn" title="Move down">▼</button>
-              <button type="button" @click="removeScreen(sIdx)" class="action-btn" title="Remove screen"><img src="trash.svg" alt="Remove" class="w-4 h-4"></button>
+              <button type="button" @click="removeScreen(sIdx)" class="action-btn" title="Remove screen"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
             </div>
             <div v-show="screen.showAppearance" class="pl-6 mb-2 space-y-1">
               <label class="block">Text:
@@ -154,13 +157,13 @@
             </div>
             <div v-show="screen.open" class="pl-6 items-container" :data-sidx="sIdx" :id="'items-'+screen.uid">
               <template v-for="(item, iIdx) in screen.items">
-                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 border p-1 rounded" :style="{backgroundColor: screen.color, borderColor: screen.color}">
+                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 border p-1 rounded text-white" :style="{backgroundColor: screen.color, borderColor: screen.color}">
                   <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
                   <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
                   <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
                   <button type="button" @click="moveMenuItemUp(sIdx, iIdx)" :disabled="iIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
                   <button type="button" @click="moveMenuItemDown(sIdx, iIdx)" :disabled="iIdx===screen.items.length-1" class="mr-1 action-btn" title="Move down">▼</button>
-                  <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="action-btn" title="Remove item"><img src="trash.svg" alt="Remove item" class="w-4 h-4"></button>
+                  <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="action-btn" title="Remove item"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
                 </div>
               </template>
               <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
@@ -205,7 +208,7 @@
               <div class="flex items-center mb-2">
                 <button type="button" @click="d.open = !d.open" class="mr-2 action-btn">{{ d.open ? '▼' : '►' }}</button>
                 <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
-                <button type="button" @click="removeDifficulty(idx)" class="action-btn" title="Remove difficulty"><img src="trash.svg" alt="Remove difficulty" class="w-4 h-4"></button>
+                <button type="button" @click="removeDifficulty(idx)" class="action-btn" title="Remove difficulty"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
               </div>
               <div v-show="d.open" class="pl-6 space-y-1">
                 <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>
@@ -235,6 +238,7 @@
     </fieldset>
   </div>
 </form>
+</div>
 <script>
 const defaultDifficulties = [
   { name: "Very Easy", wordCount: [8,10], length: [4,5] },
@@ -276,8 +280,7 @@ const app = Vue.createApp({
         const text = this.textColor || DEFAULT_TEXT_COLOR;
         const bg = this.bgColor || DEFAULT_BG_COLOR;
         const border = this.borderColor || DEFAULT_BORDER_COLOR;
-        const palette = [text, bg, border];
-        const color = palette[Math.floor(Math.random() * palette.length)];
+        const color = '#0c2c5f';
         this.screens.push({
           id,
           color,
@@ -354,8 +357,7 @@ const app = Vue.createApp({
         this.hackBgColor = hackingStyle.backgroundColor || globalBg;
         this.hackBorderColor = hackingStyle.borderColor || globalBorder;
         Object.entries(config.screens || {}).forEach(([id, data]) => {
-          const palette = [globalText, globalBg, globalBorder];
-          const screen = {id, color:palette[Math.floor(Math.random() * palette.length)], items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
+          const screen = {id, color:'#0c2c5f', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
           const items = Array.isArray(data) ? data : (data.items || []);
           if(!Array.isArray(data) && data.style){
             if(data.style.textColor) screen.textColor = data.style.textColor;

@@ -233,11 +233,6 @@
         <input type="text" id="bg-color-hex" class="ml-2 border rounded p-1 w-24" v-model="bgColor">
       </label>
     </fieldset>
-    <fieldset class="p-4 border rounded-lg shadow" title="Default typing speeds. 0 is slowest, 100 is instant.">
-      <legend class="flex items-center gap-1">Text Speeds</legend>
-      <label class="block">User Text Speed: <input type="number" id="user-speed" min="0" max="100" value="50" class="ml-2 border rounded p-1 w-20"></label>
-      <label class="block">Terminal Text Speed: <input type="number" id="comp-speed" min="0" max="100" value="50" class="ml-2 border rounded p-1 w-20"></label>
-    </fieldset>
   </div>
 </form>
 <script>
@@ -379,8 +374,6 @@ const app = Vue.createApp({
           if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
           this.screens.push(screen);
         });
-        document.getElementById('user-speed').value = config.userSpeed ?? 50;
-        document.getElementById('comp-speed').value = config.compSpeed ?? 50;
         document.getElementById('locked').checked = config.locked || false;
         const diffs = config.hacking?.difficulties || defaultDifficulties;
         this.difficulties = [];
@@ -441,8 +434,6 @@ const app = Vue.createApp({
       if(hackTextColor !== textColor) hackingStyle.textColor = hackTextColor;
       if(hackBgColor !== backgroundColor) hackingStyle.backgroundColor = hackBgColor;
       if(hackBorderColor !== borderColor) hackingStyle.borderColor = hackBorderColor;
-      const userSpeed = parseInt(document.getElementById('user-speed').value, 10);
-      const compSpeed = parseInt(document.getElementById('comp-speed').value, 10);
       const hacking = { difficulties: this.difficulties.map(({name, wordCount, length})=>({name, wordCount, length})) };
       if (difficulty) hacking.difficulty = difficulty;
       if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
@@ -453,8 +444,6 @@ const app = Vue.createApp({
         titleLines: titles,
         headerLines: headers,
         bootLines,
-        userSpeed: isNaN(userSpeed) ? 50 : userSpeed,
-        compSpeed: isNaN(compSpeed) ? 50 : compSpeed,
         screens: screensObj,
         style,
         hackingStyle: Object.keys(hackingStyle).length ? hackingStyle : undefined,

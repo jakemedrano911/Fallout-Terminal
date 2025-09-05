@@ -1581,7 +1581,10 @@ async function showScreen(name){
           playSelectSound();
           if(line.screen){
             await showScreen(line.screen);
-            if(line.command) displayMessage(line.command);
+            if(line.command){
+              await new Promise(requestAnimationFrame);
+              displayMessage(line.command);
+            }
           }else if(line.command){
             displayMessage(line.command);
           }

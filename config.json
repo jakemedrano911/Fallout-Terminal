@@ -19,8 +19,8 @@
     "Root (5A8)",
     "Maintenance Mode"
   ],
-  "userSpeed": 1,
-  "compSpeed": 1,
+  "userSpeed": 68,
+  "compSpeed": 90,
   "screens": {
     "menu": [
       { "text": "> Protectron Schematics", "screen": "protectron" },

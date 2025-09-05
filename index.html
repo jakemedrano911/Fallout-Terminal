@@ -311,7 +311,7 @@
       <button id="pref-button" aria-label="Preferences">&#9881;</button>
       <span>Prefs</span>
       <div id="pref-menu">
-        <label>Hum <input type="range" min="0" max="100" value="30" id="hum-volume"></label>
+        <label>Hum <input type="range" min="0" max="100" value="20" id="hum-volume"></label>
         <label>Scroll <input type="range" min="0" max="100" value="20" id="scroll-volume"></label>
         <label>Focus <input type="range" min="0" max="100" value="20" id="focus-volume"></label>
         <label>Select <input type="range" min="0" max="100" value="50" id="select-volume"></label>
@@ -1180,6 +1180,7 @@ async function startFanHum(){
   fanHumSource=audioCtx.createBufferSource();
   fanHumSource.buffer=fanHumBuffer;
   fanHumSource.loop=true;
+  fanHumGain.gain.value=humVolume;
   fanHumSource.connect(fanHumGain);
   fanHumSource.start(0);
 }

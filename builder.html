@@ -98,10 +98,16 @@
               <button type="button" @click="screen.open = !screen.open" class="mr-2" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
               <input type="color" v-model="screen.color" class="screen-color w-8 h-8 p-0 border-2 rounded mr-2 shadow cursor-pointer" title="Color is for organization only and does not affect terminal appearance">
+              <button type="button" @click="screen.showAppearance = !screen.showAppearance" class="mr-2" title="Toggle appearance options">Appearance</button>
               <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1" title="Move up">▲</button>
               <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1" title="Move down">▼</button>
               <span class="cursor-move text-xl mr-2">↕</span>
               <button type="button" @click="removeScreen(sIdx)" class="text-red-600" title="Remove screen">🗑️</button>
+            </div>
+            <div v-show="screen.showAppearance" class="pl-6 mb-2 space-y-1">
+              <label class="block">Text: <input type="color" v-model="screen.textColor" class="ml-2"></label>
+              <label class="block">Background: <input type="color" v-model="screen.bgColor" class="ml-2"></label>
+              <label class="block">Border: <input type="color" v-model="screen.borderColor" class="ml-2"></label>
             </div>
             <div v-show="screen.open" class="pl-6 items-container" :data-sidx="sIdx" :id="'items-'+screen.uid">
               <template v-for="(item, iIdx) in screen.items">
@@ -213,7 +219,11 @@ const app = Vue.createApp({
           color,
           items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
           open:true,
-          uid:crypto.randomUUID?crypto.randomUUID():Math.random()
+          uid:crypto.randomUUID?crypto.randomUUID():Math.random(),
+          textColor:'',
+          bgColor:'',
+          borderColor:'',
+          showAppearance:false
         });
         this.$nextTick(this.initSortables);
       },
@@ -335,8 +345,14 @@ const app = Vue.createApp({
       document.getElementById('headers').value = (config.headerLines || []).join('\n');
       document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
       this.screens = [];
-      Object.entries(config.screens || {}).forEach(([id, items]) => {
-        const screen = {id, color:'#cccccc', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random()};
+      Object.entries(config.screens || {}).forEach(([id, data]) => {
+        const screen = {id, color:'#cccccc', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:'', bgColor:'', borderColor:'', showAppearance:false};
+        const items = Array.isArray(data) ? data : (data.items || []);
+        if(!Array.isArray(data) && data.style){
+          screen.textColor = data.style.textColor || '';
+          screen.bgColor = data.style.backgroundColor || '';
+          screen.borderColor = data.style.borderColor || '';
+        }
         items.forEach(item=>{
           if (typeof item === 'string') {
             screen.items.push({text:item, screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
@@ -403,7 +419,11 @@ const app = Vue.createApp({
           else if(command){ items.push({text,command}); }
           else { items.push(text); }
         });
-        screensObj[id]=items;
+        const style = {};
+        if(scr.textColor) style.textColor = scr.textColor;
+        if(scr.bgColor) style.backgroundColor = scr.bgColor;
+        if(scr.borderColor) style.borderColor = scr.borderColor;
+        screensObj[id] = Object.keys(style).length ? {items, style} : items;
       });
       const diffValue = this.difficultyChoice;
       const difficulty = diffValue === 'Random' ? undefined : diffValue;

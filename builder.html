@@ -1,51 +1,275 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 1rem; }
-    fieldset { margin-bottom: 1rem; }
-    .menu-item { margin-bottom: 0.5rem; }
-    .menu-item input, .menu-item textarea { margin-right: 0.5rem; }
-    iframe { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 1rem; }
+    body {
+      background-color: #f9fafb;
+      color: #000000;
+    }
+    .dark body {
+      background-color: #000000;
+      color: #f3f4f6;
+    }
+    fieldset {
+      background-color: #f3f4f6;
+      border-color: #d1d5db;
+    }
+    .dark fieldset {
+      background-color: #1f2937;
+      border-color: #374151;
+    }
+    input, textarea, select {
+      background-color: #f9fafb;
+      border-color: #d1d5db;
+      color: #000000;
+    }
+    .dark input, .dark textarea, .dark select {
+      background-color: #111827;
+      border-color: #374151;
+      color: #f3f4f6;
+    }
+    ::placeholder {
+      color: #4b5563;
+      opacity: 1;
+    }
+    .dark ::placeholder {
+      color: #9ca3af;
+    }
+    .screen, .menu-item, .difficulty-item {
+      transition: transform 0.2s;
+      touch-action: none;
+    }
+    .drag-chosen {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .drag-ghost {
+      opacity: 0.4;
+      border: 2px dashed #34d399;
+    }
+    .dragging {
+      user-select: none;
+    }
+      .action-btn {
+        border: 1px solid #9ca3af;
+        border-radius: 0.25rem;
+        padding: 0 0.25rem;
+        background-color: #f3f4f6;
+        color: #000000;
+      }
+      .action-btn:hover {
+        background-color: #e5e7eb;
+      }
+      .dark .action-btn {
+        border-color: #4b5563;
+        background-color: #1f2937;
+        color: #f3f4f6;
+      }
+    .dark .action-btn:hover {
+      background-color: #374151;
+    }
+    .top-line-btn {
+      padding: 0.25rem 0.5rem;
+      border: 2px solid #4b5563;
+      border-radius: 0.25rem;
+      background-color: #f3f4f6;
+      color: #000000;
+      cursor: pointer;
+    }
+    .top-line-btn:hover {
+      background-color: #e5e7eb;
+    }
+    .dark .top-line-btn {
+      border-color: #9ca3af;
+      background-color: #1f2937;
+      color: #f3f4f6;
+    }
+    .dark .top-line-btn:hover {
+      background-color: #374151;
+    }
+
+    .tab-btn {
+      padding: 0.25rem 0.5rem;
+      border: 2px solid #4b5563;
+      border-bottom-width: 2px;
+      border-radius: 0.25rem 0.25rem 0 0;
+      background-color: #f3f4f6;
+      color: #000000;
+      cursor: pointer;
+    }
+    .tab-btn:hover {
+      background-color: #e5e7eb;
+    }
+    .tab-btn-active {
+      background-color: #ffffff;
+      border-bottom-color: transparent;
+      margin-bottom: -2px;
+    }
+    .dark .tab-btn {
+      border-color: #9ca3af;
+      background-color: #1f2937;
+      color: #f3f4f6;
+    }
+    .dark .tab-btn:hover {
+      background-color: #374151;
+    }
+    .dark .tab-btn-active {
+      background-color: #111827;
+      border-bottom-color: transparent;
+    }
   </style>
 </head>
-<body>
-<h1>Config Builder</h1>
+<body class="font-sans m-0 p-4">
+<div class="max-w-4xl mx-auto">
+<h1 class="text-2xl font-bold mb-4">Config Builder</h1>
+<div class="mb-4 flex gap-2 items-center">
+  <button type="button" id="load-config" class="top-line-btn" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
+  <button type="submit" form="builder-form" class="top-line-btn" title="Generate the configuration file and enable downloading config.json">Generate Config</button>
+  <a id="download-link" class="hidden text-blue-600 underline" download="config.json">Download config.json</a>
+  <span id="generate-feedback" class="text-green-600 hidden"></span>
+  <button type="button" id="dark-toggle" class="top-line-btn" title="Toggle dark mode">Toggle Dark Mode</button>
+</div>
+<input type="file" id="config-file" accept="application/json" class="hidden">
 <form id="builder-form">
-  <fieldset title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line.">
-    <legend>Titles</legend>
-    <textarea id="titles" rows="4" cols="50" placeholder="Each line becomes a title line" title="Each line becomes a title line"></textarea>
-  </fieldset>
-  <fieldset title="Enter header text shown beneath the title. Each line becomes its own header line.">
-    <legend>Headers</legend>
-    <textarea id="headers" rows="4" cols="50" placeholder="Each line becomes a header line" title="Each line becomes a header line"></textarea>
-  </fieldset>
-  <fieldset title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text.">
-    <legend>Screens</legend>
-    <div id="screens"></div>
-    <button type="button" id="add-screen" title="Add a new screen">Add Screen</button>
-  </fieldset>
-  <fieldset title="Configure hacking settings for locked terminals.">
-    <legend>Hacking</legend>
-    <label title="If checked, the terminal starts locked and requires hacking."><input type="checkbox" id="locked" checked> Locked</label>
-    <label title="Select the difficulty for the hacking minigame.">Difficulty:
-      <select id="difficulty">
-        <option>Very Easy</option>
-        <option>Easy</option>
-        <option selected>Average</option>
-        <option>Hard</option>
-        <option>Very Hard</option>
-      </select>
-    </label>
-    <label title="Password needed to unlock the terminal after hacking.">Password: <input type="text" id="password"></label>
-    <label title="Comma-separated words that will be removed as duds during hacking.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2"></label>
-  </fieldset>
-  <button type="submit" title="Generate the configuration file and update the preview">Generate Config</button>
+    <div class="mb-4 flex gap-2 border-b border-gray-300 dark:border-gray-700">
+      <button type="button" @click="activeTab='content'" :class="['tab-btn', activeTab==='content' ? 'tab-btn-active' : '']">Terminal Content</button>
+      <button type="button" @click="activeTab='hacking'" :class="['tab-btn', activeTab==='hacking' ? 'tab-btn-active' : '']">Hacking</button>
+      <button type="button" @click="activeTab='prefs'" :class="['tab-btn', activeTab==='prefs' ? 'tab-btn-active' : '']">Preferences</button>
+    </div>
+  <div v-show="activeTab==='content'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow" title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
+      <legend class="flex items-center gap-1">Titles</legend>
+      <textarea id="titles" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a title line" title="Each line becomes a title line, e.g., ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM"></textarea>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow" title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
+      <legend class="flex items-center gap-1">Headers</legend>
+      <textarea id="headers" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow" title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
+      <legend class="flex items-center gap-1">Boot Animation Text</legend>
+      <textarea id="boot-lines" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
+      <legend class="flex items-center gap-1">Screens</legend>
+      <div id="screens-container">
+        <template v-for="(screen, sIdx) in screens">
+          <div :key="screen.uid" class="screen mb-4 border border-l-4 rounded p-2 text-white" :style="{borderColor: screen.color, backgroundColor: screen.color}">
+            <div class="mb-2">
+              <div class="flex flex-wrap items-center mb-2">
+                <button type="button" @click="screen.open = !screen.open" class="mr-2 action-btn" :aria-expanded="screen.open">{{screen.open ? '▼' : '►' }}</button>
+                <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
+                <input type="color" v-model="screen.color" class="screen-color w-8 h-8 p-0 border-2 rounded mr-2 shadow cursor-pointer" title="Color is for organization only and does not affect terminal appearance">
+                <input type="text" v-model="screen.color" class="w-20 p-1 border rounded mr-2" title="Color is for organization only and does not affect terminal appearance">
+                <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
+                <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1 action-btn" title="Move down">▼</button>
+                <button type="button" @click="removeScreen(sIdx)" class="action-btn" title="Remove screen"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
+              </div>
+              <div class="flex flex-wrap items-center">
+                <label class="flex items-center mr-2">Text:
+                  <input type="color" v-model="screen.textColor" class="ml-1">
+                  <input type="text" v-model="screen.textColor" class="ml-1 border rounded p-1 w-24">
+                </label>
+                <label class="flex items-center mr-2">Background:
+                  <input type="color" v-model="screen.bgColor" class="ml-1">
+                  <input type="text" v-model="screen.bgColor" class="ml-1 border rounded p-1 w-24">
+                </label>
+                <label class="flex items-center mr-2">Border:
+                  <input type="color" v-model="screen.borderColor" class="ml-1">
+                  <input type="text" v-model="screen.borderColor" class="ml-1 border rounded p-1 w-24">
+                </label>
+              </div>
+            </div>
+            <div v-show="screen.open" class="pl-6 items-container" :data-sidx="sIdx" :id="'items-'+screen.uid">
+              <template v-for="(item, iIdx) in screen.items">
+                <div :key="item.uid" class="menu-item mb-1 flex flex-wrap items-center gap-1 border p-1 rounded text-white" :style="{backgroundColor: screen.color, borderColor: screen.color}">
+                  <textarea v-model="item.text" rows="2" cols="30" class="menu-text mr-1 border rounded p-1 flex-1" placeholder="Menu text"></textarea>
+                  <input v-model="item.screen" class="menu-screen mr-1 border rounded p-1 w-24" placeholder="Screen id">
+                  <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
+                  <button type="button" @click="moveMenuItemUp(sIdx, iIdx)" :disabled="iIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
+                  <button type="button" @click="moveMenuItemDown(sIdx, iIdx)" :disabled="iIdx===screen.items.length-1" class="mr-1 action-btn" title="Move down">▼</button>
+                  <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="action-btn" title="Remove item"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
+                </div>
+              </template>
+              <button type="button" @click="addMenuItem(screen)" class="mt-2 px-2 py-1 border rounded">Add Menu Item</button>
+            </div>
+          </div>
+        </template>
+        <button type="button" @click="addScreen()" class="mt-2 px-2 py-1 border rounded">Add Screen</button>
+      </div>
+    </fieldset>
+  </div>
+  <div v-show="activeTab==='hacking'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow" title="Configure hacking settings for locked terminals.">
+      <legend class="flex items-center gap-1">Hacking</legend>
+      <label class="block" title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked class="mr-1"> Locked</label>
+      <label id="difficulty-label" class="block" :title="difficultyTitle">Difficulty:
+        <select id="difficulty" v-model="difficultyChoice" class="border rounded p-1 ml-2" :title="difficultyTitle">
+          <option v-for="opt in difficultyOptions" :key="opt">{{ opt }}</option>
+        </select>
+      </label>
+      <label class="block" title="Starting number of attempts available to the user.">Attempts: <input type="number" id="attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
+      <label class="block" title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
+      <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
+      <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
+      <label class="block">Hacking Text Color:
+        <input type="color" id="hack-text-color" class="ml-2" v-model="hackTextColor">
+        <input type="text" id="hack-text-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackTextColor">
+      </label>
+      <label class="block">Hacking Background Color:
+        <input type="color" id="hack-bg-color" class="ml-2" v-model="hackBgColor">
+        <input type="text" id="hack-bg-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackBgColor">
+      </label>
+      <label class="block">Hacking Border Color:
+        <input type="color" id="hack-border-color" class="ml-2" v-model="hackBorderColor">
+        <input type="text" id="hack-border-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackBorderColor">
+      </label>
+      <div id="dud-warning" class="text-red-600 hidden"></div>
+      <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
+        <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
+          <legend class="flex items-center gap-1">Difficulties</legend>
+          <div id="difficulties-container">
+            <div v-for="(d, idx) in difficulties" :key="d.uid" class="difficulty-item mb-2 p-2 border rounded bg-gray-50 dark:bg-gray-800">
+              <div class="flex items-center mb-2">
+                <button type="button" @click="d.open = !d.open" class="mr-2 action-btn">{{ d.open ? '▼' : '►' }}</button>
+                <input v-model="d.name" class="diff-name mr-2 border rounded p-1" placeholder="Name">
+                <button type="button" @click="removeDifficulty(idx)" class="action-btn" title="Remove difficulty"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
+              </div>
+              <div v-show="d.open" class="pl-6 space-y-1">
+                <label class="block">Words: <input type="number" v-model.number="d.wordCount[0]" class="word-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.wordCount[1]" class="word-max border rounded p-1 w-16" min="1"></label>
+                <label class="block">Length: <input type="number" v-model.number="d.length[0]" class="len-min mr-1 border rounded p-1 w-16" min="1"> - <input type="number" v-model.number="d.length[1]" class="len-max border rounded p-1 w-16" min="1"></label>
+              </div>
+            </div>
+            <button type="button" @click="addDifficulty()" class="mt-2 px-2 py-1 border rounded">Add Difficulty</button>
+          </div>
+        </fieldset>
+    </fieldset>
+  </div>
+  <div v-show="activeTab==='prefs'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow" title="Customize terminal appearance.">
+      <legend class="flex items-center gap-1">Default Appearance</legend>
+      <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Default Text Color:
+        <input type="color" id="text-color" class="ml-2" v-model="textColor">
+        <input type="text" id="text-color-hex" class="ml-2 border rounded p-1 w-24" v-model="textColor">
+      </label>
+      <label class="block" title="Color of the terminal window outline, e.g., #008800.">Default Outline Color:
+        <input type="color" id="border-color" class="ml-2" v-model="borderColor">
+        <input type="text" id="border-color-hex" class="ml-2 border rounded p-1 w-24" v-model="borderColor">
+      </label>
+      <label class="block" title="Background color of the terminal window, e.g., #041204.">Default Background Color:
+        <input type="color" id="bg-color" class="ml-2" v-model="bgColor">
+        <input type="text" id="bg-color-hex" class="ml-2 border rounded p-1 w-24" v-model="bgColor">
+      </label>
+    </fieldset>
+  </div>
 </form>
-<a id="download-link" style="display:none" download="config.json">Download config.json</a>
-<iframe id="preview"></iframe>
+</div>
 <script>
 const defaultDifficulties = [
   { name: "Very Easy", wordCount: [8,10], length: [4,5] },
@@ -54,110 +278,300 @@ const defaultDifficulties = [
   { name: "Hard", wordCount: [15,17], length: [10,11] },
   { name: "Very Hard", wordCount: [17,20], length: [12,15] }
 ];
+const DEFAULT_TEXT_COLOR = '#7aff7a';
+const DEFAULT_BG_COLOR = '#041204';
+const DEFAULT_BORDER_COLOR = '#008800';
+const BASE_SCREEN_COLOR = '#0c2c5f';
 
-function addScreen(id='') {
-  const fs = document.createElement('fieldset');
-  fs.className = 'screen';
-  fs.innerHTML = '<legend title="A screen displays text and options. Use its ID to link from menu items.">Screen</legend>' +
-                 '<label title="Unique identifier for this screen">ID: <input type="text" class="screen-id"></label>' +
-                 '<div class="menu-items"></div>' +
-                 '<button type="button" class="add-menu-item" title="Add a new menu option or line of text">Add Menu Item</button>' +
-                 '<button type="button" class="remove-screen" title="Remove this screen">Remove Screen</button>';
-  fs.querySelector('.screen-id').value = id;
-  document.getElementById('screens').appendChild(fs);
-  addMenuItem(fs);
+// Adjust the base color by a given amount and introduce a slight random
+// variation in each channel so that successive screens are easier to
+// differentiate.
+function shadeColor(col, amt) {
+  const num = parseInt(col.slice(1), 16);
+  const vary = () => Math.floor(Math.random() * 30) - 15; // -15 to +14
+  let r = (num >> 16) + amt + vary();
+  let g = (num >> 8 & 0x00ff) + amt + vary();
+  let b = (num & 0x0000ff) + amt + vary();
+  r = Math.max(0, Math.min(255, r));
+  g = Math.max(0, Math.min(255, g));
+  b = Math.max(0, Math.min(255, b));
+  return '#' + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
 }
 
-function addMenuItem(screenEl, text='', screen='', command='') {
-  const div = document.createElement('div');
-  div.className = 'menu-item';
-  div.innerHTML = '<textarea rows="2" cols="30" class="menu-text" placeholder="Menu text" title="Text shown for this option or story line"></textarea>' +
-                  '<input type="text" class="menu-screen" placeholder="Screen id" title="ID of the screen to display when selected">' +
-                  '<input type="text" class="menu-command" placeholder="Command message" title="Message to show when selected">' +
-                  '<button type="button" class="remove-item" title="Remove this menu item">Remove</button>';
-  div.querySelector('.menu-text').value = text;
-  div.querySelector('.menu-screen').value = screen;
-  div.querySelector('.menu-command').value = command;
-  screenEl.querySelector('.menu-items').appendChild(div);
-}
-
-document.getElementById('add-screen').addEventListener('click', () => addScreen());
-
-document.getElementById('screens').addEventListener('click', e => {
-  if (e.target.classList.contains('remove-item')) {
-    e.target.parentElement.remove();
-  } else if (e.target.classList.contains('add-menu-item')) {
-    const screenEl = e.target.closest('.screen');
-    addMenuItem(screenEl);
-  } else if (e.target.classList.contains('remove-screen')) {
-    e.target.closest('.screen').remove();
+const app = Vue.createApp({
+  data() {
+    return {
+        activeTab: 'content',
+        screens: [],
+        difficulties: [],
+        difficultyChoice: 'Average',
+        showDifficulties: false,
+        textColor: DEFAULT_TEXT_COLOR,
+        bgColor: DEFAULT_BG_COLOR,
+        borderColor: DEFAULT_BORDER_COLOR,
+        hackTextColor: DEFAULT_TEXT_COLOR,
+        hackBgColor: DEFAULT_BG_COLOR,
+        hackBorderColor: DEFAULT_BORDER_COLOR
+      };
+    },
+  computed: {
+    difficultyOptions() {
+      return ['Random', ...this.difficulties.map(d => d.name)];
+    },
+    difficultyTitle() {
+      return this.difficulties.map(d => `${d.name} (${d.length[0]}-${d.length[1]} letters, ${d.wordCount[0]}-${d.wordCount[1]} words)`).join('; ') + '; Random selects any difficulty.';
+    }
+  },
+  methods: {
+      addScreen(id='') {
+        const text = this.textColor || DEFAULT_TEXT_COLOR;
+        const bg = this.bgColor || DEFAULT_BG_COLOR;
+        const border = this.borderColor || DEFAULT_BORDER_COLOR;
+        // Use a larger offset to make the shade differences more pronounced.
+        const offset = (this.screens.length % 10) * 20;
+        const color = shadeColor(BASE_SCREEN_COLOR, offset);
+        this.screens.push({
+          id,
+          color,
+          items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
+          open:true,
+          uid:crypto.randomUUID?crypto.randomUUID():Math.random(),
+          textColor:text,
+          bgColor:bg,
+          borderColor:border
+        });
+        this.$nextTick(this.initSortables);
+      },
+      removeScreen(idx) {
+        this.screens.splice(idx,1);
+        this.$nextTick(this.initSortables);
+      },
+        addMenuItem(screen) {
+          screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+          this.$nextTick(this.initSortables);
+        },
+        removeMenuItem(sIdx, iIdx) {
+          this.screens[sIdx].items.splice(iIdx,1);
+          this.$nextTick(this.initSortables);
+        },
+        moveScreenUp(idx) {
+          if (idx <= 0) return;
+          const arr = this.screens;
+          [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+          this.$nextTick(this.initSortables);
+        },
+        moveScreenDown(idx) {
+          if (idx >= this.screens.length - 1) return;
+          const arr = this.screens;
+          [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+          this.$nextTick(this.initSortables);
+        },
+        moveMenuItemUp(sIdx, iIdx) {
+          if (iIdx <= 0) return;
+          const items = this.screens[sIdx].items;
+          [items[iIdx - 1], items[iIdx]] = [items[iIdx], items[iIdx - 1]];
+          this.$nextTick(this.initSortables);
+        },
+        moveMenuItemDown(sIdx, iIdx) {
+          const items = this.screens[sIdx].items;
+          if (iIdx >= items.length - 1) return;
+          [items[iIdx], items[iIdx + 1]] = [items[iIdx + 1], items[iIdx]];
+          this.$nextTick(this.initSortables);
+        },
+        initSortables() {
+        },
+      addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
+        this.difficulties.push({...d, open:false, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.$nextTick(this.initSortables);
+      },
+      removeDifficulty(idx) {
+        this.difficulties.splice(idx,1);
+        this.$nextTick(this.initSortables);
+      },
+      loadConfig(config) {
+        document.getElementById('titles').value = (config.titleLines || []).join('\n');
+        document.getElementById('headers').value = (config.headerLines || []).join('\n');
+        document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
+        this.screens = [];
+        const style = config.style || {};
+        const globalText = style.textColor || DEFAULT_TEXT_COLOR;
+        const globalBg = style.backgroundColor || DEFAULT_BG_COLOR;
+        const globalBorder = style.borderColor || DEFAULT_BORDER_COLOR;
+        this.textColor = globalText;
+        this.bgColor = globalBg;
+        this.borderColor = globalBorder;
+        const hackingStyle = config.hackingStyle || {};
+        this.hackTextColor = hackingStyle.textColor || globalText;
+        this.hackBgColor = hackingStyle.backgroundColor || globalBg;
+        this.hackBorderColor = hackingStyle.borderColor || globalBorder;
+        Object.entries(config.screens || {}).forEach(([id, data]) => {
+          const screen = {id, color:'#0c2c5f', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder};
+          const items = Array.isArray(data) ? data : (data.items || []);
+          if(!Array.isArray(data) && data.style){
+            if(data.style.textColor) screen.textColor = data.style.textColor;
+            if(data.style.backgroundColor) screen.bgColor = data.style.backgroundColor;
+            if(data.style.borderColor) screen.borderColor = data.style.borderColor;
+          }
+          items.forEach(item=>{
+            if (typeof item === 'string') {
+              screen.items.push({text:item, screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+            } else {
+              screen.items.push({
+                text: item.text || '',
+                screen: item.screen || '',
+                command: item.command || '',
+                uid: crypto.randomUUID?crypto.randomUUID():Math.random()
+              });
+            }
+          });
+          if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+          this.screens.push(screen);
+        });
+        document.getElementById('locked').checked = config.locked || false;
+        const diffs = config.hacking?.difficulties || defaultDifficulties;
+        this.difficulties = [];
+        diffs.forEach(d=>this.addDifficulty(d));
+        this.difficultyChoice = config.hacking?.difficulty ?? 'Random';
+        attemptsEl.value = config.hacking?.attempts ?? 4;
+        maxAttemptsEl.value = config.hacking?.maxAttempts ?? 4;
+        passwordEl.value = config.hacking?.password || '';
+        dudWordsEl.value = (config.hacking?.dudWords || []).join(', ');
+        this.$nextTick(this.initSortables);
+      },
+      handleSubmit() {
+      if (!validateDudWords()) {
+        dudWordsEl.reportValidity();
+        return;
+      }
+      const rawTitles = document.getElementById('titles').value.split('\n');
+      const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
+      const rawHeaders = document.getElementById('headers').value.split('\n');
+      const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
+      const rawBoot = document.getElementById('boot-lines').value.split('\n');
+      const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
+      const textColor = this.textColor || DEFAULT_TEXT_COLOR;
+      const backgroundColor = this.bgColor || DEFAULT_BG_COLOR;
+      const borderColor = this.borderColor || DEFAULT_BORDER_COLOR;
+      const hackTextColor = this.hackTextColor || textColor;
+      const hackBgColor = this.hackBgColor || backgroundColor;
+      const hackBorderColor = this.hackBorderColor || borderColor;
+      const screensObj = {};
+      this.screens.forEach(scr=>{
+        const id = scr.id.trim();
+        if(!id) return;
+        const items=[];
+        scr.items.forEach(it=>{
+          const text=(it.text||'').trimEnd();
+          const screen=(it.screen||'').trim();
+          const command=(it.command||'').trim();
+          if(!text && !screen && !command) return;
+          if(screen && command){ items.push({text,screen,command}); }
+          else if(screen){ items.push({text,screen}); }
+          else if(command){ items.push({text,command}); }
+          else { items.push(text); }
+        });
+        const style = {};
+        if(scr.textColor !== textColor) style.textColor = scr.textColor;
+        if(scr.bgColor !== backgroundColor) style.backgroundColor = scr.bgColor;
+        if(scr.borderColor !== borderColor) style.borderColor = scr.borderColor;
+        screensObj[id] = Object.keys(style).length ? {items, style} : items;
+      });
+      const diffValue = this.difficultyChoice;
+      const difficulty = diffValue === 'Random' ? undefined : diffValue;
+      const password = passwordEl.value.trim();
+      const dudWords = dudWordsEl.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const attempts = parseInt(attemptsEl.value,10);
+      const maxAttempts = parseInt(maxAttemptsEl.value,10);
+      const locked = document.getElementById('locked').checked;
+      const style = { textColor, backgroundColor, borderColor };
+      const hackingStyle = {
+        textColor: hackTextColor,
+        backgroundColor: hackBgColor,
+        borderColor: hackBorderColor
+      };
+      const hacking = { difficulties: this.difficulties.map(({name, wordCount, length})=>({name, wordCount, length})) };
+      if (difficulty) hacking.difficulty = difficulty;
+      if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
+      if (!isNaN(maxAttempts) && maxAttempts !== 4) hacking.maxAttempts = maxAttempts;
+      if (password) hacking.password = password;
+      if (dudWords.length) hacking.dudWords = dudWords;
+      const config = {
+        titleLines: titles,
+        headerLines: headers,
+        bootLines,
+        screens: screensObj,
+        style,
+        hackingStyle,
+        locked,
+        hacking
+      };
+      const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const dl = document.getElementById('download-link');
+      dl.href = url;
+      dl.classList.remove('hidden');
+      const feedback = document.getElementById('generate-feedback');
+      feedback.textContent = `Generated ${new Date().toLocaleTimeString()}`;
+      feedback.classList.remove('hidden');
+    }
+  },
+  mounted() {
+    this.addScreen('menu');
+    defaultDifficulties.forEach(d=>this.addDifficulty(d));
+    this.$nextTick(this.initSortables);
   }
 });
 
-addScreen('menu');
+const vm = app.mount('#builder-form');
 
 document.getElementById('builder-form').addEventListener('submit', e => {
   e.preventDefault();
-  const titles = document.getElementById('titles').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const headers = document.getElementById('headers').value.split('\n').map(s => s.trim()).filter(Boolean);
-  const screensObj = {};
-  Array.from(document.querySelectorAll('#screens .screen')).forEach(screenEl => {
-    const id = screenEl.querySelector('.screen-id').value.trim();
-    if(!id) return;
-    const items = Array.from(screenEl.querySelectorAll('.menu-item')).map(item => {
-      const textEl = item.querySelector('.menu-text');
-      const text = textEl.value;
-      const screen = item.querySelector('.menu-screen').value.trim();
-      const command = item.querySelector('.menu-command').value.trim();
-      if(!text.trim() && !screen && !command) return null;
-      if(screen){
-        return { text, screen };
-      }else if(command){
-        return { text, command };
-      }else{
-        return text;
-      }
-    }).filter(x => x !== null);
-    screensObj[id] = items;
-  });
-  const difficulty = document.getElementById('difficulty').value;
-  const password = document.getElementById('password').value.trim();
-  const dudWords = document.getElementById('dud-words').value.split(',').map(s => s.trim()).filter(Boolean);
-  const locked = document.getElementById('locked').checked;
-
-  const config = {
-    titleLines: titles,
-    headerLines: headers,
-    screens: screensObj,
-    locked,
-    hacking: {
-      difficulty,
-      password,
-      dudWords,
-      difficulties: defaultDifficulties
-    }
-  };
-
-  const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const dl = document.getElementById('download-link');
-  dl.href = url;
-  dl.style.display = 'inline';
-
-  updatePreview(config);
+  vm.handleSubmit();
 });
+document.getElementById('load-config').addEventListener('click', () => document.getElementById('config-file').click());
+document.getElementById('config-file').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+    reader.onload = () => {
+      const config = JSON.parse(reader.result);
+      vm.loadConfig(config);
+    };
+  reader.readAsText(file);
+});
+document.getElementById('dark-toggle').addEventListener('click', ()=> document.documentElement.classList.toggle('dark'));
 
-function updatePreview(config) {
-  fetch('index.html').then(res => res.text()).then(html => {
-    const configBlob = new Blob([JSON.stringify(config, null, 2)], {type:'application/json'});
-    const configUrl = URL.createObjectURL(configBlob);
-    let modified = html.replace('config.json', configUrl);
-    modified = modified.replace('<head>', '<head><base href="." />');
-    const previewFrame = document.getElementById('preview');
-    const htmlBlob = new Blob([modified], {type:'text/html'});
-    previewFrame.src = URL.createObjectURL(htmlBlob);
-  });
+const passwordEl = document.getElementById('password');
+const dudWordsEl = document.getElementById('dud-words');
+const dudWarningEl = document.getElementById('dud-warning');
+const attemptsEl = document.getElementById('attempts');
+const maxAttemptsEl = document.getElementById('max-attempts');
+
+function validateDudWords() {
+  const password = passwordEl.value.trim();
+  const duds = dudWordsEl.value.split(',').map(s => s.trim()).filter(Boolean);
+  let msg = '';
+  if (duds.length > 0) {
+    if (password) {
+      const len = password.length;
+      if (duds.some(w => w.length !== len)) {
+        msg = 'Dud words must match the password length.';
+      }
+    } else {
+      const len = duds[0].length;
+      if (duds.some(w => w.length !== len)) {
+        msg = 'All dud words must be the same length.';
+      }
+    }
+  }
+  dudWordsEl.setCustomValidity(msg);
+  dudWarningEl.textContent = msg;
+  dudWarningEl.classList.toggle('hidden', !msg);
+  return !msg;
 }
+
+passwordEl.addEventListener('input', validateDudWords);
+dudWordsEl.addEventListener('input', validateDudWords);
 </script>
 </body>
 </html>

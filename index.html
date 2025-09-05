@@ -13,6 +13,12 @@
   }
   :root{
     --scale:1;
+    --text-color:#7aff7a;
+    --terminal-bg:#041204;
+    --border-color:#008800;
+    --hacking-text-color:var(--text-color);
+    --hacking-bg:var(--terminal-bg);
+    --hacking-border-color:var(--border-color);
   }
   html{
     overflow:auto;
@@ -21,7 +27,7 @@
     margin:0;
     overflow:auto;
     background:#000;
-    color:#7aff7a;
+    color:var(--text-color);
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:calc(24px * var(--scale) * 0.9);
     letter-spacing:calc(.75px * var(--scale) * 0.9);
@@ -45,20 +51,20 @@
     display:flex;
     justify-content:center;
     align-items:center;
-    color:#7aff7a;
+    color:var(--text-color);
   }
   #terminal{
     position:relative;
     width:100%;
     height:100%;
-    border:calc(4px * var(--scale)) solid #008800;
+    border:calc(4px * var(--scale)) solid var(--border-color);
     box-sizing:border-box;
     padding:calc(6px * var(--scale));
     padding-left:calc(6px * var(--scale) + 4ch);
     overflow:hidden;
     display:none;
     flex-direction:column;
-    background:#041204;
+    background:var(--terminal-bg);
     background-image:repeating-linear-gradient(
       rgba(0,0,0,0.55) 0px,
       rgba(0,0,0,0.55) 1px,
@@ -79,15 +85,70 @@
     align-items:center;
     justify-content:flex-end;
   }
-  #power-container, #audio-menu, #config-container{
+  #power-container, #config-container, #pref-container{
     position:relative;
     display:flex;
     flex-direction:column;
     align-items:center;
   }
-  #controls-container span{color:#7aff7a;}
-  #audio-menu span{
+  #controls-container span{color:var(--text-color);}
+  #pref-container{
+    display:flex;
+    margin-bottom:calc(10px * var(--scale));
+  }
+  #pref-container span{
     margin-top:calc(5px * var(--scale));
+  }
+  #pref-menu{
+    display:none;
+    flex-direction:column;
+    position:absolute;
+    bottom:calc(100% + (5px * var(--scale)));
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--terminal-bg);
+    border:calc(2px * var(--scale)) solid var(--border-color);
+    color:var(--text-color);
+    padding:calc(5px * var(--scale));
+    z-index:1;
+  }
+  #pref-menu label{
+    display:flex;
+    align-items:center;
+    font-size:calc(12px * var(--scale) * 0.9);
+    margin-bottom:calc(5px * var(--scale));
+  }
+  #pref-menu label:last-child{
+    margin-bottom:0;
+  }
+  #pref-menu select{
+    margin-left:calc(5px * var(--scale));
+    background:var(--terminal-bg);
+    color:var(--text-color);
+    border:calc(1px * var(--scale)) solid var(--border-color);
+  }
+  #pref-menu input[type=range]{
+    margin-left:calc(5px * var(--scale));
+    -webkit-appearance:none;
+    appearance:none;
+    background:var(--terminal-bg);
+    border:calc(1px * var(--scale)) solid var(--border-color);
+    height:calc(4px * var(--scale));
+  }
+  #pref-menu input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;
+    appearance:none;
+    width:calc(10px * var(--scale));
+    height:calc(10px * var(--scale));
+    background:var(--border-color);
+    cursor:pointer;
+  }
+  #pref-menu input[type=range]::-moz-range-thumb{
+    width:calc(10px * var(--scale));
+    height:calc(10px * var(--scale));
+    background:var(--border-color);
+    border:none;
+    cursor:pointer;
   }
   #config-container span{
     margin-top:calc(5px * var(--scale));
@@ -98,10 +159,10 @@
     left:50%;
     transform:translateX(-50%);
   }
-  #power-button, #audio-toggle, #config-button{
+  #power-button, #config-button, #pref-button{
     background:#b3410e;
-    color:#fff;
-    border:calc(2px * var(--scale)) solid #008800;
+    color:var(--text-color);
+    border:calc(2px * var(--scale)) solid var(--border-color);
     width:max(44px, calc(40px * var(--scale)));
     height:max(44px, calc(40px * var(--scale)));
     border-radius:0;
@@ -112,35 +173,6 @@
     background:#b8b20d;
   }
   #config-file{display:none;}
-  #audio-menu{
-    display:none;
-    margin-bottom:calc(10px * var(--scale));
-  }
-  #volume-controls{
-    display:none;
-    flex-direction:column;
-    position:absolute;
-    bottom:calc(100% + (5px * var(--scale)));
-    left:50%;
-    transform:translateX(-50%);
-    background:#041204;
-    border:calc(2px * var(--scale)) solid #008800;
-    color:#7aff7a;
-    padding:calc(5px * var(--scale));
-    z-index:1;
-  }
-  #volume-controls label{
-    display:flex;
-    align-items:center;
-    font-size:calc(12px * var(--scale) * 0.9);
-    margin-bottom:calc(5px * var(--scale));
-  }
-  #volume-controls label:last-child{
-    margin-bottom:0;
-  }
-  #volume-controls input[type=range]{
-    margin-left:calc(5px * var(--scale));
-  }
   #terminal::before,
   #terminal::after{
     content:"";
@@ -225,24 +257,25 @@
     cursor:pointer;
     padding:0 calc(4px * var(--scale));
     line-height:1;
+    white-space:pre-wrap;
   }
   .option + .option{
     margin-top:calc(4px * var(--scale));
   }
   .option:hover, .option:focus, .option.selected{
-    background:#008800;
-    color:#041204;
+    background:var(--border-color);
+    color:var(--terminal-bg);
   }
   #hack-wrap{display:flex;justify-content:flex-start;align-items:flex-start;width:100%;gap:2ch;}
-  #hacking{white-space:pre;font:inherit;flex-shrink:0;}
+  #hacking{white-space:pre;font:inherit;flex-shrink:0;color:var(--hacking-text-color);background:var(--hacking-bg);}
   #hacking .word{cursor:pointer;}
   #hacking .char:hover,
-  #hacking .char.highlight{background:#008800;color:#041204;}
+  #hacking .char.highlight{background:var(--hacking-border-color);color:var(--hacking-bg);}
   #hacking .word:hover,
-  #hacking .word.highlight{background:#008800;color:#041204;}
+  #hacking .word.highlight{background:var(--hacking-border-color);color:var(--hacking-bg);}
   #hacking .bracket{cursor:pointer;}
   #hacking .bracket:hover,
-  #hacking .bracket.highlight{background:#008800;color:#041204;}
+  #hacking .bracket.highlight{background:var(--hacking-border-color);color:var(--hacking-bg);}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;overflow:hidden;}
   #hack-messages #input{margin-top:0;align-self:flex-start;}
   #hack-prompt{margin-top:calc(4px * var(--scale));}
@@ -274,14 +307,30 @@
     </div>
   </div>
   <div id="controls-container">
-    <div id="audio-menu">
-      <button id="audio-toggle" aria-label="Audio">&#x1F50A;</button>
-      <span>Audio</span>
-      <div id="volume-controls">
-        <label>Hum <input type="range" min="0" max="10" value="1" id="hum-volume"></label>
-        <label>Scroll <input type="range" min="0" max="10" value="2" id="scroll-volume"></label>
-        <label>Focus <input type="range" min="0" max="10" value="2" id="focus-volume"></label>
-        <label>Select <input type="range" min="0" max="10" value="5" id="select-volume"></label>
+    <div id="pref-container">
+      <button id="pref-button" aria-label="Preferences">&#9881;</button>
+      <span>Prefs</span>
+      <div id="pref-menu">
+        <label>Hum <input type="range" min="0" max="100" value="20" id="hum-volume"></label>
+        <label>Scroll <input type="range" min="0" max="100" value="20" id="scroll-volume"></label>
+        <label>Focus <input type="range" min="0" max="100" value="20" id="focus-volume"></label>
+        <label>Select <input type="range" min="0" max="100" value="50" id="select-volume"></label>
+        <label>User Text Speed
+          <select id="user-speed-select">
+            <option value="100">Skip</option>
+            <option value="58">Slow</option>
+            <option value="75" selected>Normal</option>
+            <option value="91">Fast</option>
+          </select>
+        </label>
+        <label>Terminal Text Speed
+          <select id="comp-speed-select">
+            <option value="100">Skip</option>
+            <option value="80">Slow</option>
+            <option value="90" selected>Normal</option>
+            <option value="95">Fast</option>
+          </select>
+        </label>
       </div>
     </div>
     <div id="config-container">
@@ -296,40 +345,128 @@
   </div>
 </div>
 <script>
-function updateScale(){
+function updateScale(width=window.innerWidth, height=window.innerHeight){
   const scale=Math.min(
     3,
     Math.max(
       0.7,
-        Math.min(
-          window.innerWidth*0.98/621,
-          window.innerHeight*0.98/660
-        )*0.93
+      Math.min(
+        width*0.98/621,
+        height*0.98/660
+      )*0.93
     )
   );
   document.documentElement.style.setProperty('--scale',scale);
 }
-window.addEventListener('resize',updateScale);
-updateScale();
+let prevWidth=window.innerWidth;
+let prevHeight=window.innerHeight;
+window.addEventListener('resize',()=>{
+  const w=window.innerWidth;
+  const h=window.innerHeight;
+  if(w!==prevWidth || h!==prevHeight){
+    prevWidth=w;
+    prevHeight=h;
+    updateScale(w,h);
+  }
+});
+updateScale(prevWidth,prevHeight);
+const defaultBootLines=[
+  'Initializing Robco Industries (TM) MF Boot Agent v2.3.0',
+  'RETROS BIOS',
+  'RBIOS-4.02.08.00 52EE5.E7.E8',
+  'Copyright 2201-2203 Robco Ind.',
+  'Uppermem: 64 KB',
+  'Root (5A8)',
+  'Maintenance Mode'
+];
 let titleLines=[];
 let headerLines=[];
+let bootLines=defaultBootLines;
 let screens={};
 let hacking={};
 let startLocked=true;
+let baseStyle={textColor:'#7aff7a',backgroundColor:'#041204',borderColor:'#008800'};
 
 let uploadedConfig=null;
+let powered=false;
+const activeTimeouts=new Set();
+const pendingWaits=new Set();
+const activeAudios=new Set();
+let currentCycle=0;
 
-async function loadConfig(){
+function setTrackedTimeout(fn,ms){
+  const id=setTimeout(()=>{activeTimeouts.delete(id);fn();},ms);
+  activeTimeouts.add(id);
+  return id;
+}
+function clearAllTimeouts(){
+  for(const id of activeTimeouts) clearTimeout(id);
+  activeTimeouts.clear();
+}
+function trackAudio(audio){
+  activeAudios.add(audio);
+  audio.addEventListener('ended',()=>activeAudios.delete(audio));
+  return audio;
+}
+function stopAllAudio(){
+  for(const audio of activeAudios){
+    audio.pause();
+    audio.currentTime=0;
+  }
+  activeAudios.clear();
+  stopScrollSound();
+  stopFanHum();
+}
+function cancelWaits(){
+  for(const cleanup of pendingWaits) cleanup();
+  pendingWaits.clear();
+}
+
+async function loadConfig(cycle=currentCycle){
   let cfg;
   if(uploadedConfig){
     cfg=uploadedConfig;
   }else{
-    cfg=await fetch('config.json').then(res=>res.json());
+    try {
+      cfg=await fetch('config.json').then(res=>res.json());
+    } catch (err) {
+      cfg={};
+    }
   }
+  if(cycle!==currentCycle) return;
   titleLines=cfg.titleLines;
   headerLines=cfg.headerLines;
-  screens=cfg.screens;
-  hacking=cfg.hacking;
+  bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
+  screens=cfg.screens || {};
+  hacking = cfg.hacking || {};
+  if(savedUserSpeed===null && cfg.userSpeed!==undefined){
+    userBaseSpeed=cfg.userSpeed;
+    userSpeed=userBaseSpeed;
+    if(userSpeedSelect) userSpeedSelect.value=String([58,75,91,100].includes(userBaseSpeed)?userBaseSpeed:75);
+  }
+  if(savedCompSpeed===null && cfg.compSpeed!==undefined){
+    compBaseSpeed=cfg.compSpeed;
+    compSpeed=compBaseSpeed;
+    if(compSpeedSelect) compSpeedSelect.value=String([80,90,95,100].includes(compBaseSpeed)?compBaseSpeed:90);
+  }
+  if(cfg.style){
+    const {textColor, backgroundColor, borderColor}=cfg.style;
+    if(textColor) document.documentElement.style.setProperty('--text-color', textColor);
+    if(backgroundColor) document.documentElement.style.setProperty('--terminal-bg', backgroundColor);
+    if(borderColor) document.documentElement.style.setProperty('--border-color', borderColor);
+  }
+  if(cfg.hackingStyle){
+    const {textColor, backgroundColor, borderColor}=cfg.hackingStyle;
+    if(textColor) document.documentElement.style.setProperty('--hacking-text-color', textColor);
+    if(backgroundColor) document.documentElement.style.setProperty('--hacking-bg', backgroundColor);
+    if(borderColor) document.documentElement.style.setProperty('--hacking-border-color', borderColor);
+  }
+  const computed=getComputedStyle(document.documentElement);
+  baseStyle={
+    textColor:computed.getPropertyValue('--text-color').trim(),
+    backgroundColor:computed.getPropertyValue('--terminal-bg').trim(),
+    borderColor:computed.getPropertyValue('--border-color').trim()
+  };
   startLocked=cfg.locked!==undefined?cfg.locked:true;
   if(hasHacked) startLocked=false;
 }
@@ -341,9 +478,19 @@ const powerScreen=document.getElementById('power-screen');
 const header=document.getElementById('header');
 const content=document.getElementById('content');
 const input=document.getElementById('input');
+const isTouch=('ontouchstart' in window || navigator.maxTouchPoints>0 || window.matchMedia('(pointer: coarse)').matches);
+function focusInput(){if(!isTouch) input.focus();}
 const configFile=document.getElementById('config-file');
 const configButton=document.getElementById('config-button');
 const historyEl=content;
+
+function handleConfigLoaded(){
+  const startSound=trackAudio(new Audio('Terminal 4/Insert.wav'));
+  startSound.play();
+  if(powered){
+    powerButton.click();
+  }
+}
 
 configFile.addEventListener('change',async e=>{
   const file=e.target.files[0];
@@ -351,22 +498,31 @@ configFile.addEventListener('change',async e=>{
     try{
       const text=await file.text();
       uploadedConfig=JSON.parse(text);
+      handleConfigLoaded();
     }catch(err){
       console.error('Invalid configuration file',err);
       uploadedConfig=null;
     }
   }
 });
-configButton.addEventListener('click',()=>configFile.click());
+configButton.addEventListener('click',()=>{
+  trackAudio(new Audio('Terminal 4/Eject.wav')).play();
+  configFile.click();
+});
+window.addEventListener('message', e => { uploadedConfig = e.data; handleConfigLoaded(); });
 let currentOptions=[];
 let selected=-1;
 let typing=false;
 let baseDelay=10;
-let speed=1;
+let savedUserSpeed=localStorage.getItem('userSpeed');
+let savedCompSpeed=localStorage.getItem('compSpeed');
+let userBaseSpeed=savedUserSpeed!==null?Number(savedUserSpeed):75;
+let compBaseSpeed=savedCompSpeed!==null?Number(savedCompSpeed):90;
+let userSpeed=userBaseSpeed;
+let compSpeed=compBaseSpeed;
 let inputText="";
 let screenHistory=[];
 let skipNextClick=false;
-let powered=false;
 const MAX_INPUT_CHARS=64;
 let hackingActive=false;
 let hackingData=null;
@@ -374,37 +530,69 @@ let terminalLocked=false;
 let hasHacked=false;
 let hackedPasswordLength=0;
 
+function resetSpeeds(){
+  userSpeed=userBaseSpeed;
+  compSpeed=compBaseSpeed;
+}
+
 function restoreInput(){
   if(input.parentElement!==terminalScreen){
     terminalScreen.appendChild(input);
   }
 }
 
-const audioMenu=document.getElementById('audio-menu');
-const audioToggle=document.getElementById('audio-toggle');
-const volumeControls=document.getElementById('volume-controls');
+function applyScreenStyle(style){
+  const t=style&&style.textColor?style.textColor:baseStyle.textColor;
+  const b=style&&style.backgroundColor?style.backgroundColor:baseStyle.backgroundColor;
+  const br=style&&style.borderColor?style.borderColor:baseStyle.borderColor;
+  document.documentElement.style.setProperty('--text-color',t);
+  document.documentElement.style.setProperty('--terminal-bg',b);
+  document.documentElement.style.setProperty('--border-color',br);
+}
+
+const prefContainer=document.getElementById('pref-container');
+const prefButton=document.getElementById('pref-button');
+const prefMenu=document.getElementById('pref-menu');
 const humSlider=document.getElementById('hum-volume');
 const scrollSlider=document.getElementById('scroll-volume');
 const focusSlider=document.getElementById('focus-volume');
 const selectSlider=document.getElementById('select-volume');
+const userSpeedSelect=document.getElementById('user-speed-select');
+const compSpeedSelect=document.getElementById('comp-speed-select');
 
-audioToggle.addEventListener('click',()=>{
-  volumeControls.style.display=volumeControls.style.display==='flex'?'none':'flex';
+prefButton.addEventListener('click',()=>{
+  prefMenu.style.display=prefMenu.style.display==='flex'?'none':'flex';
 });
 
-let humVolume=humSlider.value/10;
-let scrollVolume=scrollSlider.value/10;
-let focusVolume=focusSlider.value/10;
-let selectVolume=selectSlider.value/10;
+let humVolume=Math.pow(humSlider.value/100,2);
+let scrollVolume=scrollSlider.value/100;
+let focusVolume=focusSlider.value/100;
+let selectVolume=selectSlider.value/100;
 let fanHumBuffer,fanHumSource,fanHumGain;
 
 humSlider.addEventListener('input',()=>{
-  humVolume=humSlider.value/10;
+  humVolume=Math.pow(humSlider.value/100,2);
   if(fanHumGain) fanHumGain.gain.value=humVolume;
 });
-scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/10;});
-focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/10;});
-selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/10;});
+scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/100;});
+focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/100;});
+selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/100;});
+userSpeedSelect.value=String([58,75,91,100].includes(userBaseSpeed)?userBaseSpeed:75);
+compSpeedSelect.value=String([80,90,95,100].includes(compBaseSpeed)?compBaseSpeed:90);
+userSpeedSelect.addEventListener('change',()=>{
+  const val=Number(userSpeedSelect.value);
+  userBaseSpeed=val;
+  userSpeed=userBaseSpeed;
+  localStorage.setItem('userSpeed',userBaseSpeed);
+  savedUserSpeed=userBaseSpeed;
+});
+compSpeedSelect.addEventListener('change',()=>{
+  const val=Number(compSpeedSelect.value);
+  compBaseSpeed=val;
+  compSpeed=compBaseSpeed;
+  localStorage.setItem('compSpeed',compBaseSpeed);
+  savedCompSpeed=compBaseSpeed;
+});
 
 input.addEventListener('input',updateInput);
 input.addEventListener('keydown',e=>{
@@ -425,6 +613,7 @@ function updateInput(){
   placeCaretAtEnd(input);
 }
 updateInput();
+loadConfig();
 
 function placeCaretAtEnd(el){
   const range=document.createRange();
@@ -467,35 +656,51 @@ async function startHacking(){
     }else{
       diff=difficulties[Math.floor(Math.random()*difficulties.length)];
     }
-    let pool=[];
-    for(let l=diff.length[0]; l<=diff.length[1]; l++){
-      if(byLen[l]) pool=pool.concat(Array.from(byLen[l]));
-    }
     const fixedPassword=hacking.password?hacking.password.toUpperCase():null;
-    const fixedDuds=(hacking.dudWords||[]).map(w=>w.toUpperCase());
+    let fixedDuds=(hacking.dudWords||[]).map(w=>w.toUpperCase());
+    fixedDuds=Array.from(new Set(fixedDuds.filter(w=>w!==fixedPassword)));
+    let targetLen;
     if(fixedPassword){
-      if(fixedPassword.length<diff.length[0]||fixedPassword.length>diff.length[1]) throw new Error('Invalid hacking configuration');
-      if(!byLen[fixedPassword.length]||!byLen[fixedPassword.length].has(fixedPassword)) throw new Error('Invalid hacking configuration');
+      targetLen=fixedPassword.length;
+    }else if(fixedDuds.length){
+      targetLen=fixedDuds[Math.floor(Math.random()*fixedDuds.length)].length;
+    }else{
+      targetLen=diff.length[0]+Math.floor(Math.random()*(diff.length[1]-diff.length[0]+1));
+    }
+    if(targetLen<diff.length[0]||targetLen>diff.length[1]){
+      diff.length=[targetLen,targetLen];
     }
     for(const w of fixedDuds){
-      if(w===fixedPassword) throw new Error('Invalid hacking configuration');
-      if(w.length<diff.length[0]||w.length>diff.length[1]) throw new Error('Invalid hacking configuration');
-      if(!byLen[w.length]||!byLen[w.length].has(w)) throw new Error('Invalid hacking configuration');
+      if(w.length!==targetLen) throw new Error('Invalid hacking configuration');
     }
     const maxCount=diff.wordCount[1];
-    const minCount=Math.max(diff.wordCount[0],fixedDuds.length+1);
+    const minCount=diff.wordCount[0];
     if(minCount>maxCount) throw new Error('Invalid hacking configuration');
-    let count=minCount+Math.floor(Math.random()*(maxCount-minCount+1));
-    pool=pool.filter(w=>w!==fixedPassword && !fixedDuds.includes(w));
-    if(pool.length<count-fixedDuds.length-(fixedPassword?1:0)) throw new Error('Insufficient words');
-    shuffle(pool);
-    let wordList=fixedDuds.concat(pool.slice(0,count-fixedDuds.length-(fixedPassword?1:0)));
-    if(fixedPassword) wordList.push(fixedPassword);
+    const count=minCount+Math.floor(Math.random()*(maxCount-minCount+1));
+    const fixedWords=fixedPassword?[fixedPassword,...fixedDuds]:[...fixedDuds];
+    const pool=Array.from(byLen[targetLen]||[]).filter(w=>!fixedWords.includes(w));
+    let wordList,usedDuds;
+    if(fixedWords.length>=count){
+      const dudsCopy=fixedDuds.slice();
+      shuffle(dudsCopy);
+      const neededDuds=count-(fixedPassword?1:0);
+      usedDuds=dudsCopy.slice(0,neededDuds);
+      wordList=(fixedPassword?[fixedPassword]:[]).concat(usedDuds);
+    }else{
+      if(pool.length<count-fixedWords.length) throw new Error('Insufficient words');
+      shuffle(pool);
+      usedDuds=fixedDuds.slice();
+      wordList=fixedWords.concat(pool.slice(0,count-fixedWords.length));
+    }
+    wordList=Array.from(new Set(wordList));
+    usedDuds=Array.from(new Set(usedDuds.filter(w=>wordList.includes(w))));
     shuffle(wordList);
-    const password=fixedPassword||wordList[Math.floor(Math.random()*wordList.length)];
+    const password=fixedPassword|| (usedDuds.length?usedDuds[Math.floor(Math.random()*usedDuds.length)]:wordList[Math.floor(Math.random()*wordList.length)]);
+    const attempts = hacking.attempts ?? 4;
+    const maxAttempts = hacking.maxAttempts ?? 4;
     hackingData={
-      attempts:4,
-      maxAttempts:4,
+      attempts,
+      maxAttempts,
       password,
       wordList,
       difficulty:diff.name,
@@ -532,53 +737,58 @@ function detectBrackets(block){
     }
     const ch=block.chars[i];
     if(openToClose[ch]){
-      stack.push({ch,index:i});
+      stack.push({ch,index:i,depth:stack.length});
     }else if(closeToOpen[ch]){
       for(let s=stack.length-1;s>=0;s--){
-        if(stack[s].ch===closeToOpen[ch]){
-          pairs.push({start:stack[s].index,end:i});
+        const open=stack[s];
+        if(open.ch===closeToOpen[ch]){
+          pairs.push({start:open.index,end:i,depth:open.depth});
           stack.splice(s,1);
           break;
         }
       }
     }
   }
-  block.brackets=pairs;
+  block.brackets=pairs.sort((a,b)=>a.start-b.start||a.depth-b.depth);
 }
 
 function blockHtml(block){
-  const parts=[];
-  const regions=[];
+  const wrapChar=ch=>`<span class="char">${escapeHtml(ch)}</span>`;
+  const wordMap=new Map();
   for(const w of block.words){
     const seg=w.segment||w.word;
-    regions.push({start:w.start,end:w.start+seg.length,type:'word',word:w.word,text:seg});
+    wordMap.set(w.start,{end:w.start+seg.length,word:w.word,text:seg});
   }
+  const opens=new Map(),closes=new Map();
   for(const b of block.brackets||[]){
-    regions.push({start:b.start,end:b.end+1,type:'bracket'});
+    if(!opens.has(b.start)) opens.set(b.start,[]);
+    if(!closes.has(b.end)) closes.set(b.end,[]);
+    opens.get(b.start).push(b.depth);
+    closes.get(b.end).push(b.depth);
   }
-  regions.sort((a,b)=>a.start-b.start);
-  let idx=0;
-  const wrapChar=ch=>`<span class="char">${escapeHtml(ch)}</span>`;
-  for(const r of regions){
-    while(idx<r.start){
-      parts.push(wrapChar(block.chars[idx++]));
+  for(const arr of opens.values()) arr.sort((a,b)=>a-b);
+  for(const arr of closes.values()) arr.sort((a,b)=>b-a);
+  let html='';
+  for(let i=0;i<block.chars.length;i++){
+    if(opens.has(i)){
+      for(const _ of opens.get(i)) html+='<span class="bracket">';
     }
-    if(r.type==='word'){
-      parts.push(`<span class="word" data-word="${r.word}">${r.text}</span>`);
-    }else if(r.type==='bracket'){
-      const seg=block.chars.slice(r.start,r.end).map(wrapChar).join('');
-      parts.push(`<span class="bracket">${seg}</span>`);
+    if(wordMap.has(i)){
+      const w=wordMap.get(i);
+      html+=`<span class="word" data-word="${w.word}">${w.text}</span>`;
+      i=w.end-1;
+    }else{
+      html+=wrapChar(block.chars[i]);
     }
-    idx=r.end;
+    if(closes.has(i)){
+      for(const _ of closes.get(i)) html+='</span>';
+    }
   }
-  while(idx<block.chars.length){
-    parts.push(wrapChar(block.chars[idx++]));
-  }
-  return parts.join('');
+  return html;
 }
 
 async function renderHackScreen(){
-  speed=1;
+  resetSpeeds();
   typing=true;
   header.innerHTML='';
   content.innerHTML='';
@@ -680,7 +890,7 @@ async function renderHackScreen(){
   await typeHtml(grid, gridHtml);
   stopScrollSound();
   typing=false;
-  speed=1;
+  resetSpeeds();
   grid.querySelectorAll('.char').forEach(span=>{
     span.addEventListener('mouseenter',()=>{
       span.classList.add('highlight');
@@ -711,7 +921,7 @@ async function renderHackScreen(){
   hackingData.blocks=blocks;
   hackingData.messages=messages;
   hackingData.grid=grid;
-  input.focus();
+  focusInput();
 }
 
 function updateAttempts(){
@@ -786,7 +996,7 @@ function processGuess(guess,playSound=true){
     playPasswordResult(true);
     hackedPasswordLength=hackingData.password.length;
     hasHacked=true;
-    setTimeout(()=>showIntro(),500);
+    setTrackedTimeout(()=>showIntro(),500);
   }else{
     let like=0;
     for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
@@ -807,7 +1017,7 @@ function processGuess(guess,playSound=true){
   input.textContent='';
   inputText='';
   updateInput();
-  input.focus();
+  focusInput();
 }
 
 function addHackMessage(text){
@@ -873,8 +1083,8 @@ function displayMessage(text){
   if(input.parentElement){
     input.parentElement.insertBefore(div,input);
   }
-  setTimeout(()=>div.classList.add('fade'),5000);
-  setTimeout(()=>div.remove(),6000);
+  setTrackedTimeout(()=>div.classList.add('fade'),5000);
+  setTrackedTimeout(()=>div.remove(),6000);
 }
 
 function clearResponses(){
@@ -894,7 +1104,7 @@ function handleCommand(cmd){
   if(command==='syntaxhelper'){
     if(hackingActive){
       hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
-      setTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+      setTrackedTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
     }else{
       displayMessage('command unknown');
     }
@@ -912,7 +1122,7 @@ function handleCommand(cmd){
   input.textContent='';
   inputText='';
   updateInput();
-  input.focus();
+  focusInput();
 }
 
 const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -932,7 +1142,7 @@ async function loadScrollSound(){
 }
 
 function playScrollSound(){
-  if(!scrollBuffer) return;
+  if(!scrollBuffer || !powered) return;
   lastScrollTime=Date.now();
   const src=audioCtx.createBufferSource();
   src.buffer=scrollBuffer;
@@ -940,15 +1150,15 @@ function playScrollSound(){
   gain.gain.value=scrollVolume;
   src.connect(gain).connect(audioCtx.destination);
   src.start();
-  scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs);
+  scrollTimeout=setTrackedTimeout(playScrollSound,scrollIntervalMs);
 }
 function startScrollSound(){
-  if(scrollTimeout) return;
+  if(scrollTimeout || !powered) return;
   const elapsed=Date.now()-lastScrollTime;
   if(elapsed>=scrollIntervalMs){
     playScrollSound();
   }else{
-    scrollTimeout=setTimeout(playScrollSound,scrollIntervalMs-elapsed);
+    scrollTimeout=setTrackedTimeout(playScrollSound,scrollIntervalMs-elapsed);
   }
 }
 
@@ -975,6 +1185,7 @@ async function startFanHum(){
   fanHumSource=audioCtx.createBufferSource();
   fanHumSource.buffer=fanHumBuffer;
   fanHumSource.loop=true;
+  fanHumGain.gain.value=humVolume;
   fanHumSource.connect(fanHumGain);
   fanHumSource.start(0);
 }
@@ -988,12 +1199,14 @@ function stopFanHum(){
 }
 
 function playFocusSound(){
-  const audio=new Audio('Terminal 3/menu/menu_focus.wav');
+  if(!powered) return;
+  const audio=trackAudio(new Audio('Terminal 3/menu/menu_focus.wav'));
   audio.volume=focusVolume;
   audio.play();
 }
 
 function playSelectSound(){
+  if(!powered) return;
   const files=[
     'Terminal 4/HDD/HDD1/HDD101.wav',
     'Terminal 4/HDD/HDD1/HDD102.wav',
@@ -1018,15 +1231,16 @@ function playSelectSound(){
   ];
   const hddSrc=files[Math.floor(Math.random()*files.length)];
   const enterSrc=enterFiles[Math.floor(Math.random()*enterFiles.length)];
-  const hddAudio=new Audio(hddSrc);
+  const hddAudio=trackAudio(new Audio(hddSrc));
   hddAudio.volume=selectVolume;
   hddAudio.play();
-  const enterAudio=new Audio(enterSrc);
+  const enterAudio=trackAudio(new Audio(enterSrc));
   enterAudio.volume=selectVolume;
   enterAudio.play();
 }
 
 function playCharFocusSound(){
+  if(!powered) return;
   const files=[
     'Terminal 3/single/charsingle_01.wav',
     'Terminal 3/single/charsingle_02.wav',
@@ -1036,12 +1250,13 @@ function playCharFocusSound(){
     'Terminal 3/single/charsingle_06.wav'
   ];
   const src=files[Math.floor(Math.random()*files.length)];
-  const audio=new Audio(src);
+  const audio=trackAudio(new Audio(src));
   audio.volume=focusVolume;
   audio.play();
 }
 
 function playWordFocusSound(){
+  if(!powered) return;
   const files=[
     'Terminal 3/multiple/charmultiple_01.wav',
     'Terminal 3/multiple/charmultiple_02.wav',
@@ -1049,36 +1264,38 @@ function playWordFocusSound(){
     'Terminal 3/multiple/charmultiple_04.wav'
   ];
   const src=files[Math.floor(Math.random()*files.length)];
-  const audio=new Audio(src);
+  const audio=trackAudio(new Audio(src));
   audio.volume=focusVolume;
   audio.play();
 }
 
 function playEnterCharSound(){
+  if(!powered) return;
   const files=[
     'Terminal 3/enter/charenter_01.wav',
     'Terminal 3/enter/charenter_02.wav',
     'Terminal 3/enter/charenter_03.wav'
   ];
   const src=files[Math.floor(Math.random()*files.length)];
-  const audio=new Audio(src);
+  const audio=trackAudio(new Audio(src));
   audio.volume=selectVolume;
   audio.play();
 }
 
 function playPasswordResult(correct){
+  if(!powered) return;
   const file=correct?'Terminal 3/passgood.wav':'Terminal 3/passbad.wav';
-  const audio=new Audio(file);
+  const audio=trackAudio(new Audio(file));
   audio.volume=selectVolume;
   audio.play();
 }
 
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function sleep(ms){return new Promise(r=>setTrackedTimeout(r,ms));}
 
 async function typeText(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    const delay=speed===Infinity?0:baseDelay/speed;
+    const delay=Math.pow(100-compSpeed,2)/100*baseDelay;
     if(delay>0) await sleep(delay);
   }
   el.textContent+='\n';
@@ -1090,10 +1307,14 @@ async function typeText(el,text){
 async function typeUserInput(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    playCharFocusSound();
-    await sleep(baseDelay*10);
+    const delay=Math.pow(100-userSpeed,2)/100*baseDelay;
+    if(delay>0){
+      playCharFocusSound();
+      await sleep(delay);
+    }
   }
   el.textContent+='\n';
+  if(userSpeed<100) playEnterCharSound();
 }
 
 function splitEntities(str){
@@ -1131,7 +1352,7 @@ async function typeHtml(el,html){
     target.appendChild(textNode);
     for(const unit of units){
       textNode.data+=unit.startsWith('&')?decodeEntity(unit):unit;
-      const delay=speed===Infinity?0:baseDelay/speed;
+      const delay=Math.pow(100-compSpeed,2)/100*baseDelay;
       if(delay>0) await sleep(delay);
     }
   }
@@ -1145,8 +1366,10 @@ function waitForContinue(){
     }
     function cleanup(){
       document.removeEventListener('mousedown',handler);
+      pendingWaits.delete(cleanup);
       res();
     }
+    pendingWaits.add(cleanup);
     document.addEventListener('mousedown',handler);
   });
 }
@@ -1154,33 +1377,112 @@ function waitForContinue(){
 document.addEventListener('mousedown',e=>{
   if(!typing) return;
   if(e.button===0){
-    speed=Infinity;
+    if(!e.target.closest('#terminal')) return;
+    userSpeed=100;
+    compSpeed=100;
     skipNextClick=true;
     e.preventDefault();
   }
 });
 document.addEventListener('click',e=>{
   if(skipNextClick){
+    if(!e.target.closest('#terminal')){
+      skipNextClick=false;
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     skipNextClick=false;
   }
 },true);
 
-async function init(){
+async function init(cycle=currentCycle){
+  if(cycle!==currentCycle || !powered) return;
   startScrollSound();
   header.innerHTML='';
   stopScrollSound();
   if(hasHacked){
     await showBoot();
   }else if(startLocked){
+    await showLockedBoot();
     await startHacking();
   }else{
     await showIntro();
   }
 }
 
+async function showLockedBoot(){
+  typing=true;
+  resetSpeeds();
+  restoreInput();
+  header.innerHTML='';
+  content.innerHTML='';
+  header.classList.remove('hack-header');
+  content.classList.remove('hack-content');
+  header.style.marginLeft='-2ch';
+  header.style.textAlign='left';
+
+  startScrollSound();
+  const l1=document.createElement('div');
+  header.appendChild(l1);
+  await typeText(l1,'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK');
+  stopScrollSound();
+
+  const br0=document.createElement('br');
+  header.appendChild(br0);
+
+  const l2=document.createElement('div');
+  l2.textContent='>';
+  header.appendChild(l2);
+  if(userSpeed<100) await sleep(1500);
+  await typeUserInput(l2,'SET TERMINAL/INQUIRE');
+  const br1=document.createElement('br');
+  header.appendChild(br1);
+  startScrollSound();
+  const l3=document.createElement('div');
+  header.appendChild(l3);
+  await typeText(l3,'RIT-V300');
+  stopScrollSound();
+
+  const br2=document.createElement('br');
+  header.appendChild(br2);
+
+  const l4=document.createElement('div');
+  l4.textContent='>';
+  header.appendChild(l4);
+  if(userSpeed<100) await sleep(1500);
+  await typeUserInput(l4,'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F');
+
+  const l5=document.createElement('div');
+  l5.textContent='>';
+  header.appendChild(l5);
+  if(userSpeed<100) await sleep(1500);
+  await typeUserInput(l5,'SET HALT RESTART/MAINT');
+  const br3=document.createElement('br');
+  header.appendChild(br3);
+  startScrollSound();
+  for(const text of bootLines){
+    const div=document.createElement('div');
+    header.appendChild(div);
+    await typeText(div,text);
+  }
+  stopScrollSound();
+
+  const br4=document.createElement('br');
+  header.appendChild(br4);
+
+  const lEnd=document.createElement('div');
+  lEnd.textContent='>';
+  header.appendChild(lEnd);
+  if(userSpeed<100) await sleep(1500);
+  await typeUserInput(lEnd,'RUN DEBUG/ACCOUNTS.F');
+
+  typing=false;
+}
+
 async function showBoot(){
+  typing=true;
+  resetSpeeds();
   restoreInput();
   header.innerHTML='';
   content.innerHTML='';
@@ -1193,26 +1495,35 @@ async function showBoot(){
   header.appendChild(line1);
   await typeText(line1,'Welcome to RobCo Industries (TM) Termlink');
   stopScrollSound();
+  const brBoot1=document.createElement('br');
+  header.appendChild(brBoot1);
   const line2=document.createElement('div');
   line2.textContent='>';
   header.appendChild(line2);
-  await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(line2,'Logon Admin');
+  const brBoot=document.createElement('br');
+  header.appendChild(brBoot);
   const line3=document.createElement('div');
   header.appendChild(line3);
   startScrollSound();
   await typeText(line3,'Enter Password');
   stopScrollSound();
+  const brBoot2=document.createElement('br');
+  header.appendChild(brBoot2);
   const line4=document.createElement('div');
   line4.textContent='>';
   header.appendChild(line4);
-  await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
-  await sleep(500);
+  if(userSpeed<100) await sleep(500);
+  typing=false;
   await showIntro();
 }
 
 async function showIntro(){
+  typing=true;
+  resetSpeeds();
   restoreInput();
   startScrollSound();
   header.innerHTML='';
@@ -1234,6 +1545,7 @@ async function showIntro(){
     await typeText(div,line);
   }
   stopScrollSound();
+  typing=false;
   showScreen('menu');
 }
 
@@ -1247,10 +1559,19 @@ async function showScreen(name){
   content.innerHTML='';
   currentOptions=[];
   selected=-1;
-  const lines=screens[name];
+  const data=screens[name];
+  let lines=[];
+  let style=null;
+  if(Array.isArray(data)){
+    lines=data;
+  }else if(data){
+    lines=data.items||[];
+    style=data.style||null;
+  }
+  applyScreenStyle(style);
   let i=0;
   while(i<lines.length){
-    speed=1;
+    resetSpeeds();
     typing=true;
     startScrollSound();
     while(i<lines.length){
@@ -1261,10 +1582,14 @@ async function showScreen(name){
         div.className='option';
         div.tabIndex=0;
         await typeText(div,line.text);
-        div.addEventListener('click',()=>{
+        div.addEventListener('click',async()=>{
           playSelectSound();
           if(line.screen){
-            showScreen(line.screen);
+            await showScreen(line.screen);
+            if(line.command){
+              await new Promise(requestAnimationFrame);
+              displayMessage(line.command);
+            }
           }else if(line.command){
             displayMessage(line.command);
           }
@@ -1308,7 +1633,7 @@ async function showScreen(name){
 }
 
 document.addEventListener('keydown',e=>{
-  if(typing || !currentOptions.length) return;
+  if(!powered || typing || !currentOptions.length) return;
   if(e.key==='ArrowDown'){
     if(selected>=0) currentOptions[selected].classList.remove('selected');
     selected=selected<0?0:(selected+1)%currentOptions.length;
@@ -1327,6 +1652,7 @@ document.addEventListener('keydown',e=>{
 });
 
 document.addEventListener('keydown',e=>{
+  if(!powered) return;
   if(e.key==='Tab'){
     e.preventDefault();
     if(!typing) goBack();
@@ -1336,11 +1662,15 @@ document.addEventListener('keydown',e=>{
 powerButton.addEventListener('click',async()=>{
   await audioCtx.resume();
   if(!powered){
-    const powerSound=new Audio('Terminal 3/poweron.mp3');
+    currentCycle++;
+    const cycle=currentCycle;
+    const powerSound=trackAudio(new Audio('Terminal 3/poweron.mp3'));
     powerSound.play();
     powerScreen.style.display='none';
+    updateScale();
+    prevWidth=window.innerWidth;
+    prevHeight=window.innerHeight;
     terminal.classList.add('powered');
-    audioMenu.style.display='flex';
     startFanHum();
     if(!terminalLocked){
       header.innerHTML='';
@@ -1353,22 +1683,35 @@ powerButton.addEventListener('click',async()=>{
       updateInput();
       hackingActive=false;
       hackingData=null;
-      await loadConfig();
-      loadScrollSound().then(init);
+      await loadConfig(cycle);
+      loadScrollSound().then(()=>{if(currentCycle===cycle) init(cycle);});
     }
     powered=true;
   }else{
-    const powerSound=new Audio('Terminal 3/poweroff.mp3');
+    currentCycle++;
+    powered=false;
+    stopAllAudio();
+    clearAllTimeouts();
+    cancelWaits();
+    typing=false;
+    screenHistory=[];
+    currentOptions=[];
+    selected=-1;
+    inputText='';
+    input.textContent='';
+    header.innerHTML='';
+    content.innerHTML='';
+    applyScreenStyle(null);
+    const powerSound=trackAudio(new Audio('Terminal 3/poweroff.mp3'));
     powerSound.play();
-    stopFanHum();
-    stopScrollSound();
     powerScreen.style.display='flex';
+    updateScale();
+    prevWidth=window.innerWidth;
+    prevHeight=window.innerHeight;
     terminal.classList.remove('powered');
-    audioMenu.style.display='none';
-    volumeControls.style.display='none';
+    prefMenu.style.display='none';
     hackingActive=false;
     hackingData=null;
-    powered=false;
   }
 });
 </script>

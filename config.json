@@ -10,6 +10,17 @@
     "How may I assist you this fine day?",
     "───────────────────────────────────────"
   ],
+  "bootLines": [
+    "Initializing Robco Industries (TM) MF Boot Agent v2.3.0",
+    "RETROS BIOS",
+    "RBIOS-4.02.08.00 52EE5.E7.E8",
+    "Copyright 2201-2203 Robco Ind.",
+    "Uppermem: 64 KB",
+    "Root (5A8)",
+    "Maintenance Mode"
+  ],
+  "userSpeed": 75,
+  "compSpeed": 90,
   "screens": {
     "menu": [
       { "text": "> Protectron Schematics", "screen": "protectron" },
@@ -106,16 +117,26 @@
     "help": [
       "== HELP ==",
       "",
-      "Sample help terminal entry.",
+      "Use the Preferences button to adjust audio or typing speeds.",
       "",
       { "text": "> RETURN", "screen": "menu" }
     ]
   },
+  "style": {
+      "textColor": "#7aff7a",
+      "backgroundColor": "#041204",
+      "borderColor": "#008800"
+    },
+  "hackingStyle": {
+      "textColor": "#7aff7a",
+      "backgroundColor": "#041204",
+      "borderColor": "#008800"
+    },
   "locked": true,
   "hacking": {
     "difficulty": "Average",
-    "password": "HARDWARE",
-    "dudWords": ["RESEARCH", "SCIENTIST"],
+    "attempts": 4,
+    "maxAttempts": 4,
     "difficulties": [
       { "name": "Very Easy", "wordCount": [8, 10], "length": [4, 5] },
       { "name": "Easy", "wordCount": [10, 12], "length": [6, 7] },

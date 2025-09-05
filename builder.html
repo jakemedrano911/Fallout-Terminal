@@ -184,6 +184,18 @@
       <label class="block" title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
       <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
       <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
+      <label class="block">Hacking Text Color:
+        <input type="color" id="hack-text-color" class="ml-2">
+        <input type="text" id="hack-text-color-hex" class="ml-2 border rounded p-1 w-24">
+      </label>
+      <label class="block">Hacking Background Color:
+        <input type="color" id="hack-bg-color" class="ml-2">
+        <input type="text" id="hack-bg-color-hex" class="ml-2 border rounded p-1 w-24">
+      </label>
+      <label class="block">Hacking Border Color:
+        <input type="color" id="hack-border-color" class="ml-2">
+        <input type="text" id="hack-border-color-hex" class="ml-2 border rounded p-1 w-24">
+      </label>
       <div id="dud-warning" class="text-red-600 hidden"></div>
       <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
         <fieldset id="difficulties-fieldset" class="p-4 border rounded-lg shadow mt-4" title="Define hacking difficulty levels. Each level has a name, word count range, and password length range." v-show="showDifficulties">
@@ -210,24 +222,21 @@
       <legend class="flex items-center gap-1">Default Appearance</legend>
       <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Default Text Color:
         <input type="color" id="text-color" value="#7aff7a" class="ml-2">
-        <input type="checkbox" class="ml-1 color-apply" data-target="text-color">
         <input type="text" id="text-color-hex" value="#7aff7a" class="ml-2 border rounded p-1 w-24">
       </label>
       <label class="block" title="Color of the terminal window outline, e.g., #008800.">Default Outline Color:
         <input type="color" id="border-color" value="#008800" class="ml-2">
-        <input type="checkbox" class="ml-1 color-apply" data-target="border-color">
         <input type="text" id="border-color-hex" value="#008800" class="ml-2 border rounded p-1 w-24">
       </label>
       <label class="block" title="Background color of the terminal window, e.g., #041204.">Default Background Color:
         <input type="color" id="bg-color" value="#041204" class="ml-2">
-        <input type="checkbox" class="ml-1 color-apply" data-target="bg-color">
         <input type="text" id="bg-color-hex" value="#041204" class="ml-2 border rounded p-1 w-24">
       </label>
     </fieldset>
-    <fieldset class="p-4 border rounded-lg shadow" title="Default typing speeds. 0 skips the animation.">
-      <legend class="flex items-center gap-1">Typing Speeds</legend>
-      <label class="block">User Speed: <input type="number" id="user-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
-      <label class="block">Computer Speed: <input type="number" id="comp-speed" min="0" max="5" value="1" class="ml-2 border rounded p-1 w-20"></label>
+    <fieldset class="p-4 border rounded-lg shadow" title="Default typing speeds. 0 is slowest, 100 is instant.">
+      <legend class="flex items-center gap-1">Text Speeds</legend>
+      <label class="block">User Text Speed: <input type="number" id="user-speed" min="0" max="100" value="50" class="ml-2 border rounded p-1 w-20"></label>
+      <label class="block">Terminal Text Speed: <input type="number" id="comp-speed" min="0" max="100" value="50" class="ml-2 border rounded p-1 w-20"></label>
     </fieldset>
   </div>
 </form>
@@ -261,17 +270,16 @@ function linkColorHex(colorId, hexId){
   return syncToHex;
 }
 
-document.querySelectorAll('.color-apply').forEach(cb=>{
-  cb.addEventListener('change',()=>{
-    const target=document.getElementById(cb.dataset.target);
-    if(target) target.dispatchEvent(new Event('input'));
-    cb.checked=false;
-  });
-});
-
 const syncTextColor = linkColorHex('text-color', 'text-color-hex');
 const syncBorderColor = linkColorHex('border-color', 'border-color-hex');
 const syncBgColor = linkColorHex('bg-color', 'bg-color-hex');
+
+document.getElementById('hack-text-color').value = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
+document.getElementById('hack-bg-color').value = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
+document.getElementById('hack-border-color').value = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
+const syncHackTextColor = linkColorHex('hack-text-color', 'hack-text-color-hex');
+const syncHackBgColor = linkColorHex('hack-bg-color', 'hack-bg-color-hex');
+const syncHackBorderColor = linkColorHex('hack-border-color', 'hack-border-color-hex');
 
 const app = Vue.createApp({
   data() {
@@ -372,6 +380,13 @@ const app = Vue.createApp({
       syncTextColor();
       syncBgColor();
       syncBorderColor();
+      const hackingStyle = config.hackingStyle || {};
+      document.getElementById('hack-text-color').value = hackingStyle.textColor || globalText;
+      document.getElementById('hack-bg-color').value = hackingStyle.backgroundColor || globalBg;
+      document.getElementById('hack-border-color').value = hackingStyle.borderColor || globalBorder;
+      syncHackTextColor();
+      syncHackBgColor();
+      syncHackBorderColor();
       Object.entries(config.screens || {}).forEach(([id, data]) => {
         const palette = [globalText, globalBg, globalBorder];
         const screen = {id, color:palette[Math.floor(Math.random() * palette.length)], items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
@@ -393,8 +408,8 @@ const app = Vue.createApp({
         if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
         this.screens.push(screen);
       });
-      document.getElementById('user-speed').value = config.userSpeed ?? 1;
-      document.getElementById('comp-speed').value = config.compSpeed ?? 1;
+      document.getElementById('user-speed').value = config.userSpeed ?? 50;
+      document.getElementById('comp-speed').value = config.compSpeed ?? 50;
       document.getElementById('locked').checked = config.locked || false;
       const diffs = config.hacking?.difficulties || defaultDifficulties;
         this.difficulties = [];
@@ -420,6 +435,9 @@ const app = Vue.createApp({
       const textColor = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
       const backgroundColor = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
       const borderColor = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
+      const hackTextColor = document.getElementById('hack-text-color').value || textColor;
+      const hackBgColor = document.getElementById('hack-bg-color').value || backgroundColor;
+      const hackBorderColor = document.getElementById('hack-border-color').value || borderColor;
       const screensObj = {};
       this.screens.forEach(scr=>{
         const id = scr.id.trim();
@@ -448,6 +466,10 @@ const app = Vue.createApp({
       const maxAttempts = parseInt(maxAttemptsEl.value,10);
       const locked = document.getElementById('locked').checked;
       const style = { textColor, backgroundColor, borderColor };
+      const hackingStyle = {};
+      if(hackTextColor !== textColor) hackingStyle.textColor = hackTextColor;
+      if(hackBgColor !== backgroundColor) hackingStyle.backgroundColor = hackBgColor;
+      if(hackBorderColor !== borderColor) hackingStyle.borderColor = hackBorderColor;
       const userSpeed = parseInt(document.getElementById('user-speed').value, 10);
       const compSpeed = parseInt(document.getElementById('comp-speed').value, 10);
       const hacking = { difficulties: this.difficulties.map(({name, wordCount, length})=>({name, wordCount, length})) };
@@ -460,10 +482,11 @@ const app = Vue.createApp({
         titleLines: titles,
         headerLines: headers,
         bootLines,
-        userSpeed: isNaN(userSpeed) ? 1 : userSpeed,
-        compSpeed: isNaN(compSpeed) ? 1 : compSpeed,
+        userSpeed: isNaN(userSpeed) ? 50 : userSpeed,
+        compSpeed: isNaN(compSpeed) ? 50 : compSpeed,
         screens: screensObj,
         style,
+        hackingStyle: Object.keys(hackingStyle).length ? hackingStyle : undefined,
         locked,
         hacking
       };

@@ -309,8 +309,8 @@
         <label>Scroll <input type="range" min="0" max="100" value="20" id="scroll-volume"></label>
         <label>Focus <input type="range" min="0" max="100" value="20" id="focus-volume"></label>
         <label>Select <input type="range" min="0" max="100" value="50" id="select-volume"></label>
-        <label>User Speed <input type="range" min="0" max="5" value="1" id="user-speed-slider"></label>
-        <label>Computer Speed <input type="range" min="0" max="5" value="1" id="comp-speed-slider"></label>
+        <label>User Text Speed <input type="range" min="0" max="100" value="50" id="user-speed-slider"></label>
+        <label>Terminal Text Speed <input type="range" min="0" max="100" value="50" id="comp-speed-slider"></label>
       </div>
     </div>
     <div id="config-container">
@@ -387,14 +387,14 @@ async function loadConfig(){
   screens=cfg.screens || {};
   hacking = cfg.hacking || {};
   if(savedUserSpeed===null && cfg.userSpeed!==undefined){
-    userBaseSpeed=cfg.userSpeed===0?Infinity:cfg.userSpeed;
+    userBaseSpeed=cfg.userSpeed;
     userSpeed=userBaseSpeed;
-    if(userSpeedSlider) userSpeedSlider.value=userBaseSpeed===Infinity?0:userBaseSpeed;
+    if(userSpeedSlider) userSpeedSlider.value=userBaseSpeed;
   }
   if(savedCompSpeed===null && cfg.compSpeed!==undefined){
-    compBaseSpeed=cfg.compSpeed===0?Infinity:cfg.compSpeed;
+    compBaseSpeed=cfg.compSpeed;
     compSpeed=compBaseSpeed;
-    if(compSpeedSlider) compSpeedSlider.value=compBaseSpeed===Infinity?0:compBaseSpeed;
+    if(compSpeedSlider) compSpeedSlider.value=compBaseSpeed;
   }
   if(cfg.style){
     const {textColor, backgroundColor, borderColor}=cfg.style;
@@ -463,8 +463,8 @@ let typing=false;
 let baseDelay=10;
 const savedUserSpeed=localStorage.getItem('userSpeed');
 const savedCompSpeed=localStorage.getItem('compSpeed');
-let userBaseSpeed=savedUserSpeed!==null?Number(savedUserSpeed):1;
-let compBaseSpeed=savedCompSpeed!==null?Number(savedCompSpeed):1;
+let userBaseSpeed=savedUserSpeed!==null?Number(savedUserSpeed):50;
+let compBaseSpeed=savedCompSpeed!==null?Number(savedCompSpeed):50;
 let userSpeed=userBaseSpeed;
 let compSpeed=compBaseSpeed;
 let inputText="";
@@ -524,17 +524,17 @@ humSlider.addEventListener('input',()=>{
 scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/100;});
 focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/100;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/100;});
-userSpeedSlider.value=userSpeed===Infinity?0:userSpeed;
-compSpeedSlider.value=compSpeed===Infinity?0:compSpeed;
+userSpeedSlider.value=userSpeed;
+compSpeedSlider.value=compSpeed;
 userSpeedSlider.addEventListener('input',()=>{
   const val=Number(userSpeedSlider.value);
-  userBaseSpeed=val===0?Infinity:val;
+  userBaseSpeed=val;
   userSpeed=userBaseSpeed;
   localStorage.setItem('userSpeed',userBaseSpeed);
 });
 compSpeedSlider.addEventListener('input',()=>{
   const val=Number(compSpeedSlider.value);
-  compBaseSpeed=val===0?Infinity:val;
+  compBaseSpeed=val;
   compSpeed=compBaseSpeed;
   localStorage.setItem('compSpeed',compBaseSpeed);
 });
@@ -1227,7 +1227,7 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 async function typeText(el,text){
   for(let ch of text){
     el.textContent+=ch;
-    const delay=compSpeed===Infinity?0:baseDelay/compSpeed;
+    const delay=(100-compSpeed)*baseDelay;
     if(delay>0) await sleep(delay);
   }
   el.textContent+='\n';
@@ -1237,16 +1237,16 @@ async function typeText(el,text){
 }
 
 async function typeUserInput(el,text){
-  const shouldPlay=userSpeed!==Infinity&&userSpeed>0;
   for(let ch of text){
     el.textContent+=ch;
-    if(shouldPlay){
+    const delay=(100-userSpeed)*baseDelay;
+    if(delay>0){
       playCharFocusSound();
-      await sleep(baseDelay*10);
+      await sleep(delay);
     }
   }
   el.textContent+='\n';
-  if(shouldPlay) playEnterCharSound();
+  if(userSpeed<100) playEnterCharSound();
 }
 
 function splitEntities(str){
@@ -1284,7 +1284,7 @@ async function typeHtml(el,html){
     target.appendChild(textNode);
     for(const unit of units){
       textNode.data+=unit.startsWith('&')?decodeEntity(unit):unit;
-      const delay=compSpeed===Infinity?0:baseDelay/compSpeed;
+      const delay=(100-compSpeed)*baseDelay;
       if(delay>0) await sleep(delay);
     }
   }
@@ -1307,16 +1307,16 @@ function waitForContinue(){
 document.addEventListener('mousedown',e=>{
   if(!typing) return;
   if(e.button===0){
-    if(e.target.closest('#controls-container')) return;
-    userSpeed=Infinity;
-    compSpeed=Infinity;
+    if(!e.target.closest('#terminal')) return;
+    userSpeed=100;
+    compSpeed=100;
     skipNextClick=true;
     e.preventDefault();
   }
 });
 document.addEventListener('click',e=>{
   if(skipNextClick){
-    if(e.target.closest('#controls-container')){
+    if(!e.target.closest('#terminal')){
       skipNextClick=false;
       return;
     }
@@ -1363,7 +1363,7 @@ async function showLockedBoot(){
   const l2=document.createElement('div');
   l2.textContent='>';
   header.appendChild(l2);
-  if(userSpeed!==Infinity) await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(l2,'SET TERMINAL/INQUIRE');
   const br1=document.createElement('br');
   header.appendChild(br1);
@@ -1379,13 +1379,13 @@ async function showLockedBoot(){
   const l4=document.createElement('div');
   l4.textContent='>';
   header.appendChild(l4);
-  if(userSpeed!==Infinity) await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(l4,'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F');
 
   const l5=document.createElement('div');
   l5.textContent='>';
   header.appendChild(l5);
-  if(userSpeed!==Infinity) await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(l5,'SET HALT RESTART/MAINT');
   const br3=document.createElement('br');
   header.appendChild(br3);
@@ -1403,7 +1403,7 @@ async function showLockedBoot(){
   const lEnd=document.createElement('div');
   lEnd.textContent='>';
   header.appendChild(lEnd);
-  if(userSpeed!==Infinity) await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(lEnd,'RUN DEBUG/ACCOUNTS.F');
 
   typing=false;
@@ -1429,7 +1429,7 @@ async function showBoot(){
   const line2=document.createElement('div');
   line2.textContent='>';
   header.appendChild(line2);
-  if(userSpeed!==Infinity) await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(line2,'Logon Admin');
   const brBoot=document.createElement('br');
   header.appendChild(brBoot);
@@ -1443,9 +1443,9 @@ async function showBoot(){
   const line4=document.createElement('div');
   line4.textContent='>';
   header.appendChild(line4);
-  if(userSpeed!==Infinity) await sleep(1500);
+  if(userSpeed<100) await sleep(1500);
   await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
-  if(userSpeed!==Infinity) await sleep(500);
+  if(userSpeed<100) await sleep(500);
   typing=false;
   await showIntro();
 }

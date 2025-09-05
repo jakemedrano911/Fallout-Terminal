@@ -345,7 +345,7 @@ let startLocked=true;
 let baseStyle={textColor:'#7aff7a',backgroundColor:'#041204',borderColor:'#008800'};
 
 let uploadedConfig=null;
-window.addEventListener('message', e => { uploadedConfig = e.data; loadConfig(); });
+let powered=false;
 
 async function loadConfig(){
   let cfg;
@@ -402,19 +402,37 @@ const configFile=document.getElementById('config-file');
 const configButton=document.getElementById('config-button');
 const historyEl=content;
 
+function handleConfigLoaded(){
+  const sounds=[
+    'Terminal 4/Program Start/ProgramLoad_01.wav',
+    'Terminal 4/Program Start/ProgramLoad_02.wav',
+    'Terminal 4/Program Start/ProgramLoad_03.wav'
+  ];
+  const startSound=new Audio(sounds[Math.floor(Math.random()*sounds.length)]);
+  startSound.play();
+  if(powered){
+    powerButton.click();
+  }
+}
+
 configFile.addEventListener('change',async e=>{
   const file=e.target.files[0];
   if(file){
     try{
       const text=await file.text();
       uploadedConfig=JSON.parse(text);
+      handleConfigLoaded();
     }catch(err){
       console.error('Invalid configuration file',err);
       uploadedConfig=null;
     }
   }
 });
-configButton.addEventListener('click',()=>configFile.click());
+configButton.addEventListener('click',()=>{
+  new Audio('Terminal 4/Insert.wav').play();
+  configFile.click();
+});
+window.addEventListener('message', e => { uploadedConfig = e.data; handleConfigLoaded(); });
 let currentOptions=[];
 let selected=-1;
 let typing=false;
@@ -428,7 +446,6 @@ let compSpeed=compBaseSpeed;
 let inputText="";
 let screenHistory=[];
 let skipNextClick=false;
-let powered=false;
 const MAX_INPUT_CHARS=64;
 let hackingActive=false;
 let hackingData=null;
@@ -1266,6 +1283,7 @@ function waitForContinue(){
 document.addEventListener('mousedown',e=>{
   if(!typing) return;
   if(e.button===0){
+    if(e.target.closest('#controls-container')) return;
     userSpeed=Infinity;
     compSpeed=Infinity;
     skipNextClick=true;
@@ -1274,6 +1292,10 @@ document.addEventListener('mousedown',e=>{
 });
 document.addEventListener('click',e=>{
   if(skipNextClick){
+    if(e.target.closest('#controls-container')){
+      skipNextClick=false;
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     skipNextClick=false;
@@ -1465,10 +1487,11 @@ async function showScreen(name){
         div.className='option';
         div.tabIndex=0;
         await typeText(div,line.text);
-        div.addEventListener('click',()=>{
+        div.addEventListener('click',async()=>{
           playSelectSound();
           if(line.screen){
-            showScreen(line.screen);
+            await showScreen(line.screen);
+            if(line.command) displayMessage(line.command);
           }else if(line.command){
             displayMessage(line.command);
           }

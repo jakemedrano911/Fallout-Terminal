@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
@@ -74,15 +74,34 @@
     .dark .action-btn:hover {
       background-color: #374151;
     }
+    .top-line-btn {
+      padding: 0.25rem 0.5rem;
+      border: 2px solid #4b5563;
+      border-radius: 0.25rem;
+      background-color: #f3f4f6;
+      color: #000000;
+      cursor: pointer;
+    }
+    .top-line-btn:hover {
+      background-color: #e5e7eb;
+    }
+    .dark .top-line-btn {
+      border-color: #9ca3af;
+      background-color: #1f2937;
+      color: #f3f4f6;
+    }
+    .dark .top-line-btn:hover {
+      background-color: #374151;
+    }
   </style>
 </head>
 <body class="font-sans m-0 p-4">
 <h1 class="text-2xl font-bold mb-4">Config Builder</h1>
 <div class="mb-4 flex gap-2 items-center">
-  <button type="button" id="load-config" class="px-2 py-1 border-2 border-gray-600 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-400 dark:hover:bg-gray-700" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
-  <button type="submit" form="builder-form" class="px-2 py-1 border-2 border-gray-600 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-400 dark:hover:bg-gray-700" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
+  <button type="button" id="load-config" class="top-line-btn" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
+  <button type="submit" form="builder-form" class="top-line-btn" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
   <a id="download-link" class="hidden text-blue-600 underline" download="config.json">Download config.json</a>
-  <button type="button" id="dark-toggle" class="px-2 py-1 border-2 border-gray-600 rounded bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:border-gray-400 dark:hover:bg-gray-700" title="Toggle dark mode">Toggle Dark Mode</button>
+  <button type="button" id="dark-toggle" class="top-line-btn" title="Toggle dark mode">Toggle Dark Mode</button>
 </div>
 <input type="file" id="config-file" accept="application/json" class="hidden">
 <div id="builder-layout" class="flex flex-col lg:flex-row items-start gap-4">
@@ -203,6 +222,9 @@ const defaultDifficulties = [
   { name: "Hard", wordCount: [15,17], length: [10,11] },
   { name: "Very Hard", wordCount: [17,20], length: [12,15] }
 ];
+const DEFAULT_TEXT_COLOR = '#7aff7a';
+const DEFAULT_BG_COLOR = '#041204';
+const DEFAULT_BORDER_COLOR = '#008800';
 
 const app = Vue.createApp({
   data() {
@@ -230,15 +252,18 @@ const app = Vue.createApp({
       addScreen(id='') {
         const palette = ['#f87171', '#fb923c', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa'];
         const color = palette[Math.floor(Math.random() * palette.length)];
+        const text = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
+        const bg = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
+        const border = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
         this.screens.push({
           id,
           color,
           items:[{text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
           open:true,
           uid:crypto.randomUUID?crypto.randomUUID():Math.random(),
-          textColor:'',
-          bgColor:'',
-          borderColor:'',
+          textColor:text,
+          bgColor:bg,
+          borderColor:border,
           showAppearance:false
         });
         this.$nextTick(this.initSortables);
@@ -361,13 +386,20 @@ const app = Vue.createApp({
       document.getElementById('headers').value = (config.headerLines || []).join('\n');
       document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
       this.screens = [];
+      const style = config.style || {};
+      const globalText = style.textColor || DEFAULT_TEXT_COLOR;
+      const globalBg = style.backgroundColor || DEFAULT_BG_COLOR;
+      const globalBorder = style.borderColor || DEFAULT_BORDER_COLOR;
+      document.getElementById('text-color').value = globalText;
+      document.getElementById('bg-color').value = globalBg;
+      document.getElementById('border-color').value = globalBorder;
       Object.entries(config.screens || {}).forEach(([id, data]) => {
-        const screen = {id, color:'#cccccc', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:'', bgColor:'', borderColor:'', showAppearance:false};
+        const screen = {id, color:'#cccccc', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
         const items = Array.isArray(data) ? data : (data.items || []);
         if(!Array.isArray(data) && data.style){
-          screen.textColor = data.style.textColor || '';
-          screen.bgColor = data.style.backgroundColor || '';
-          screen.borderColor = data.style.borderColor || '';
+          if(data.style.textColor) screen.textColor = data.style.textColor;
+          if(data.style.backgroundColor) screen.bgColor = data.style.backgroundColor;
+          if(data.style.borderColor) screen.borderColor = data.style.borderColor;
         }
         items.forEach(item=>{
           if (typeof item === 'string') {
@@ -381,10 +413,6 @@ const app = Vue.createApp({
         if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
         this.screens.push(screen);
       });
-      const style = config.style || {};
-      document.getElementById('text-color').value = style.textColor || '#7aff7a';
-      document.getElementById('bg-color').value = style.backgroundColor || '#041204';
-      document.getElementById('border-color').value = style.borderColor || '#008800';
       document.getElementById('user-speed').value = config.userSpeed ?? 1;
       document.getElementById('comp-speed').value = config.compSpeed ?? 1;
       document.getElementById('locked').checked = config.locked || false;
@@ -421,6 +449,9 @@ const app = Vue.createApp({
       const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
       const rawBoot = document.getElementById('boot-lines').value.split('\n');
       const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
+      const textColor = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
+      const backgroundColor = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
+      const borderColor = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
       const screensObj = {};
       this.screens.forEach(scr=>{
         const id = scr.id.trim();
@@ -436,9 +467,9 @@ const app = Vue.createApp({
           else { items.push(text); }
         });
         const style = {};
-        if(scr.textColor) style.textColor = scr.textColor;
-        if(scr.bgColor) style.backgroundColor = scr.bgColor;
-        if(scr.borderColor) style.borderColor = scr.borderColor;
+        if(scr.textColor !== textColor) style.textColor = scr.textColor;
+        if(scr.bgColor !== backgroundColor) style.backgroundColor = scr.bgColor;
+        if(scr.borderColor !== borderColor) style.borderColor = scr.borderColor;
         screensObj[id] = Object.keys(style).length ? {items, style} : items;
       });
       const diffValue = this.difficultyChoice;
@@ -448,9 +479,6 @@ const app = Vue.createApp({
       const attempts = parseInt(attemptsEl.value,10);
       const maxAttempts = parseInt(maxAttemptsEl.value,10);
       const locked = document.getElementById('locked').checked;
-      const textColor = document.getElementById('text-color').value;
-      const backgroundColor = document.getElementById('bg-color').value;
-      const borderColor = document.getElementById('border-color').value;
       const style = { textColor, backgroundColor, borderColor };
       const userSpeed = parseInt(document.getElementById('user-speed').value, 10);
       const compSpeed = parseInt(document.getElementById('comp-speed').value, 10);

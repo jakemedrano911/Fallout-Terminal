@@ -8,7 +8,6 @@
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <style>
     body {
       background-color: #f9fafb;
@@ -137,7 +136,6 @@
               <button type="button" @click="screen.showAppearance = !screen.showAppearance" class="mr-2 action-btn" title="Toggle appearance options">Appearance</button>
               <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
               <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1 action-btn" title="Move down">▼</button>
-              <span class="cursor-move text-xl mr-2">↕</span>
               <button type="button" @click="removeScreen(sIdx)" class="action-btn" title="Remove screen"><img src="trash.svg" alt="Remove" class="w-4 h-4"></button>
             </div>
             <div v-show="screen.showAppearance" class="pl-6 mb-2 space-y-1">
@@ -162,7 +160,6 @@
                   <input v-model="item.command" class="menu-command mr-1 border rounded p-1 w-32" placeholder="Command">
                   <button type="button" @click="moveMenuItemUp(sIdx, iIdx)" :disabled="iIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
                   <button type="button" @click="moveMenuItemDown(sIdx, iIdx)" :disabled="iIdx===screen.items.length-1" class="mr-1 action-btn" title="Move down">▼</button>
-                  <span class="cursor-move text-xl mr-1">↕</span>
                   <button type="button" @click="removeMenuItem(sIdx, iIdx)" class="action-btn" title="Remove item"><img src="trash.svg" alt="Remove item" class="w-4 h-4"></button>
                 </div>
               </template>
@@ -274,10 +271,7 @@ const app = Vue.createApp({
         difficulties: [],
         difficultyChoice: 'Average',
         showDifficulties: false,
-        previewLoaded: false,
-        screenSortable: null,
-        itemSortables: [],
-        difficultySortable: null
+        previewLoaded: false
       };
     },
   computed: {
@@ -345,74 +339,7 @@ const app = Vue.createApp({
           this.$nextTick(this.initSortables);
         },
         initSortables() {
-          this.$nextTick(() => {
-          if (this.screenSortable) this.screenSortable.destroy();
-          this.screenSortable = new Sortable(document.getElementById('screens-container'), {
-            handle: '.cursor-move',
-            animation: 150,
-            forceFallback: true,
-            ghostClass: 'drag-ghost',
-            chosenClass: 'drag-chosen',
-            draggable: '.screen',
-            onStart: () => document.body.classList.add('dragging'),
-            onEnd: evt => {
-              document.body.classList.remove('dragging');
-              if (evt.newIndex === undefined || evt.newIndex === null) { this.$nextTick(this.initSortables); return; }
-              if (evt.oldIndex === evt.newIndex) return;
-              const moved = this.screens.splice(evt.oldIndex, 1)[0];
-              this.screens.splice(evt.newIndex, 0, moved);
-              this.$nextTick(this.initSortables);
-            }
-          });
-
-          if (this.difficultySortable) this.difficultySortable.destroy();
-          const diffEl = document.getElementById('difficulties-container');
-          if (diffEl) {
-            this.difficultySortable = new Sortable(diffEl, {
-              animation: 150,
-              forceFallback: true,
-              ghostClass: 'drag-ghost',
-              chosenClass: 'drag-chosen',
-              draggable: '.difficulty-item',
-              onStart: () => document.body.classList.add('dragging'),
-              onEnd: evt => {
-                document.body.classList.remove('dragging');
-                if (evt.newIndex === undefined || evt.newIndex === null) { this.$nextTick(this.initSortables); return; }
-                if (evt.oldIndex === evt.newIndex) return;
-                const moved = this.difficulties.splice(evt.oldIndex, 1)[0];
-                this.difficulties.splice(evt.newIndex, 0, moved);
-                this.$nextTick(this.initSortables);
-              }
-            });
-          }
-
-          this.itemSortables.forEach(s => s.destroy());
-          this.itemSortables = [];
-          document.querySelectorAll('.items-container').forEach(container => {
-            const sortable = new Sortable(container, {
-              group: { name: 'items', put: ['items'] },
-              animation: 150,
-              forceFallback: true,
-              ghostClass: 'drag-ghost',
-              chosenClass: 'drag-chosen',
-              handle: '.cursor-move',
-              draggable: '.menu-item',
-              onStart: () => document.body.classList.add('dragging'),
-              onEnd: evt => {
-                document.body.classList.remove('dragging');
-                const fromSIdx = parseInt(evt.from.dataset.sidx, 10);
-                const toSIdx = parseInt(evt.to.dataset.sidx, 10);
-                if (isNaN(toSIdx)) { this.$nextTick(this.initSortables); return; }
-                if (fromSIdx === toSIdx && evt.oldIndex === evt.newIndex) return;
-                const moved = this.screens[fromSIdx].items.splice(evt.oldIndex, 1)[0];
-                this.screens[toSIdx].items.splice(evt.newIndex, 0, moved);
-                this.$nextTick(this.initSortables);
-              }
-            });
-            this.itemSortables.push(sortable);
-          });
-        });
-      },
+        },
       addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
         this.difficulties.push({...d, open:false, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
         this.$nextTick(this.initSortables);

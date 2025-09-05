@@ -185,16 +185,16 @@
       <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
       <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
       <label class="block">Hacking Text Color:
-        <input type="color" id="hack-text-color" class="ml-2">
-        <input type="text" id="hack-text-color-hex" class="ml-2 border rounded p-1 w-24">
+        <input type="color" id="hack-text-color" class="ml-2" v-model="hackTextColor">
+        <input type="text" id="hack-text-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackTextColor">
       </label>
       <label class="block">Hacking Background Color:
-        <input type="color" id="hack-bg-color" class="ml-2">
-        <input type="text" id="hack-bg-color-hex" class="ml-2 border rounded p-1 w-24">
+        <input type="color" id="hack-bg-color" class="ml-2" v-model="hackBgColor">
+        <input type="text" id="hack-bg-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackBgColor">
       </label>
       <label class="block">Hacking Border Color:
-        <input type="color" id="hack-border-color" class="ml-2">
-        <input type="text" id="hack-border-color-hex" class="ml-2 border rounded p-1 w-24">
+        <input type="color" id="hack-border-color" class="ml-2" v-model="hackBorderColor">
+        <input type="text" id="hack-border-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackBorderColor">
       </label>
       <div id="dud-warning" class="text-red-600 hidden"></div>
       <button type="button" @click="showDifficulties = !showDifficulties" class="mt-2 px-2 py-1 border rounded" title="Edit difficulty levels">Customize Difficulties</button>
@@ -221,16 +221,16 @@
     <fieldset class="p-4 border rounded-lg shadow" title="Customize terminal appearance.">
       <legend class="flex items-center gap-1">Default Appearance</legend>
       <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Default Text Color:
-        <input type="color" id="text-color" value="#7aff7a" class="ml-2">
-        <input type="text" id="text-color-hex" value="#7aff7a" class="ml-2 border rounded p-1 w-24">
+        <input type="color" id="text-color" class="ml-2" v-model="textColor">
+        <input type="text" id="text-color-hex" class="ml-2 border rounded p-1 w-24" v-model="textColor">
       </label>
       <label class="block" title="Color of the terminal window outline, e.g., #008800.">Default Outline Color:
-        <input type="color" id="border-color" value="#008800" class="ml-2">
-        <input type="text" id="border-color-hex" value="#008800" class="ml-2 border rounded p-1 w-24">
+        <input type="color" id="border-color" class="ml-2" v-model="borderColor">
+        <input type="text" id="border-color-hex" class="ml-2 border rounded p-1 w-24" v-model="borderColor">
       </label>
       <label class="block" title="Background color of the terminal window, e.g., #041204.">Default Background Color:
-        <input type="color" id="bg-color" value="#041204" class="ml-2">
-        <input type="text" id="bg-color-hex" value="#041204" class="ml-2 border rounded p-1 w-24">
+        <input type="color" id="bg-color" class="ml-2" v-model="bgColor">
+        <input type="text" id="bg-color-hex" class="ml-2 border rounded p-1 w-24" v-model="bgColor">
       </label>
     </fieldset>
     <fieldset class="p-4 border rounded-lg shadow" title="Default typing speeds. 0 is slowest, 100 is instant.">
@@ -252,35 +252,6 @@ const DEFAULT_TEXT_COLOR = '#7aff7a';
 const DEFAULT_BG_COLOR = '#041204';
 const DEFAULT_BORDER_COLOR = '#008800';
 
-function linkColorHex(colorId, hexId){
-  const colorInput=document.getElementById(colorId);
-  const hexInput=document.getElementById(hexId);
-  const syncToHex=()=>{hexInput.value=colorInput.value;};
-  const syncToColor=()=>{
-    let val=hexInput.value.trim();
-    if(!val.startsWith('#')) val='#'+val;
-    if(/^#[0-9a-fA-F]{6}$/.test(val)){
-      colorInput.value=val;
-      colorInput.dispatchEvent(new Event('input'));
-    }
-  };
-  colorInput.addEventListener('input', syncToHex);
-  hexInput.addEventListener('input', syncToColor);
-  syncToHex();
-  return syncToHex;
-}
-
-const syncTextColor = linkColorHex('text-color', 'text-color-hex');
-const syncBorderColor = linkColorHex('border-color', 'border-color-hex');
-const syncBgColor = linkColorHex('bg-color', 'bg-color-hex');
-
-document.getElementById('hack-text-color').value = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
-document.getElementById('hack-bg-color').value = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
-document.getElementById('hack-border-color').value = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
-const syncHackTextColor = linkColorHex('hack-text-color', 'hack-text-color-hex');
-const syncHackBgColor = linkColorHex('hack-bg-color', 'hack-bg-color-hex');
-const syncHackBorderColor = linkColorHex('hack-border-color', 'hack-border-color-hex');
-
 const app = Vue.createApp({
   data() {
     return {
@@ -288,7 +259,13 @@ const app = Vue.createApp({
         screens: [],
         difficulties: [],
         difficultyChoice: 'Average',
-        showDifficulties: false
+        showDifficulties: false,
+        textColor: DEFAULT_TEXT_COLOR,
+        bgColor: DEFAULT_BG_COLOR,
+        borderColor: DEFAULT_BORDER_COLOR,
+        hackTextColor: DEFAULT_TEXT_COLOR,
+        hackBgColor: DEFAULT_BG_COLOR,
+        hackBorderColor: DEFAULT_BORDER_COLOR
       };
     },
   computed: {
@@ -301,9 +278,9 @@ const app = Vue.createApp({
   },
   methods: {
       addScreen(id='') {
-        const text = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
-        const bg = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
-        const border = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
+        const text = this.textColor || DEFAULT_TEXT_COLOR;
+        const bg = this.bgColor || DEFAULT_BG_COLOR;
+        const border = this.borderColor || DEFAULT_BORDER_COLOR;
         const palette = [text, bg, border];
         const color = palette[Math.floor(Math.random() * palette.length)];
         this.screens.push({
@@ -365,53 +342,47 @@ const app = Vue.createApp({
         this.difficulties.splice(idx,1);
         this.$nextTick(this.initSortables);
       },
-        loadConfig(config) {
-      document.getElementById('titles').value = (config.titleLines || []).join('\n');
-      document.getElementById('headers').value = (config.headerLines || []).join('\n');
-      document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
-      this.screens = [];
-      const style = config.style || {};
-      const globalText = style.textColor || DEFAULT_TEXT_COLOR;
-      const globalBg = style.backgroundColor || DEFAULT_BG_COLOR;
-      const globalBorder = style.borderColor || DEFAULT_BORDER_COLOR;
-      document.getElementById('text-color').value = globalText;
-      document.getElementById('bg-color').value = globalBg;
-      document.getElementById('border-color').value = globalBorder;
-      syncTextColor();
-      syncBgColor();
-      syncBorderColor();
-      const hackingStyle = config.hackingStyle || {};
-      document.getElementById('hack-text-color').value = hackingStyle.textColor || globalText;
-      document.getElementById('hack-bg-color').value = hackingStyle.backgroundColor || globalBg;
-      document.getElementById('hack-border-color').value = hackingStyle.borderColor || globalBorder;
-      syncHackTextColor();
-      syncHackBgColor();
-      syncHackBorderColor();
-      Object.entries(config.screens || {}).forEach(([id, data]) => {
-        const palette = [globalText, globalBg, globalBorder];
-        const screen = {id, color:palette[Math.floor(Math.random() * palette.length)], items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
-        const items = Array.isArray(data) ? data : (data.items || []);
-        if(!Array.isArray(data) && data.style){
-          if(data.style.textColor) screen.textColor = data.style.textColor;
-          if(data.style.backgroundColor) screen.bgColor = data.style.backgroundColor;
-          if(data.style.borderColor) screen.borderColor = data.style.borderColor;
-        }
-        items.forEach(item=>{
-          if (typeof item === 'string') {
-            screen.items.push({text:item, screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-          } else if (item.screen) {
-            screen.items.push({text:item.text || '', screen:item.screen, command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-          } else if (item.command) {
-            screen.items.push({text:item.text || '', screen:'', command:item.command, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+      loadConfig(config) {
+        document.getElementById('titles').value = (config.titleLines || []).join('\n');
+        document.getElementById('headers').value = (config.headerLines || []).join('\n');
+        document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
+        this.screens = [];
+        const style = config.style || {};
+        const globalText = style.textColor || DEFAULT_TEXT_COLOR;
+        const globalBg = style.backgroundColor || DEFAULT_BG_COLOR;
+        const globalBorder = style.borderColor || DEFAULT_BORDER_COLOR;
+        this.textColor = globalText;
+        this.bgColor = globalBg;
+        this.borderColor = globalBorder;
+        const hackingStyle = config.hackingStyle || {};
+        this.hackTextColor = hackingStyle.textColor || globalText;
+        this.hackBgColor = hackingStyle.backgroundColor || globalBg;
+        this.hackBorderColor = hackingStyle.borderColor || globalBorder;
+        Object.entries(config.screens || {}).forEach(([id, data]) => {
+          const palette = [globalText, globalBg, globalBorder];
+          const screen = {id, color:palette[Math.floor(Math.random() * palette.length)], items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
+          const items = Array.isArray(data) ? data : (data.items || []);
+          if(!Array.isArray(data) && data.style){
+            if(data.style.textColor) screen.textColor = data.style.textColor;
+            if(data.style.backgroundColor) screen.bgColor = data.style.backgroundColor;
+            if(data.style.borderColor) screen.borderColor = data.style.borderColor;
           }
+          items.forEach(item=>{
+            if (typeof item === 'string') {
+              screen.items.push({text:item, screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+            } else if (item.screen) {
+              screen.items.push({text:item.text || '', screen:item.screen, command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+            } else if (item.command) {
+              screen.items.push({text:item.text || '', screen:'', command:item.command, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+            }
+          });
+          if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+          this.screens.push(screen);
         });
-        if(!screen.items.length) screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
-        this.screens.push(screen);
-      });
-      document.getElementById('user-speed').value = config.userSpeed ?? 50;
-      document.getElementById('comp-speed').value = config.compSpeed ?? 50;
-      document.getElementById('locked').checked = config.locked || false;
-      const diffs = config.hacking?.difficulties || defaultDifficulties;
+        document.getElementById('user-speed').value = config.userSpeed ?? 50;
+        document.getElementById('comp-speed').value = config.compSpeed ?? 50;
+        document.getElementById('locked').checked = config.locked || false;
+        const diffs = config.hacking?.difficulties || defaultDifficulties;
         this.difficulties = [];
         diffs.forEach(d=>this.addDifficulty(d));
         this.difficultyChoice = config.hacking?.difficulty ?? 'Random';
@@ -420,7 +391,7 @@ const app = Vue.createApp({
         passwordEl.value = config.hacking?.password || '';
         dudWordsEl.value = (config.hacking?.dudWords || []).join(', ');
         this.$nextTick(this.initSortables);
-        },
+      },
       handleSubmit() {
       if (!validateDudWords()) {
         dudWordsEl.reportValidity();
@@ -432,12 +403,12 @@ const app = Vue.createApp({
       const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
       const rawBoot = document.getElementById('boot-lines').value.split('\n');
       const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
-      const textColor = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
-      const backgroundColor = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
-      const borderColor = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
-      const hackTextColor = document.getElementById('hack-text-color').value || textColor;
-      const hackBgColor = document.getElementById('hack-bg-color').value || backgroundColor;
-      const hackBorderColor = document.getElementById('hack-border-color').value || borderColor;
+      const textColor = this.textColor || DEFAULT_TEXT_COLOR;
+      const backgroundColor = this.bgColor || DEFAULT_BG_COLOR;
+      const borderColor = this.borderColor || DEFAULT_BORDER_COLOR;
+      const hackTextColor = this.hackTextColor || textColor;
+      const hackBgColor = this.hackBgColor || backgroundColor;
+      const hackBorderColor = this.hackBorderColor || borderColor;
       const screensObj = {};
       this.screens.forEach(scr=>{
         const id = scr.id.trim();

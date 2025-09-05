@@ -133,6 +133,7 @@
               <button type="button" @click="screen.open = !screen.open" class="mr-2 action-btn" :aria-expanded="screen.open">{{ screen.open ? '▼' : '►' }}</button>
               <input v-model="screen.id" class="screen-id flex-1 border rounded p-1 mr-2" placeholder="Screen ID">
               <input type="color" v-model="screen.color" class="screen-color w-8 h-8 p-0 border-2 rounded mr-2 shadow cursor-pointer" title="Color is for organization only and does not affect terminal appearance">
+              <input type="text" v-model="screen.color" class="w-20 p-1 border rounded mr-2" title="Color is for organization only and does not affect terminal appearance">
               <button type="button" @click="screen.showAppearance = !screen.showAppearance" class="mr-2 action-btn" title="Toggle appearance options">Appearance</button>
               <button type="button" @click="moveScreenUp(sIdx)" :disabled="sIdx===0" class="mr-1 action-btn" title="Move up">▲</button>
               <button type="button" @click="moveScreenDown(sIdx)" :disabled="sIdx===screens.length-1" class="mr-1 action-btn" title="Move down">▼</button>
@@ -140,9 +141,18 @@
               <button type="button" @click="removeScreen(sIdx)" class="action-btn" title="Remove screen"><img src="trash.svg" alt="Remove" class="w-4 h-4"></button>
             </div>
             <div v-show="screen.showAppearance" class="pl-6 mb-2 space-y-1">
-              <label class="block">Text: <input type="color" v-model="screen.textColor" class="ml-2"></label>
-              <label class="block">Background: <input type="color" v-model="screen.bgColor" class="ml-2"></label>
-              <label class="block">Border: <input type="color" v-model="screen.borderColor" class="ml-2"></label>
+              <label class="block">Text:
+                <input type="color" v-model="screen.textColor" class="ml-2">
+                <input type="text" v-model="screen.textColor" class="ml-2 border rounded p-1 w-24">
+              </label>
+              <label class="block">Background:
+                <input type="color" v-model="screen.bgColor" class="ml-2">
+                <input type="text" v-model="screen.bgColor" class="ml-2 border rounded p-1 w-24">
+              </label>
+              <label class="block">Border:
+                <input type="color" v-model="screen.borderColor" class="ml-2">
+                <input type="text" v-model="screen.borderColor" class="ml-2 border rounded p-1 w-24">
+              </label>
             </div>
             <div v-show="screen.open" class="pl-6 items-container" :data-sidx="sIdx" :id="'items-'+screen.uid">
               <template v-for="(item, iIdx) in screen.items">
@@ -200,10 +210,19 @@
   </div>
   <div v-show="activeTab==='prefs'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow" title="Customize terminal appearance.">
-      <legend class="flex items-center gap-1">Style</legend>
-      <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Text Color: <input type="color" id="text-color" value="#7aff7a" class="ml-2"></label>
-      <label class="block" title="Background color of the terminal window, e.g., #041204.">Background Color: <input type="color" id="bg-color" value="#041204" class="ml-2"></label>
-      <label class="block" title="Color of the terminal window outline, e.g., #008800.">Outline Color: <input type="color" id="border-color" value="#008800" class="ml-2"></label>
+      <legend class="flex items-center gap-1">Default Appearance</legend>
+      <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Default Text Color:
+        <input type="color" id="text-color" value="#7aff7a" class="ml-2">
+        <input type="text" id="text-color-hex" value="#7aff7a" class="ml-2 border rounded p-1 w-24">
+      </label>
+      <label class="block" title="Color of the terminal window outline, e.g., #008800.">Default Outline Color:
+        <input type="color" id="border-color" value="#008800" class="ml-2">
+        <input type="text" id="border-color-hex" value="#008800" class="ml-2 border rounded p-1 w-24">
+      </label>
+      <label class="block" title="Background color of the terminal window, e.g., #041204.">Default Background Color:
+        <input type="color" id="bg-color" value="#041204" class="ml-2">
+        <input type="text" id="bg-color-hex" value="#041204" class="ml-2 border rounded p-1 w-24">
+      </label>
     </fieldset>
     <fieldset class="p-4 border rounded-lg shadow" title="Default typing speeds. 0 skips the animation.">
       <legend class="flex items-center gap-1">Typing Speeds</legend>
@@ -225,6 +244,27 @@ const defaultDifficulties = [
 const DEFAULT_TEXT_COLOR = '#7aff7a';
 const DEFAULT_BG_COLOR = '#041204';
 const DEFAULT_BORDER_COLOR = '#008800';
+
+function linkColorHex(colorId, hexId){
+  const colorInput=document.getElementById(colorId);
+  const hexInput=document.getElementById(hexId);
+  const syncToHex=()=>{hexInput.value=colorInput.value;};
+  const syncToColor=()=>{
+    let val=hexInput.value.trim();
+    if(!val.startsWith('#')) val='#'+val;
+    if(/^#[0-9a-fA-F]{6}$/.test(val)){
+      colorInput.value=val;
+    }
+  };
+  colorInput.addEventListener('input', syncToHex);
+  hexInput.addEventListener('input', syncToColor);
+  syncToHex();
+  return syncToHex;
+}
+
+const syncTextColor = linkColorHex('text-color', 'text-color-hex');
+const syncBorderColor = linkColorHex('border-color', 'border-color-hex');
+const syncBgColor = linkColorHex('bg-color', 'bg-color-hex');
 
 const app = Vue.createApp({
   data() {
@@ -250,11 +290,11 @@ const app = Vue.createApp({
   },
   methods: {
       addScreen(id='') {
-        const palette = ['#f87171', '#fb923c', '#fbbf24', '#34d399', '#60a5fa', '#a78bfa'];
-        const color = palette[Math.floor(Math.random() * palette.length)];
         const text = document.getElementById('text-color').value || DEFAULT_TEXT_COLOR;
         const bg = document.getElementById('bg-color').value || DEFAULT_BG_COLOR;
         const border = document.getElementById('border-color').value || DEFAULT_BORDER_COLOR;
+        const palette = [text, bg, border];
+        const color = palette[Math.floor(Math.random() * palette.length)];
         this.screens.push({
           id,
           color,
@@ -393,8 +433,12 @@ const app = Vue.createApp({
       document.getElementById('text-color').value = globalText;
       document.getElementById('bg-color').value = globalBg;
       document.getElementById('border-color').value = globalBorder;
+      syncTextColor();
+      syncBgColor();
+      syncBorderColor();
       Object.entries(config.screens || {}).forEach(([id, data]) => {
-        const screen = {id, color:'#cccccc', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
+        const palette = [globalText, globalBg, globalBorder];
+        const screen = {id, color:palette[Math.floor(Math.random() * palette.length)], items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder, showAppearance:false};
         const items = Array.isArray(data) ? data : (data.items || []);
         if(!Array.isArray(data) && data.style){
           if(data.style.textColor) screen.textColor = data.style.textColor;

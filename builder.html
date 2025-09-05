@@ -98,13 +98,13 @@
 <h1 class="text-2xl font-bold mb-4">Config Builder</h1>
 <div class="mb-4 flex gap-2 items-center">
   <button type="button" id="load-config" class="top-line-btn" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
-  <button type="submit" form="builder-form" class="top-line-btn" title="Generate the configuration file, update the preview, and enable downloading config.json">Generate Config</button>
+  <button type="submit" form="builder-form" class="top-line-btn" title="Generate the configuration file and enable downloading config.json">Generate Config</button>
   <a id="download-link" class="hidden text-blue-600 underline" download="config.json">Download config.json</a>
+  <span id="generate-feedback" class="text-green-600 hidden"></span>
   <button type="button" id="dark-toggle" class="top-line-btn" title="Toggle dark mode">Toggle Dark Mode</button>
 </div>
 <input type="file" id="config-file" accept="application/json" class="hidden">
-<div id="builder-layout" class="flex flex-col lg:flex-row items-start gap-4">
-<form id="builder-form" class="flex-1">
+<form id="builder-form">
     <div class="mb-4 flex gap-2 border-b border-gray-300 dark:border-gray-700">
       <button type="button" @click="activeTab='content'" :class="['px-2 py-1 border rounded-t', activeTab==='content' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Terminal Content</button>
       <button type="button" @click="activeTab='hacking'" :class="['px-2 py-1 border rounded-t', activeTab==='hacking' ? 'bg-white border-gray-600 border-b-transparent -mb-px dark:bg-gray-800 dark:border-gray-400 dark:border-b-transparent' : 'bg-gray-100 border-gray-300 text-gray-500 dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400']">Hacking</button>
@@ -231,8 +231,6 @@
     </fieldset>
   </div>
 </form>
-<iframe id="preview" class="flex-1 h-[600px] border border-gray-300 w-full"></iframe>
-</div>
 <script>
 const defaultDifficulties = [
   { name: "Very Easy", wordCount: [8,10], length: [4,5] },
@@ -282,8 +280,7 @@ const app = Vue.createApp({
         screens: [],
         difficulties: [],
         difficultyChoice: 'Average',
-        showDifficulties: false,
-        previewLoaded: false
+        showDifficulties: false
       };
     },
   computed: {
@@ -360,7 +357,7 @@ const app = Vue.createApp({
         this.difficulties.splice(idx,1);
         this.$nextTick(this.initSortables);
       },
-    loadConfig(config) {
+        loadConfig(config) {
       document.getElementById('titles').value = (config.titleLines || []).join('\n');
       document.getElementById('headers').value = (config.headerLines || []).join('\n');
       document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
@@ -408,20 +405,8 @@ const app = Vue.createApp({
         passwordEl.value = config.hacking?.password || '';
         dudWordsEl.value = (config.hacking?.dudWords || []).join(', ');
         this.$nextTick(this.initSortables);
-      },
-    updatePreview(config){
-      const previewFrame = document.getElementById('preview');
-      if (!this.previewLoaded) {
-        previewFrame.src = 'index.html';
-        previewFrame.onload = () => {
-          this.previewLoaded = true;
-          previewFrame.contentWindow.postMessage(config, '*');
-        };
-      } else {
-        previewFrame.contentWindow.postMessage(config, '*');
-      }
-    },
-    handleSubmit() {
+        },
+      handleSubmit() {
       if (!validateDudWords()) {
         dudWordsEl.reportValidity();
         return;
@@ -487,7 +472,9 @@ const app = Vue.createApp({
       const dl = document.getElementById('download-link');
       dl.href = url;
       dl.classList.remove('hidden');
-      this.updatePreview(config);
+      const feedback = document.getElementById('generate-feedback');
+      feedback.textContent = `Generated ${new Date().toLocaleTimeString()}`;
+      feedback.classList.remove('hidden');
     }
   },
   mounted() {
@@ -508,11 +495,10 @@ document.getElementById('config-file').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
-    const config = JSON.parse(reader.result);
-    vm.loadConfig(config);
-    vm.updatePreview(config);
-  };
+    reader.onload = () => {
+      const config = JSON.parse(reader.result);
+      vm.loadConfig(config);
+    };
   reader.readAsText(file);
 });
 document.getElementById('dark-toggle').addEventListener('click', ()=> document.documentElement.classList.toggle('dark'));

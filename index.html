@@ -121,6 +121,12 @@
   #pref-menu label:last-child{
     margin-bottom:0;
   }
+  #pref-menu select{
+    margin-left:calc(5px * var(--scale));
+    background:var(--terminal-bg);
+    color:var(--text-color);
+    border:calc(1px * var(--scale)) solid var(--border-color);
+  }
   #pref-menu input[type=range]{
     margin-left:calc(5px * var(--scale));
     -webkit-appearance:none;
@@ -309,8 +315,22 @@
         <label>Scroll <input type="range" min="0" max="100" value="20" id="scroll-volume"></label>
         <label>Focus <input type="range" min="0" max="100" value="20" id="focus-volume"></label>
         <label>Select <input type="range" min="0" max="100" value="50" id="select-volume"></label>
-        <label>User Text Speed <input type="range" min="0" max="100" value="50" id="user-speed-slider"></label>
-        <label>Terminal Text Speed <input type="range" min="0" max="100" value="50" id="comp-speed-slider"></label>
+        <label>User Text Speed
+          <select id="user-speed-select">
+            <option value="100">Skip</option>
+            <option value="35">Slow</option>
+            <option value="50" selected>Normal</option>
+            <option value="65">Fast</option>
+          </select>
+        </label>
+        <label>Terminal Text Speed
+          <select id="comp-speed-select">
+            <option value="100">Skip</option>
+            <option value="35">Slow</option>
+            <option value="50" selected>Normal</option>
+            <option value="65">Fast</option>
+          </select>
+        </label>
       </div>
     </div>
     <div id="config-container">
@@ -422,12 +442,12 @@ async function loadConfig(cycle=currentCycle){
   if(savedUserSpeed===null && cfg.userSpeed!==undefined){
     userBaseSpeed=cfg.userSpeed;
     userSpeed=userBaseSpeed;
-    if(userSpeedSlider) userSpeedSlider.value=userBaseSpeed;
+    if(userSpeedSelect) userSpeedSelect.value=String([35,50,65,100].includes(userBaseSpeed)?userBaseSpeed:50);
   }
   if(savedCompSpeed===null && cfg.compSpeed!==undefined){
     compBaseSpeed=cfg.compSpeed;
     compSpeed=compBaseSpeed;
-    if(compSpeedSlider) compSpeedSlider.value=compBaseSpeed;
+    if(compSpeedSelect) compSpeedSelect.value=String([35,50,65,100].includes(compBaseSpeed)?compBaseSpeed:50);
   }
   if(cfg.style){
     const {textColor, backgroundColor, borderColor}=cfg.style;
@@ -537,8 +557,8 @@ const humSlider=document.getElementById('hum-volume');
 const scrollSlider=document.getElementById('scroll-volume');
 const focusSlider=document.getElementById('focus-volume');
 const selectSlider=document.getElementById('select-volume');
-const userSpeedSlider=document.getElementById('user-speed-slider');
-const compSpeedSlider=document.getElementById('comp-speed-slider');
+const userSpeedSelect=document.getElementById('user-speed-select');
+const compSpeedSelect=document.getElementById('comp-speed-select');
 
 prefButton.addEventListener('click',()=>{
   prefMenu.style.display=prefMenu.style.display==='flex'?'none':'flex';
@@ -557,17 +577,17 @@ humSlider.addEventListener('input',()=>{
 scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/100;});
 focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/100;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/100;});
-userSpeedSlider.value=userSpeed;
-compSpeedSlider.value=compSpeed;
-userSpeedSlider.addEventListener('input',()=>{
-  const val=Number(userSpeedSlider.value);
+userSpeedSelect.value=String([35,50,65,100].includes(userBaseSpeed)?userBaseSpeed:50);
+compSpeedSelect.value=String([35,50,65,100].includes(compBaseSpeed)?compBaseSpeed:50);
+userSpeedSelect.addEventListener('change',()=>{
+  const val=Number(userSpeedSelect.value);
   userBaseSpeed=val;
   userSpeed=userBaseSpeed;
   localStorage.setItem('userSpeed',userBaseSpeed);
   savedUserSpeed=userBaseSpeed;
 });
-compSpeedSlider.addEventListener('input',()=>{
-  const val=Number(compSpeedSlider.value);
+compSpeedSelect.addEventListener('change',()=>{
+  const val=Number(compSpeedSelect.value);
   compBaseSpeed=val;
   compSpeed=compBaseSpeed;
   localStorage.setItem('compSpeed',compBaseSpeed);

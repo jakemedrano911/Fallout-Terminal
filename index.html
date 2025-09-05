@@ -737,49 +737,54 @@ function detectBrackets(block){
     }
     const ch=block.chars[i];
     if(openToClose[ch]){
-      stack.push({ch,index:i});
+      stack.push({ch,index:i,depth:stack.length});
     }else if(closeToOpen[ch]){
       for(let s=stack.length-1;s>=0;s--){
-        if(stack[s].ch===closeToOpen[ch]){
-          pairs.push({start:stack[s].index,end:i});
+        const open=stack[s];
+        if(open.ch===closeToOpen[ch]){
+          pairs.push({start:open.index,end:i,depth:open.depth});
           stack.splice(s,1);
           break;
         }
       }
     }
   }
-  block.brackets=pairs;
+  block.brackets=pairs.sort((a,b)=>a.start-b.start||a.depth-b.depth);
 }
 
 function blockHtml(block){
-  const parts=[];
-  const regions=[];
+  const wrapChar=ch=>`<span class="char">${escapeHtml(ch)}</span>`;
+  const wordMap=new Map();
   for(const w of block.words){
     const seg=w.segment||w.word;
-    regions.push({start:w.start,end:w.start+seg.length,type:'word',word:w.word,text:seg});
+    wordMap.set(w.start,{end:w.start+seg.length,word:w.word,text:seg});
   }
+  const opens=new Map(),closes=new Map();
   for(const b of block.brackets||[]){
-    regions.push({start:b.start,end:b.end+1,type:'bracket'});
+    if(!opens.has(b.start)) opens.set(b.start,[]);
+    if(!closes.has(b.end)) closes.set(b.end,[]);
+    opens.get(b.start).push(b.depth);
+    closes.get(b.end).push(b.depth);
   }
-  regions.sort((a,b)=>a.start-b.start);
-  let idx=0;
-  const wrapChar=ch=>`<span class="char">${escapeHtml(ch)}</span>`;
-  for(const r of regions){
-    while(idx<r.start){
-      parts.push(wrapChar(block.chars[idx++]));
+  for(const arr of opens.values()) arr.sort((a,b)=>a-b);
+  for(const arr of closes.values()) arr.sort((a,b)=>b-a);
+  let html='';
+  for(let i=0;i<block.chars.length;i++){
+    if(opens.has(i)){
+      for(const _ of opens.get(i)) html+='<span class="bracket">';
     }
-    if(r.type==='word'){
-      parts.push(`<span class="word" data-word="${r.word}">${r.text}</span>`);
-    }else if(r.type==='bracket'){
-      const seg=block.chars.slice(r.start,r.end).map(wrapChar).join('');
-      parts.push(`<span class="bracket">${seg}</span>`);
+    if(wordMap.has(i)){
+      const w=wordMap.get(i);
+      html+=`<span class="word" data-word="${w.word}">${w.text}</span>`;
+      i=w.end-1;
+    }else{
+      html+=wrapChar(block.chars[i]);
     }
-    idx=r.end;
+    if(closes.has(i)){
+      for(const _ of closes.get(i)) html+='</span>';
+    }
   }
-  while(idx<block.chars.length){
-    parts.push(wrapChar(block.chars[idx++]));
-  }
-  return parts.join('');
+  return html;
 }
 
 async function renderHackScreen(){

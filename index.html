@@ -318,17 +318,17 @@
         <label>User Text Speed
           <select id="user-speed-select">
             <option value="100">Skip</option>
-            <option value="35">Slow</option>
-            <option value="50" selected>Normal</option>
-            <option value="65">Fast</option>
+            <option value="53">Slow</option>
+            <option value="68" selected>Normal</option>
+            <option value="83">Fast</option>
           </select>
         </label>
         <label>Terminal Text Speed
           <select id="comp-speed-select">
             <option value="100">Skip</option>
-            <option value="35">Slow</option>
-            <option value="50" selected>Normal</option>
-            <option value="65">Fast</option>
+            <option value="80">Slow</option>
+            <option value="90" selected>Normal</option>
+            <option value="95">Fast</option>
           </select>
         </label>
       </div>
@@ -442,12 +442,12 @@ async function loadConfig(cycle=currentCycle){
   if(savedUserSpeed===null && cfg.userSpeed!==undefined){
     userBaseSpeed=cfg.userSpeed;
     userSpeed=userBaseSpeed;
-    if(userSpeedSelect) userSpeedSelect.value=String([35,50,65,100].includes(userBaseSpeed)?userBaseSpeed:50);
+    if(userSpeedSelect) userSpeedSelect.value=String([53,68,83,100].includes(userBaseSpeed)?userBaseSpeed:68);
   }
   if(savedCompSpeed===null && cfg.compSpeed!==undefined){
     compBaseSpeed=cfg.compSpeed;
     compSpeed=compBaseSpeed;
-    if(compSpeedSelect) compSpeedSelect.value=String([35,50,65,100].includes(compBaseSpeed)?compBaseSpeed:50);
+    if(compSpeedSelect) compSpeedSelect.value=String([80,90,95,100].includes(compBaseSpeed)?compBaseSpeed:90);
   }
   if(cfg.style){
     const {textColor, backgroundColor, borderColor}=cfg.style;
@@ -516,8 +516,8 @@ let typing=false;
 let baseDelay=10;
 let savedUserSpeed=localStorage.getItem('userSpeed');
 let savedCompSpeed=localStorage.getItem('compSpeed');
-let userBaseSpeed=savedUserSpeed!==null?Number(savedUserSpeed):50;
-let compBaseSpeed=savedCompSpeed!==null?Number(savedCompSpeed):50;
+let userBaseSpeed=savedUserSpeed!==null?Number(savedUserSpeed):68;
+let compBaseSpeed=savedCompSpeed!==null?Number(savedCompSpeed):90;
 let userSpeed=userBaseSpeed;
 let compSpeed=compBaseSpeed;
 let inputText="";
@@ -577,8 +577,8 @@ humSlider.addEventListener('input',()=>{
 scrollSlider.addEventListener('input',()=>{scrollVolume=scrollSlider.value/100;});
 focusSlider.addEventListener('input',()=>{focusVolume=focusSlider.value/100;});
 selectSlider.addEventListener('input',()=>{selectVolume=selectSlider.value/100;});
-userSpeedSelect.value=String([35,50,65,100].includes(userBaseSpeed)?userBaseSpeed:50);
-compSpeedSelect.value=String([35,50,65,100].includes(compBaseSpeed)?compBaseSpeed:50);
+userSpeedSelect.value=String([53,68,83,100].includes(userBaseSpeed)?userBaseSpeed:68);
+compSpeedSelect.value=String([80,90,95,100].includes(compBaseSpeed)?compBaseSpeed:90);
 userSpeedSelect.addEventListener('change',()=>{
   const val=Number(userSpeedSelect.value);
   userBaseSpeed=val;

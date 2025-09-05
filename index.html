@@ -31,7 +31,7 @@
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:calc(24px * var(--scale) * 0.9);
     letter-spacing:calc(.75px * var(--scale) * 0.9);
-    line-height:1.2;
+    line-height:1;
     display:flex;
     justify-content:center;
     align-items:flex-start;
@@ -59,7 +59,7 @@
     height:100%;
     border:calc(4px * var(--scale)) solid var(--border-color);
     box-sizing:border-box;
-    padding:calc(6px * var(--scale));
+    padding:calc(6px * var(--scale)) calc(6px * var(--scale)) calc(3px * var(--scale));
     padding-left:calc(6px * var(--scale) + 4ch);
     overflow:hidden;
     display:none;
@@ -222,7 +222,7 @@
   }
   #input{
     white-space:pre;
-    min-height:1.2em;
+    min-height:1em;
     outline:none;
     background:transparent;
     border:none;
@@ -230,6 +230,8 @@
     font:inherit;
     letter-spacing:inherit;
     line-height:inherit;
+    margin-top:0;
+    padding:0;
     caret-color:transparent;
     flex-shrink:0;
     align-self:flex-start;

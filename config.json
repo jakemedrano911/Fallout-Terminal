@@ -119,8 +119,12 @@
       "",
       "Use the Preferences button to adjust audio or typing speeds.",
       "",
-      { "text": "> RETURN", "screen": "menu" }
+    { "text": "> RETURN", "screen": "menu" }
     ]
+  },
+  "commands": {
+    "diagnostics": { "command": "Running system diagnostics...", "help": true },
+    "exit": { "screen": "menu", "help": true, "hacking": true }
   },
   "style": {
       "textColor": "#7aff7a",

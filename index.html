@@ -391,6 +391,7 @@ let headerLines=[];
 let bootLines=defaultBootLines;
 let screens={};
 let hacking={};
+let commands={};
 let startLocked=true;
 let baseStyle={textColor:'#7aff7a',backgroundColor:'#041204',borderColor:'#008800'};
 
@@ -446,6 +447,22 @@ async function loadConfig(cycle=currentCycle){
   bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
   screens=cfg.screens || {};
   hacking = cfg.hacking || {};
+  commands={};
+  if(cfg.commands){
+    for(const [name,info] of Object.entries(cfg.commands)){
+      const key=name.toLowerCase();
+      commands[key]=info;
+      if(info.help){
+        if(!screens.help) screens.help=[];
+        const item={text:`> ${name}`};
+        if(info.screen) item.screen=info.screen;
+        if(info.command) item.command=info.command;
+        const helpItems=screens.help;
+        const retIdx=helpItems.findIndex(it=>typeof it==='object' && it.screen==='menu');
+        if(retIdx>=0) helpItems.splice(retIdx,0,item); else helpItems.push(item);
+      }
+    }
+  }
   if(savedUserSpeed===null && cfg.userSpeed!==undefined){
     userBaseSpeed=cfg.userSpeed;
     userSpeed=userBaseSpeed;
@@ -1099,6 +1116,17 @@ function clearResponses(){
   document.querySelectorAll('.response').forEach(el=>el.remove());
 }
 
+function executeCustomCommand(info){
+  if(info.screen){
+    showScreen(info.screen);
+    if(info.command){
+      requestAnimationFrame(()=>displayMessage(info.command));
+    }
+  }else if(info.command){
+    displayMessage(info.command);
+  }
+}
+
 function handleCommand(cmd){
   playEnterCharSound();
   clearResponses();
@@ -1116,16 +1144,33 @@ function handleCommand(cmd){
     }else{
       displayMessage('command unknown');
     }
-  }else if(hackingActive){
-    processGuess(cmd.trim().toUpperCase().slice(0,20),false);
-  }else if(command==='back'){
-    goBack();
-  }else if(command==='?'||command==='help'){
-    showScreen('help');
-  }else if(screens[command]){
-    showScreen(command);
   }else{
-    displayMessage('command unknown');
+    const custom=commands[command];
+    if(hackingActive){
+      if(custom && custom.hacking){
+        executeCustomCommand(custom);
+      }else{
+        processGuess(cmd.trim().toUpperCase().slice(0,20),false);
+      }
+    }else if(custom){
+      executeCustomCommand(custom);
+    }else if(command==='back'){
+      goBack();
+    }else if(command==='?'||command==='help'){
+      showScreen('help');
+    }else{
+      const match=currentOptions.find(o=>{
+        const text=o.textContent.trim().toLowerCase().replace(/^> ?/, '');
+        return text===command;
+      });
+      if(match){
+        match.click();
+      }else if(screens[command]){
+        showScreen(command);
+      }else{
+        displayMessage('command unknown');
+      }
+    }
   }
   input.textContent='';
   inputText='';
@@ -1574,10 +1619,13 @@ async function showScreen(name){
   let lines=[];
   let style=null;
   if(Array.isArray(data)){
-    lines=data;
+    lines=data.slice();
   }else if(data){
-    lines=data.items||[];
+    lines=(data.items||[]).slice();
     style=data.style||null;
+  }
+  if(name==='help'){
+    // no additional entries
   }
   applyScreenStyle(style);
   let i=0;

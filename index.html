@@ -619,10 +619,10 @@ compSpeedSelect.addEventListener('change',()=>{
 });
 
 input.addEventListener('input',updateInput);
-input.addEventListener('keydown',e=>{
+input.addEventListener('keydown',async e=>{
   if(e.key==='Enter'){
     e.preventDefault();
-    handleCommand(inputText);
+    await handleCommand(inputText);
   }
 });
 
@@ -1116,18 +1116,19 @@ function clearResponses(){
   document.querySelectorAll('.response').forEach(el=>el.remove());
 }
 
-function executeCustomCommand(info){
+async function executeCustomCommand(info){
   if(info.screen){
-    showScreen(info.screen);
+    await showScreen(info.screen);
     if(info.command){
-      requestAnimationFrame(()=>displayMessage(info.command));
+      await new Promise(requestAnimationFrame);
+      displayMessage(info.command);
     }
   }else if(info.command){
     displayMessage(info.command);
   }
 }
 
-function handleCommand(cmd){
+async function handleCommand(cmd){
   playEnterCharSound();
   clearResponses();
   if(terminalLocked){
@@ -1148,12 +1149,12 @@ function handleCommand(cmd){
     const custom=commands[command];
     if(hackingActive){
       if(custom && custom.hacking){
-        executeCustomCommand(custom);
+        await executeCustomCommand(custom);
       }else{
         processGuess(cmd.trim().toUpperCase().slice(0,20),false);
       }
     }else if(custom){
-      executeCustomCommand(custom);
+      await executeCustomCommand(custom);
     }else if(command==='back'){
       goBack();
     }else if(command==='?'||command==='help'){

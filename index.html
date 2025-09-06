@@ -31,13 +31,16 @@
     font-family:"FSEX300","IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Courier New",monospace;
     font-size:calc(24px * var(--scale) * 0.9);
     letter-spacing:calc(.75px * var(--scale) * 0.9);
-    line-height:1.2;
+    line-height:1;
     display:flex;
     justify-content:center;
     align-items:flex-start;
     min-height:100vh;
     box-sizing:border-box;
     padding:calc(env(safe-area-inset-top) + 8px) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  br{
+    line-height:0.7;
   }
   #terminal-wrapper{
     position:relative;
@@ -59,7 +62,7 @@
     height:100%;
     border:calc(4px * var(--scale)) solid var(--border-color);
     box-sizing:border-box;
-    padding:calc(6px * var(--scale));
+    padding:calc(6px * var(--scale)) calc(6px * var(--scale)) calc(3px * var(--scale));
     padding-left:calc(6px * var(--scale) + 4ch);
     overflow:hidden;
     display:none;
@@ -222,7 +225,7 @@
   }
   #input{
     white-space:pre;
-    min-height:1.2em;
+    min-height:1em;
     outline:none;
     background:transparent;
     border:none;
@@ -230,6 +233,8 @@
     font:inherit;
     letter-spacing:inherit;
     line-height:inherit;
+    margin-top:0;
+    padding:0;
     caret-color:transparent;
     flex-shrink:0;
     align-self:flex-start;
@@ -278,7 +283,7 @@
   #hacking .bracket.highlight{background:var(--hacking-border-color);color:var(--hacking-bg);}
   #hack-messages{white-space:pre;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;height:100%;flex:1;line-height:1;align-self:flex-start;padding:0 calc(8px * var(--scale)) calc(24px * var(--scale)) 0;overflow:hidden;}
   #hack-messages #input{margin-top:0;align-self:flex-start;}
-  #hack-prompt{margin-top:calc(4px * var(--scale));}
+  #hack-prompt{margin-top:0;margin-bottom:calc(20px * var(--scale));}
   .hack-message{text-align:left;}
   .hack-row{line-height:1;}
   .hack-addr{display:inline-block;width:6ch;}
@@ -287,8 +292,10 @@
   #hacking, .hack-row { letter-spacing: inherit; }
   #content.hack-content{display:flex;flex-direction:column;justify-content:flex-start;padding:calc(4px * var(--scale));padding-bottom:calc(22px * var(--scale));}
   #header.hack-header{padding-top:calc(16px * var(--scale));padding-bottom:calc(4px * var(--scale));}
-  #header.hack-header #hack-title{margin-top:calc(4px * var(--scale));margin-bottom:calc(8px * var(--scale));}
-  #header.hack-header #attempts{margin-bottom:calc(4px * var(--scale));}
+  #header.hack-header #hack-title{margin-top:0;margin-bottom:calc(2px * var(--scale));}
+  #header.hack-header #attempts{margin:0 0 calc(4px + 2px * var(--scale));}
+  #header.hack-header #attempts .attempt-block{display:inline-block;margin-right:calc(2px * var(--scale));}
+  #header.hack-header #attempts .attempt-block:last-child{margin-right:0;}
     #header.hack-header #hack-warning{margin-bottom:calc(4px * var(--scale));}
     #terminal-screen{height:100%;display:flex;flex-direction:column;transition:transform 1s linear;}
     #terminal.locking #terminal-screen{transform:translateY(-100%);}
@@ -370,20 +377,42 @@ window.addEventListener('resize',()=>{
   }
 });
 updateScale(prevWidth,prevHeight);
-const defaultBootLines=[
-  'Initializing Robco Industries (TM) MF Boot Agent v2.3.0',
-  'RETROS BIOS',
-  'RBIOS-4.02.08.00 52EE5.E7.E8',
-  'Copyright 2201-2203 Robco Ind.',
-  'Uppermem: 64 KB',
-  'Root (5A8)',
-  'Maintenance Mode'
+const defaultBootSequence=[
+  {type:'terminal',text:'Welcome to RobCo Industries (TM) Termlink'},
+  {type:'terminal',text:''},
+  {type:'user',text:'Logon Admin'},
+  {type:'terminal',text:''},
+  {type:'terminal',text:'Enter Password'},
+  {type:'terminal',text:''},
+  {type:'user',text:'********'}
+];
+const defaultLockedBootSequence=[
+  {type:'terminal',text:'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK'},
+  {type:'terminal',text:''},
+  {type:'user',text:'SET TERMINAL/INQUIRE'},
+  {type:'terminal',text:''},
+  {type:'terminal',text:'RIT-V300'},
+  {type:'terminal',text:''},
+  {type:'user',text:'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F'},
+  {type:'user',text:'SET HALT RESTART/MAINT'},
+  {type:'terminal',text:''},
+  {type:'terminal',text:'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'},
+  {type:'terminal',text:'RETROS BIOS'},
+  {type:'terminal',text:'RBIOS-4.02.08.00 52EE5.E7.E8'},
+  {type:'terminal',text:'Copyright 2201-2203 Robco Ind.'},
+  {type:'terminal',text:'Uppermem: 64 KB'},
+  {type:'terminal',text:'Root (5A8)'},
+  {type:'terminal',text:'Maintenance Mode'},
+  {type:'terminal',text:''},
+  {type:'user',text:'RUN DEBUG/ACCOUNTS.F'}
 ];
 let titleLines=[];
 let headerLines=[];
-let bootLines=defaultBootLines;
+let bootSequence=defaultBootSequence;
+let lockedBootSequence=defaultLockedBootSequence;
 let screens={};
 let hacking={};
+let commands={};
 let startLocked=true;
 let baseStyle={textColor:'#7aff7a',backgroundColor:'#041204',borderColor:'#008800'};
 
@@ -436,9 +465,26 @@ async function loadConfig(cycle=currentCycle){
   if(cycle!==currentCycle) return;
   titleLines=cfg.titleLines;
   headerLines=cfg.headerLines;
-  bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
+  bootSequence = Array.isArray(cfg.bootSequence) && cfg.bootSequence.length ? cfg.bootSequence : defaultBootSequence;
+  lockedBootSequence = Array.isArray(cfg.lockedBootSequence) && cfg.lockedBootSequence.length ? cfg.lockedBootSequence : defaultLockedBootSequence;
   screens=cfg.screens || {};
   hacking = cfg.hacking || {};
+  commands={};
+  if(cfg.commands){
+    for(const [name,info] of Object.entries(cfg.commands)){
+      const key=name.toLowerCase();
+      commands[key]=info;
+      if(info.help){
+        if(!screens.help) screens.help=[];
+        const item={text:`> ${name}`};
+        if(info.screen) item.screen=info.screen;
+        if(info.command) item.command=info.command;
+        const helpItems=screens.help;
+        const retIdx=helpItems.findIndex(it=>typeof it==='object' && it.screen==='menu');
+        if(retIdx>=0) helpItems.splice(retIdx,0,item); else helpItems.push(item);
+      }
+    }
+  }
   if(savedUserSpeed===null && cfg.userSpeed!==undefined){
     userBaseSpeed=cfg.userSpeed;
     userSpeed=userBaseSpeed;
@@ -541,6 +587,19 @@ function restoreInput(){
   }
 }
 
+function centerHeader(){
+  const termStyle=getComputedStyle(terminal);
+  const padLeft=parseFloat(termStyle.paddingLeft);
+  const padRight=parseFloat(termStyle.paddingRight);
+  header.style.marginLeft=`${(padLeft-padRight)/-2}px`;
+  header.style.textAlign='center';
+}
+
+function leftAlignHeader(){
+  header.style.marginLeft='';
+  header.style.textAlign='left';
+}
+
 function applyScreenStyle(style){
   const t=style&&style.textColor?style.textColor:baseStyle.textColor;
   const b=style&&style.backgroundColor?style.backgroundColor:baseStyle.backgroundColor;
@@ -595,10 +654,10 @@ compSpeedSelect.addEventListener('change',()=>{
 });
 
 input.addEventListener('input',updateInput);
-input.addEventListener('keydown',e=>{
+input.addEventListener('keydown',async e=>{
   if(e.key==='Enter'){
     e.preventDefault();
-    handleCommand(inputText);
+    await handleCommand(inputText);
   }
 });
 
@@ -792,10 +851,9 @@ async function renderHackScreen(){
   typing=true;
   header.innerHTML='';
   content.innerHTML='';
-  header.style.marginLeft='';
-  header.style.textAlign='';
   header.classList.add('hack-header');
   content.classList.add('hack-content');
+  leftAlignHeader();
   const title=document.createElement('div');
   title.id='hack-title';
   header.appendChild(title);
@@ -828,12 +886,14 @@ async function renderHackScreen(){
   prompt.textContent='';
   attempts.textContent='';
   warning.textContent='';
-  await typeText(title,'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL');
+  const hackHeader=hacking.header || 'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
+  await typeText(title,hackHeader);
   title.textContent=title.textContent.trimEnd();
   await typeText(prompt,promptText);
   prompt.textContent=prompt.textContent.trimEnd();
   await typeText(attempts,attemptsText);
   attempts.textContent=attempts.textContent.trimEnd();
+  updateAttempts();
   const rows=17,cols=12,total=rows*2;
     const base=0xF000+Math.floor(Math.random()*(0xFFF-cols*total));
     const chars='{}[]()<>/\\|;:!@#$%^&*-_=+,.?';
@@ -927,8 +987,8 @@ async function renderHackScreen(){
 function updateAttempts(){
   const a=hackingData.attempts;
   const word=a===1?'ATTEMPT':'ATTEMPTS';
-  const blocks='█'.repeat(Math.min(a,4));
-  hackingData.attemptsEl.textContent=`${a} ${word} LEFT: ${blocks}`;
+  const blocks=Array.from({length:Math.min(a,4)},()=>'<span class="attempt-block">█</span>').join('');
+  hackingData.attemptsEl.innerHTML=`${a} ${word} LEFT: ${blocks}`;
   hackingData.promptEl.textContent=a===1?'!!! WARNING: LOCKOUT IMMINENT !!!':'ENTER PASSWORD NOW';
 }
 
@@ -961,66 +1021,97 @@ function insertHackBox(box){
   trimHackMessages();
 }
 
-function processGuess(guess,playSound=true){
-  if(!hackingActive) return;
-  guess=guess.trim().toUpperCase();
-  const override=guess==='ADMIN OVERRIDE';
-  const allowances=guess==='ADMIN ALLOWANCES';
-  const len=hackingData.password.length;
-  const box=document.createElement('div');
-  box.className='hack-message';
-  const guessLine=document.createElement('div');
-  guessLine.textContent=`>${override?'ADMIN OVERRIDE':allowances?'ADMIN ALLOWANCES':guess}`;
-  box.appendChild(guessLine);
-  if(playSound) playEnterCharSound();
-  if(allowances){
-    hackingData.attempts=99;
-    hackingData.maxAttempts=99;
-    updateAttempts();
-    const ok=document.createElement('div');
-    ok.textContent='Allowances set to 99.';
-    box.appendChild(ok);
-    insertHackBox(box);
-  }else if(override || guess===hackingData.password){
-    const likeLine=document.createElement('div');
-    likeLine.textContent=`${len}/${len} correct`;
-    box.appendChild(likeLine);
-    const ok=document.createElement('div');
-    ok.textContent='Access granted.';
-    box.appendChild(ok);
-    insertHackBox(box);
-    hackingActive=false;
-    hackingData.promptEl.textContent='';
-    hackingData.warningEl.textContent='';
-    hackingData.attemptsEl.textContent='';
-    playPasswordResult(true);
-    hackedPasswordLength=hackingData.password.length;
-    hasHacked=true;
-    setTrackedTimeout(()=>showIntro(),500);
-  }else{
-    let like=0;
-    for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
-    const denied=document.createElement('div');
-    denied.textContent='Entry denied';
-    box.appendChild(denied);
-    const likeLine=document.createElement('div');
-    likeLine.textContent=`${like}/${len} correct`;
-    box.appendChild(likeLine);
-    insertHackBox(box);
-    hackingData.attempts--;
-    updateAttempts();
-    playPasswordResult(false);
-    if(hackingData.attempts<=0){
-      lockTerminal();
+  function processGuess(guess,playSound=true){
+    if(!hackingActive) return;
+    guess=guess.trim().toUpperCase();
+    const len=hackingData.password.length;
+    const box=document.createElement('div');
+    box.className='hack-message';
+    const guessLine=document.createElement('div');
+    guessLine.textContent=`>${guess}`;
+    box.appendChild(guessLine);
+    if(playSound) playEnterCharSound();
+    if(guess===hackingData.password){
+      const likeLine=document.createElement('div');
+      likeLine.textContent=`${len}/${len} correct`;
+      box.appendChild(likeLine);
+      const ok=document.createElement('div');
+      ok.textContent='Access granted.';
+      box.appendChild(ok);
+      insertHackBox(box);
+      hackingActive=false;
+      hackingData.promptEl.textContent='';
+      hackingData.warningEl.textContent='';
+      hackingData.attemptsEl.textContent='';
+      playPasswordResult(true);
+      hackedPasswordLength=hackingData.password.length;
+      hasHacked=true;
+      setTrackedTimeout(()=>showIntro(),500);
+    }else{
+      let like=0;
+      for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
+      const denied=document.createElement('div');
+      denied.textContent='Entry denied';
+      box.appendChild(denied);
+      const likeLine=document.createElement('div');
+      likeLine.textContent=`${like}/${len} correct`;
+      box.appendChild(likeLine);
+      insertHackBox(box);
+      hackingData.attempts--;
+      updateAttempts();
+      playPasswordResult(false);
+      if(hackingData.attempts<=0){
+        lockTerminal();
+      }
     }
-  }
   input.textContent='';
   inputText='';
   updateInput();
   focusInput();
+  }
+
+function commandAdminAllowances(rawCmd, msg='Allowances set to 99.'){
+  const box=document.createElement('div');
+  box.className='hack-message';
+  const guessLine=document.createElement('div');
+  guessLine.textContent=`>${rawCmd.toUpperCase()}`;
+  box.appendChild(guessLine);
+  playEnterCharSound();
+  hackingData.attempts=99;
+  hackingData.maxAttempts=99;
+  updateAttempts();
+  const ok=document.createElement('div');
+  ok.textContent=msg;
+  box.appendChild(ok);
+  insertHackBox(box);
 }
 
-function addHackMessage(text){
+function commandAdminOverride(rawCmd, msg='Access granted.'){
+  const len=hackingData.password.length;
+  const box=document.createElement('div');
+  box.className='hack-message';
+  const guessLine=document.createElement('div');
+  guessLine.textContent=`>${rawCmd.toUpperCase()}`;
+  box.appendChild(guessLine);
+  playEnterCharSound();
+  const likeLine=document.createElement('div');
+  likeLine.textContent=`${len}/${len} correct`;
+  box.appendChild(likeLine);
+  const ok=document.createElement('div');
+  ok.textContent=msg;
+  box.appendChild(ok);
+  insertHackBox(box);
+  hackingActive=false;
+  hackingData.promptEl.textContent='';
+  hackingData.warningEl.textContent='';
+  hackingData.attemptsEl.textContent='';
+  playPasswordResult(true);
+  hackedPasswordLength=hackingData.password.length;
+  hasHacked=true;
+  setTrackedTimeout(()=>showIntro(),500);
+}
+
+  function addHackMessage(text){
   const box=document.createElement('div');
   box.className='hack-message';
   const line=document.createElement('div');
@@ -1091,7 +1182,67 @@ function clearResponses(){
   document.querySelectorAll('.response').forEach(el=>el.remove());
 }
 
-function handleCommand(cmd){
+async function executeCustomCommand(info){
+  if(info.screen){
+    await showScreen(info.screen);
+    if(info.command){
+      await new Promise(requestAnimationFrame);
+      displayMessage(info.command);
+    }
+  }else if(info.command){
+    displayMessage(info.command);
+  }
+}
+
+async function executeCommand(info, rawCmd){
+  if(info.action){
+    switch(info.action){
+      case 'syntaxhelper':
+        if(hackingActive){
+          hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
+          setTrackedTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+        }else if(info.command){
+          displayMessage(info.command);
+        }else{
+          displayMessage('command unknown');
+        }
+        break;
+      case 'back':
+        goBack();
+        if(info.command) displayMessage(info.command);
+        break;
+      case 'help':
+        await showScreen(info.screen || 'help');
+        if(info.command) displayMessage(info.command);
+        break;
+      case 'adminoverride':
+        if(hackingActive){
+          commandAdminOverride(rawCmd, info.command);
+        }else if(info.command){
+          displayMessage(info.command);
+        }else{
+          displayMessage('command unknown');
+        }
+        break;
+      case 'adminallowances':
+        if(hackingActive){
+          commandAdminAllowances(rawCmd, info.command);
+        }else if(info.command){
+          displayMessage(info.command);
+        }else{
+          displayMessage('command unknown');
+        }
+        break;
+      default:
+        await executeCustomCommand(info);
+    }
+  }else{
+    await executeCustomCommand(info);
+  }
+}
+
+async function handleCommand(cmd){
+  if(typing) return;
   playEnterCharSound();
   clearResponses();
   if(terminalLocked){
@@ -1100,24 +1251,29 @@ function handleCommand(cmd){
     updateInput();
     return;
   }
-  const command=cmd.trim().toLowerCase();
-  if(command==='syntaxhelper'){
-    if(hackingActive){
-      hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
-      setTrackedTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+  const raw=cmd.trim();
+  const command=raw.toLowerCase();
+  const custom=commands[command];
+  if(hackingActive){
+    if(custom && custom.hacking){
+      await executeCommand(custom, raw);
+    }else{
+      processGuess(raw.toUpperCase().slice(0,20),false);
+    }
+  }else if(custom){
+    await executeCommand(custom, raw);
+  }else{
+    const match=currentOptions.find(o=>{
+      const text=o.textContent.trim().toLowerCase().replace(/^> ?/, '');
+      return text===command;
+    });
+    if(match){
+      match.click();
+    }else if(screens[command]){
+      await showScreen(command);
     }else{
       displayMessage('command unknown');
     }
-  }else if(hackingActive){
-    processGuess(cmd.trim().toUpperCase().slice(0,20),false);
-  }else if(command==='back'){
-    goBack();
-  }else if(command==='?'||command==='help'){
-    showScreen('help');
-  }else if(screens[command]){
-    showScreen(command);
-  }else{
-    displayMessage('command unknown');
   }
   input.textContent='';
   inputText='';
@@ -1411,6 +1567,27 @@ async function init(cycle=currentCycle){
   }
 }
 
+async function playBootSequence(seq){
+  for(const step of seq){
+    if(step.text===''){
+      const br=document.createElement('br');
+      header.appendChild(br);
+      continue;
+    }
+    const div=document.createElement('div');
+    header.appendChild(div);
+    if(step.type==='user'){
+      div.textContent='>';
+      if(userSpeed<100) await sleep(1500);
+      await typeUserInput(div,step.text);
+    }else{
+      startScrollSound();
+      await typeText(div,step.text);
+      stopScrollSound();
+    }
+  }
+}
+
 async function showLockedBoot(){
   typing=true;
   resetSpeeds();
@@ -1419,64 +1596,8 @@ async function showLockedBoot(){
   content.innerHTML='';
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
-  header.style.marginLeft='-2ch';
-  header.style.textAlign='left';
-
-  startScrollSound();
-  const l1=document.createElement('div');
-  header.appendChild(l1);
-  await typeText(l1,'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK');
-  stopScrollSound();
-
-  const br0=document.createElement('br');
-  header.appendChild(br0);
-
-  const l2=document.createElement('div');
-  l2.textContent='>';
-  header.appendChild(l2);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(l2,'SET TERMINAL/INQUIRE');
-  const br1=document.createElement('br');
-  header.appendChild(br1);
-  startScrollSound();
-  const l3=document.createElement('div');
-  header.appendChild(l3);
-  await typeText(l3,'RIT-V300');
-  stopScrollSound();
-
-  const br2=document.createElement('br');
-  header.appendChild(br2);
-
-  const l4=document.createElement('div');
-  l4.textContent='>';
-  header.appendChild(l4);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(l4,'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F');
-
-  const l5=document.createElement('div');
-  l5.textContent='>';
-  header.appendChild(l5);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(l5,'SET HALT RESTART/MAINT');
-  const br3=document.createElement('br');
-  header.appendChild(br3);
-  startScrollSound();
-  for(const text of bootLines){
-    const div=document.createElement('div');
-    header.appendChild(div);
-    await typeText(div,text);
-  }
-  stopScrollSound();
-
-  const br4=document.createElement('br');
-  header.appendChild(br4);
-
-  const lEnd=document.createElement('div');
-  lEnd.textContent='>';
-  header.appendChild(lEnd);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(lEnd,'RUN DEBUG/ACCOUNTS.F');
-
+  leftAlignHeader();
+  await playBootSequence(lockedBootSequence);
   typing=false;
 }
 
@@ -1488,34 +1609,8 @@ async function showBoot(){
   content.innerHTML='';
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
-  header.style.marginLeft='-2ch';
-  header.style.textAlign='left';
-  startScrollSound();
-  const line1=document.createElement('div');
-  header.appendChild(line1);
-  await typeText(line1,'Welcome to RobCo Industries (TM) Termlink');
-  stopScrollSound();
-  const brBoot1=document.createElement('br');
-  header.appendChild(brBoot1);
-  const line2=document.createElement('div');
-  line2.textContent='>';
-  header.appendChild(line2);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(line2,'Logon Admin');
-  const brBoot=document.createElement('br');
-  header.appendChild(brBoot);
-  const line3=document.createElement('div');
-  header.appendChild(line3);
-  startScrollSound();
-  await typeText(line3,'Enter Password');
-  stopScrollSound();
-  const brBoot2=document.createElement('br');
-  header.appendChild(brBoot2);
-  const line4=document.createElement('div');
-  line4.textContent='>';
-  header.appendChild(line4);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
+  leftAlignHeader();
+  await playBootSequence(bootSequence);
   if(userSpeed<100) await sleep(500);
   typing=false;
   await showIntro();
@@ -1530,16 +1625,15 @@ async function showIntro(){
   content.innerHTML='';
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
-  header.style.marginLeft='-2ch';
-  header.style.textAlign='left';
+  centerHeader();
   for(const line of titleLines){
     const div=document.createElement('div');
-    div.style.textAlign='center';
     header.appendChild(div);
     await typeText(div,line);
   }
   for(const line of headerLines){
     const div=document.createElement('div');
+    div.style.textAlign='left';
     div.style.marginLeft='2ch';
     header.appendChild(div);
     await typeText(div,line);
@@ -1551,6 +1645,7 @@ async function showIntro(){
 
 async function showScreen(name){
   restoreInput();
+  centerHeader();
   clearResponses();
   screenHistory.push(name);
   inputText='';
@@ -1563,10 +1658,13 @@ async function showScreen(name){
   let lines=[];
   let style=null;
   if(Array.isArray(data)){
-    lines=data;
+    lines=data.slice();
   }else if(data){
-    lines=data.items||[];
+    lines=(data.items||[]).slice();
     style=data.style||null;
+  }
+  if(name==='help'){
+    // no additional entries
   }
   applyScreenStyle(style);
   let i=0;

@@ -1,51 +1,151 @@
-<!-- "Modern Pip-Boy" redesign with CSS tokens, sticky topbar, ARIA tabs, and live summary. Accessibility and performance are improved while preserving existing Vue bindings. -->
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <title>Terminal Config Builder</title>
+  <script>
+    tailwind.config = { darkMode: 'class' }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <style>
-:root{--bg:#0a0d10;--surface:#0f1419;--panel:#121922;--muted:#1a2230;--text:#e9f1ff;--text-muted:#9aa6bf;--pip:#33ff99;--pip-amber:#ffd27a;--pip-rust:#8b5a3c;--border:#223042;--focus:#9ed0ff;--success:#33d18f;--warning:#ffd27a;--danger:#ff6b6b;--radius:14px;--radius-sm:10px;--hairline:1px solid #223042;--shadow:0 8px 24px rgba(0,0,0,.25);--space-1:6px;--space-2:10px;--space-3:16px;--space-4:24px;--space-5:36px;--step--1:clamp(12px,0.95vw,14px);--step-0:clamp(14px,1.05vw,16px);--step-1:clamp(16px,1.25vw,18px);--step-2:clamp(18px,1.6vw,22px);--step-3:clamp(22px,2vw,26px)}
-html[data-theme="pip"]{--bg:#06100a;--surface:#0b160f;--panel:#0e1b13;--muted:#112217;--text:#dfffe9;--text-muted:#94b9a3;--border:#14402a;--focus:#7ef2be}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-body{background:var(--bg);color:var(--text)}
-.topbar{position:sticky;top:0;z-index:40;background:color-mix(in oklab,var(--surface) 85%,black 15%);backdrop-filter:blur(8px);border-bottom:var(--hairline)}
-.card{background:var(--panel);border:var(--hairline);border-radius:var(--radius);box-shadow:var(--shadow);position:relative}
-.card::after{content:"";pointer-events:none;position:absolute;inset:0;opacity:.06;background-image:repeating-linear-gradient(0deg,rgba(0,0,0,.4)0,rgba(0,0,0,.4)1px,transparent1px,transparent3px)}
-.btn{padding:.6rem 1rem;border-radius:var(--radius-sm);font-weight:600;border:1px solid var(--border)}
-.btn-primary{background:var(--pip);color:#06260f}
-.btn-secondary{background:var(--surface);color:var(--text)}
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.tablist{display:flex;gap:8px;border-bottom:var(--hairline)}
-.tab[aria-selected="true"]{color:var(--pip);box-shadow:inset 0 -2px 0 var(--pip)}
+    body {
+      background-color: #f9fafb;
+      color: #000000;
+    }
+    .dark body {
+      background-color: #000000;
+      color: #f3f4f6;
+    }
+    fieldset {
+      background-color: #f3f4f6;
+      border-color: #d1d5db;
+    }
+    .dark fieldset {
+      background-color: #1f2937;
+      border-color: #374151;
+    }
+    input, textarea, select {
+      background-color: #f9fafb;
+      border-color: #d1d5db;
+      color: #000000;
+    }
+    .dark input, .dark textarea, .dark select {
+      background-color: #111827;
+      border-color: #374151;
+      color: #f3f4f6;
+    }
+    ::placeholder {
+      color: #4b5563;
+      opacity: 1;
+    }
+    .dark ::placeholder {
+      color: #9ca3af;
+    }
+    .screen, .menu-item, .difficulty-item {
+      transition: transform 0.2s;
+      touch-action: none;
+    }
+    .drag-chosen {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .drag-ghost {
+      opacity: 0.4;
+      border: 2px dashed #34d399;
+    }
+    .dragging {
+      user-select: none;
+    }
+      .action-btn {
+        border: 1px solid #9ca3af;
+        border-radius: 0.25rem;
+        padding: 0 0.25rem;
+        background-color: #f3f4f6;
+        color: #000000;
+      }
+      .action-btn:hover {
+        background-color: #e5e7eb;
+      }
+      .dark .action-btn {
+        border-color: #4b5563;
+        background-color: #1f2937;
+        color: #f3f4f6;
+      }
+    .dark .action-btn:hover {
+      background-color: #374151;
+    }
+    .top-line-btn {
+      padding: 0.25rem 0.5rem;
+      border: 2px solid #4b5563;
+      border-radius: 0.25rem;
+      background-color: #f3f4f6;
+      color: #000000;
+      cursor: pointer;
+    }
+    .top-line-btn:hover {
+      background-color: #e5e7eb;
+    }
+    .dark .top-line-btn {
+      border-color: #9ca3af;
+      background-color: #1f2937;
+      color: #f3f4f6;
+    }
+    .dark .top-line-btn:hover {
+      background-color: #374151;
+    }
+
+    .tab-btn {
+      padding: 0.25rem 0.5rem;
+      border: 2px solid #4b5563;
+      border-bottom-width: 2px;
+      border-radius: 0.25rem 0.25rem 0 0;
+      background-color: #f3f4f6;
+      color: #000000;
+      cursor: pointer;
+    }
+    .tab-btn:hover {
+      background-color: #e5e7eb;
+    }
+    .tab-btn-active {
+      background-color: #ffffff;
+      border-bottom-color: transparent;
+      margin-bottom: -2px;
+    }
+    .dark .tab-btn {
+      border-color: #9ca3af;
+      background-color: #1f2937;
+      color: #f3f4f6;
+    }
+    .dark .tab-btn:hover {
+      background-color: #374151;
+    }
+    .dark .tab-btn-active {
+      background-color: #111827;
+      border-bottom-color: transparent;
+    }
   </style>
 </head>
 <body class="font-sans m-0 p-4">
-<header class="topbar">
-  <div class="mx-auto max-w-6xl px-4 h-14 flex items-center justify-between">
-    <h1 class="text-[var(--text)] text-base md:text-lg font-semibold">Config Builder</h1>
-    <nav class="flex items-center gap-2">
-      <button id="load-config" class="btn btn-secondary" title="Load configuration">Load</button>
-      <button type="submit" form="builder-form" class="btn btn-primary" title="Generate config">Generate</button>
-      <a id="download-link" class="btn btn-secondary hidden" download="config.json">Download</a>
-      <button id="dark-toggle" class="btn btn-secondary" title="Toggle Pip-Boy theme">Theme</button>
-    </nav>
-  </div>
-</header>
-<div id="toast" aria-live="polite" class="sr-only"></div>
 <div class="max-w-4xl mx-auto">
+<h1 class="text-2xl font-bold mb-4">Config Builder</h1>
+<div class="mb-4 flex gap-2 items-center">
+  <button type="button" id="load-config" class="top-line-btn" title="Load configuration from a JSON file such as one previously exported.">Load Config</button>
+  <button type="submit" form="builder-form" class="top-line-btn" title="Generate the configuration file and enable downloading config.json">Generate Config</button>
+  <a id="download-link" class="hidden text-blue-600 underline" download="config.json">Download config.json</a>
+  <span id="generate-feedback" class="text-green-600 hidden"></span>
+  <button type="button" id="dark-toggle" class="top-line-btn" title="Toggle dark mode">Toggle Dark Mode</button>
+</div>
+<input type="file" id="config-file" accept="application/json" class="hidden">
 <form id="builder-form">
-  <div class="card p-3 relative mb-4">
-    <div class="tablist" role="tablist" aria-label="Sections">
-      <button role="tab" :aria-selected="activeTab==='content'" aria-controls="panel-content" @click="activeTab='content'" class="tab">Terminal Content</button>
-      <button role="tab" :aria-selected="activeTab==='boot'" aria-controls="panel-boot" @click="activeTab='boot'" class="tab">Boot</button>
-      <button role="tab" :aria-selected="activeTab==='commands'" aria-controls="panel-commands" @click="activeTab='commands'" class="tab">Commands</button>
-      <button role="tab" :aria-selected="activeTab==='hacking'" aria-controls="panel-hacking" @click="activeTab='hacking'" class="tab">Hacking</button>
-      <button role="tab" :aria-selected="activeTab==='prefs'" aria-controls="panel-prefs" @click="activeTab='prefs'" class="tab">Preferences</button>
+    <div class="mb-4 flex gap-2 border-b border-gray-300 dark:border-gray-700">
+      <button type="button" @click="activeTab='content'" :class="['tab-btn', activeTab==='content' ? 'tab-btn-active' : '']">Terminal Content</button>
+      <button type="button" @click="activeTab='boot'" :class="['tab-btn', activeTab==='boot' ? 'tab-btn-active' : '']">Boot</button>
+      <button type="button" @click="activeTab='commands'" :class="['tab-btn', activeTab==='commands' ? 'tab-btn-active' : '']">Commands</button>
+      <button type="button" @click="activeTab='hacking'" :class="['tab-btn', activeTab==='hacking' ? 'tab-btn-active' : '']">Hacking</button>
+      <button type="button" @click="activeTab='prefs'" :class="['tab-btn', activeTab==='prefs' ? 'tab-btn-active' : '']">Preferences</button>
     </div>
-    <section id="panel-content" role="tabpanel" :hidden="activeTab!=='content'" class="space-y-4">
+  <div v-show="activeTab==='content'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow" title="Enter the lines displayed at the top of the terminal. Each line becomes a separate title line. Example: 'ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM'.">
       <legend class="flex items-center gap-1">Titles</legend>
       <textarea id="titles" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a title line" title="Each line becomes a title line, e.g., ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM"></textarea>
@@ -102,8 +202,8 @@ body{background:var(--bg);color:var(--text)}
         <button type="button" @click="addScreen()" class="mt-2 px-2 py-1 border rounded">Add Screen</button>
       </div>
     </fieldset>
-  </section>
-  <section id="panel-boot" role="tabpanel" :hidden="activeTab!=='boot'" class="space-y-4">
+  </div>
+  <div v-show="activeTab==='boot'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow">
       <legend class="flex items-center gap-1">Boot Sequence</legend>
       <div v-for="(step, idx) in bootSequence" :key="step.uid" class="flex items-center flex-wrap gap-1 mb-1">
@@ -132,8 +232,8 @@ body{background:var(--bg);color:var(--text)}
       </div>
       <button type="button" @click="addBootStep(lockedBootSequence)" class="mt-2 px-2 py-1 border rounded">Add Entry</button>
     </fieldset>
-  </section>
-  <section id="panel-commands" role="tabpanel" :hidden="activeTab!=='commands'" class="space-y-4">
+  </div>
+  <div v-show="activeTab==='commands'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow">
       <legend class="flex items-center gap-1">Commands</legend>
       <div v-for="(cmd,idx) in commands" :key="cmd.uid" class="flex items-center flex-wrap gap-2 mb-2">
@@ -148,8 +248,8 @@ body{background:var(--bg);color:var(--text)}
       </div>
       <button type="button" @click="addCommand" class="mt-2 action-btn">Add Command</button>
     </fieldset>
-  </section>
-  <section id="panel-hacking" role="tabpanel" :hidden="activeTab!=='hacking'" class="space-y-4">
+  </div>
+  <div v-show="activeTab==='hacking'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow" title="Configure hacking settings for locked terminals.">
       <legend class="flex items-center gap-1">Hacking</legend>
       <label class="block" title="If checked, the terminal starts locked and requires hacking before use."><input type="checkbox" id="locked" checked class="mr-1"> Locked</label>
@@ -195,8 +295,8 @@ body{background:var(--bg);color:var(--text)}
           </div>
         </fieldset>
     </fieldset>
-  </section>
-  <section id="panel-prefs" role="tabpanel" :hidden="activeTab!=='prefs'" class="space-y-4">
+  </div>
+  <div v-show="activeTab==='prefs'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow" title="Customize terminal appearance.">
       <legend class="flex items-center gap-1">Default Appearance</legend>
       <label class="block" title="Color of text displayed in the terminal, e.g., #7aff7a.">Default Text Color:
@@ -212,28 +312,9 @@ body{background:var(--bg);color:var(--text)}
         <input type="text" id="bg-color-hex" class="ml-2 border rounded p-1 w-24" v-model="bgColor">
       </label>
     </fieldset>
-  </section>
   </div>
 </form>
-<aside class="card p-3 mt-4" id="summary">
-  <h2 class="text-[var(--text)] text-sm font-semibold mb-2">Overview</h2>
-  <ul class="text-[var(--text-muted)] text-sm space-y-1">
-    <li><strong>Text color:</strong> {{ textColor }}</li>
-    <li><strong>Border:</strong> {{ borderColor }}</li>
-    <li><strong>Background:</strong> {{ bgColor }}</li>
-    <li><strong>Difficulty:</strong> {{ difficultyChoice }}</li>
-  </ul>
-  <button @click="copySummary" class="btn btn-secondary mt-2" aria-label="Copy summary">Copy</button>
-</aside>
 </div>
-<input type="file" id="config-file" accept="application/json" class="hidden">
-<script>
-document.getElementById('dark-toggle')?.addEventListener('click',()=>{
-  const html=document.documentElement;const pip=html.getAttribute('data-theme')==='pip'?'':'pip';
-  pip?html.setAttribute('data-theme','pip'):html.removeAttribute('data-theme');
-});
-function showToast(msg){const t=document.getElementById('toast');t.classList.remove('sr-only');t.textContent=msg;setTimeout(()=>t.classList.add('sr-only'),1600);}
-</script>
 <script>
 const defaultDifficulties = [
   { name: "Very Easy", wordCount: [8,10], length: [4,5] },
@@ -463,11 +544,6 @@ const app = Vue.createApp({
         dudWordsEl.value = (config.hacking?.dudWords || []).join(', ');
         this.$nextTick(this.initSortables);
       },
-      copySummary() {
-        const summary = `Text: ${this.textColor}\nBorder: ${this.borderColor}\nBackground: ${this.bgColor}\nDifficulty: ${this.difficultyChoice}`;
-        navigator.clipboard.writeText(summary);
-        showToast('Summary copied');
-      },
       handleSubmit() {
       if (!validateDudWords()) {
         dudWordsEl.reportValidity();
@@ -558,7 +634,9 @@ const app = Vue.createApp({
       const dl = document.getElementById('download-link');
       dl.href = url;
       dl.classList.remove('hidden');
-      showToast(`Generated ${new Date().toLocaleTimeString()}`);
+      const feedback = document.getElementById('generate-feedback');
+      feedback.textContent = `Generated ${new Date().toLocaleTimeString()}`;
+      feedback.classList.remove('hidden');
     }
   },
   mounted() {
@@ -585,6 +663,7 @@ document.getElementById('config-file').addEventListener('change', e => {
     };
   reader.readAsText(file);
 });
+document.getElementById('dark-toggle').addEventListener('click', ()=> document.documentElement.classList.toggle('dark'));
 
 const passwordEl = document.getElementById('password');
 const dudWordsEl = document.getElementById('dud-words');

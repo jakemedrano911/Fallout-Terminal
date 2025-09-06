@@ -1129,6 +1129,7 @@ async function executeCustomCommand(info){
 }
 
 async function handleCommand(cmd){
+  if(typing) return;
   playEnterCharSound();
   clearResponses();
   if(terminalLocked){
@@ -1158,7 +1159,7 @@ async function handleCommand(cmd){
     }else if(command==='back'){
       goBack();
     }else if(command==='?'||command==='help'){
-      showScreen('help');
+      await showScreen('help');
     }else{
       const match=currentOptions.find(o=>{
         const text=o.textContent.trim().toLowerCase().replace(/^> ?/, '');
@@ -1167,7 +1168,7 @@ async function handleCommand(cmd){
       if(match){
         match.click();
       }else if(screens[command]){
-        showScreen(command);
+        await showScreen(command);
       }else{
         displayMessage('command unknown');
       }

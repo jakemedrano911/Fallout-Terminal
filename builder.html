@@ -140,6 +140,7 @@
 <form id="builder-form">
     <div class="mb-4 flex gap-2 border-b border-gray-300 dark:border-gray-700">
       <button type="button" @click="activeTab='content'" :class="['tab-btn', activeTab==='content' ? 'tab-btn-active' : '']">Terminal Content</button>
+      <button type="button" @click="activeTab='boot'" :class="['tab-btn', activeTab==='boot' ? 'tab-btn-active' : '']">Boot</button>
       <button type="button" @click="activeTab='commands'" :class="['tab-btn', activeTab==='commands' ? 'tab-btn-active' : '']">Commands</button>
       <button type="button" @click="activeTab='hacking'" :class="['tab-btn', activeTab==='hacking' ? 'tab-btn-active' : '']">Hacking</button>
       <button type="button" @click="activeTab='prefs'" :class="['tab-btn', activeTab==='prefs' ? 'tab-btn-active' : '']">Preferences</button>
@@ -152,10 +153,6 @@
     <fieldset class="p-4 border rounded-lg shadow" title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
       <legend class="flex items-center gap-1">Headers</legend>
       <textarea id="headers" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
-    </fieldset>
-    <fieldset class="p-4 border rounded-lg shadow" title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
-      <legend class="flex items-center gap-1">Boot Animation Text</legend>
-      <textarea id="boot-lines" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
     </fieldset>
     <fieldset class="p-4 border rounded-lg shadow" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
       <legend class="flex items-center gap-1">Screens</legend>
@@ -206,6 +203,36 @@
       </div>
     </fieldset>
   </div>
+  <div v-show="activeTab==='boot'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow">
+      <legend class="flex items-center gap-1">Boot Sequence</legend>
+      <div v-for="(step, idx) in bootSequence" :key="step.uid" class="flex items-center flex-wrap gap-1 mb-1">
+        <textarea v-model="step.text" rows="2" cols="40" class="border rounded p-1 flex-1" placeholder="Boot text"></textarea>
+        <select v-model="step.type" class="border rounded p-1">
+          <option value="terminal">Terminal</option>
+          <option value="user">User</option>
+        </select>
+        <button type="button" @click="moveBootStepUp(bootSequence, idx)" :disabled="idx===0" class="action-btn">▲</button>
+        <button type="button" @click="moveBootStepDown(bootSequence, idx)" :disabled="idx===bootSequence.length-1" class="action-btn">▼</button>
+        <button type="button" @click="removeBootStep(bootSequence, idx)" class="action-btn"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
+      </div>
+      <button type="button" @click="addBootStep(bootSequence)" class="mt-2 px-2 py-1 border rounded">Add Entry</button>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow">
+      <legend class="flex items-center gap-1">Locked Boot Sequence</legend>
+      <div v-for="(step, idx) in lockedBootSequence" :key="step.uid" class="flex items-center flex-wrap gap-1 mb-1">
+        <textarea v-model="step.text" rows="2" cols="40" class="border rounded p-1 flex-1" placeholder="Boot text"></textarea>
+        <select v-model="step.type" class="border rounded p-1">
+          <option value="terminal">Terminal</option>
+          <option value="user">User</option>
+        </select>
+        <button type="button" @click="moveBootStepUp(lockedBootSequence, idx)" :disabled="idx===0" class="action-btn">▲</button>
+        <button type="button" @click="moveBootStepDown(lockedBootSequence, idx)" :disabled="idx===lockedBootSequence.length-1" class="action-btn">▼</button>
+        <button type="button" @click="removeBootStep(lockedBootSequence, idx)" class="action-btn"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
+      </div>
+      <button type="button" @click="addBootStep(lockedBootSequence)" class="mt-2 px-2 py-1 border rounded">Add Entry</button>
+    </fieldset>
+  </div>
   <div v-show="activeTab==='commands'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow">
       <legend class="flex items-center gap-1">Built-in Commands</legend>
@@ -239,6 +266,7 @@
       <label class="block" title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
       <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
       <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
+      <label class="block" title="Header text shown at the top of the hacking screen.">Hacking Header: <input type="text" id="hacking-header-input" v-model="hackingHeader" class="ml-2 border rounded p-1"></label>
       <label class="block">Hacking Text Color:
         <input type="color" id="hack-text-color" class="ml-2" v-model="hackTextColor">
         <input type="text" id="hack-text-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackTextColor">
@@ -324,6 +352,8 @@ const app = Vue.createApp({
     return {
         activeTab: 'content',
         screens: [],
+        bootSequence:[{text:'',type:'terminal',uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
+        lockedBootSequence:[{text:'',type:'terminal',uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
         commands: [],
         builtIns:['back','help','?','syntaxhelper'],
         difficulties: [],
@@ -334,7 +364,8 @@ const app = Vue.createApp({
         borderColor: DEFAULT_BORDER_COLOR,
         hackTextColor: DEFAULT_TEXT_COLOR,
         hackBgColor: DEFAULT_BG_COLOR,
-        hackBorderColor: DEFAULT_BORDER_COLOR
+        hackBorderColor: DEFAULT_BORDER_COLOR,
+        hackingHeader: ''
       };
     },
   computed: {
@@ -407,6 +438,24 @@ const app = Vue.createApp({
           [items[iIdx], items[iIdx + 1]] = [items[iIdx + 1], items[iIdx]];
           this.$nextTick(this.initSortables);
         },
+        addBootStep(seq) {
+        seq.push({text:'', type:'terminal', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.$nextTick(this.initSortables);
+        },
+        removeBootStep(seq, idx) {
+        seq.splice(idx,1);
+        this.$nextTick(this.initSortables);
+        },
+        moveBootStepUp(seq, idx) {
+        if(idx<=0) return;
+        [seq[idx-1], seq[idx]] = [seq[idx], seq[idx-1]];
+        this.$nextTick(this.initSortables);
+        },
+        moveBootStepDown(seq, idx) {
+        if(idx>=seq.length-1) return;
+        [seq[idx], seq[idx+1]] = [seq[idx+1], seq[idx]];
+        this.$nextTick(this.initSortables);
+        },
         initSortables() {
         },
       addDifficulty(d={name:'', wordCount:[1,1], length:[1,1]}) {
@@ -420,7 +469,10 @@ const app = Vue.createApp({
       loadConfig(config) {
         document.getElementById('titles').value = (config.titleLines || []).join('\n');
         document.getElementById('headers').value = (config.headerLines || []).join('\n');
-        document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
+        this.bootSequence = (config.bootSequence || []).map(s=>({...s, uid:crypto.randomUUID?crypto.randomUUID():Math.random()}));
+        this.lockedBootSequence = (config.lockedBootSequence || []).map(s=>({...s, uid:crypto.randomUUID?crypto.randomUUID():Math.random()}));
+        if(!this.bootSequence.length) this.bootSequence.push({text:'',type:'terminal',uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        if(!this.lockedBootSequence.length) this.lockedBootSequence.push({text:'',type:'terminal',uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
         this.screens = [];
         this.commands = [];
         const style = config.style || {};
@@ -434,6 +486,7 @@ const app = Vue.createApp({
         this.hackTextColor = hackingStyle.textColor || globalText;
         this.hackBgColor = hackingStyle.backgroundColor || globalBg;
         this.hackBorderColor = hackingStyle.borderColor || globalBorder;
+        this.hackingHeader = (config.hacking && config.hacking.header) || '';
         Object.entries(config.screens || {}).forEach(([id, data]) => {
           const screen = {id, color:'#0c2c5f', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder};
           const items = Array.isArray(data) ? data : (data.items || []);
@@ -487,8 +540,8 @@ const app = Vue.createApp({
       const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
       const rawHeaders = document.getElementById('headers').value.split('\n');
       const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
-      const rawBoot = document.getElementById('boot-lines').value.split('\n');
-      const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
+      const bootSeq = this.bootSequence.filter(s=>s.text.trim()).map(s=>({text:s.text, type:s.type}));
+      const lockedBootSeq = this.lockedBootSequence.filter(s=>s.text.trim()).map(s=>({text:s.text, type:s.type}));
       const textColor = this.textColor || DEFAULT_TEXT_COLOR;
       const backgroundColor = this.bgColor || DEFAULT_BG_COLOR;
       const borderColor = this.borderColor || DEFAULT_BORDER_COLOR;
@@ -548,10 +601,12 @@ const app = Vue.createApp({
       if (!isNaN(maxAttempts) && maxAttempts !== 4) hacking.maxAttempts = maxAttempts;
       if (password) hacking.password = password;
       if (dudWords.length) hacking.dudWords = dudWords;
+      if (this.hackingHeader) hacking.header = this.hackingHeader;
       const config = {
         titleLines: titles,
         headerLines: headers,
-        bootLines,
+        bootSequence: bootSeq,
+        lockedBootSequence: lockedBootSeq,
         screens: screensObj,
         style,
         hackingStyle,

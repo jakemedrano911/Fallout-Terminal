@@ -10,14 +10,34 @@
     "How may I assist you this fine day?",
     "───────────────────────────────────────"
   ],
-  "bootLines": [
-    "Initializing Robco Industries (TM) MF Boot Agent v2.3.0",
-    "RETROS BIOS",
-    "RBIOS-4.02.08.00 52EE5.E7.E8",
-    "Copyright 2201-2203 Robco Ind.",
-    "Uppermem: 64 KB",
-    "Root (5A8)",
-    "Maintenance Mode"
+  "bootSequence": [
+    { "text": "Welcome to RobCo Industries (TM) Termlink", "type": "terminal" },
+    { "text": "", "type": "terminal" },
+    { "text": "Logon Admin", "type": "user" },
+    { "text": "", "type": "terminal" },
+    { "text": "Enter Password", "type": "terminal" },
+    { "text": "", "type": "terminal" },
+    { "text": "********", "type": "user" }
+  ],
+  "lockedBootSequence": [
+    { "text": "WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK", "type": "terminal" },
+    { "text": "", "type": "terminal" },
+    { "text": "SET TERMINAL/INQUIRE", "type": "user" },
+    { "text": "", "type": "terminal" },
+    { "text": "RIT-V300", "type": "terminal" },
+    { "text": "", "type": "terminal" },
+    { "text": "SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F", "type": "user" },
+    { "text": "SET HALT RESTART/MAINT", "type": "user" },
+    { "text": "", "type": "terminal" },
+    { "text": "Initializing Robco Industries (TM) MF Boot Agent v2.3.0", "type": "terminal" },
+    { "text": "RETROS BIOS", "type": "terminal" },
+    { "text": "RBIOS-4.02.08.00 52EE5.E7.E8", "type": "terminal" },
+    { "text": "Copyright 2201-2203 Robco Ind.", "type": "terminal" },
+    { "text": "Uppermem: 64 KB", "type": "terminal" },
+    { "text": "Root (5A8)", "type": "terminal" },
+    { "text": "Maintenance Mode", "type": "terminal" },
+    { "text": "", "type": "terminal" },
+    { "text": "RUN DEBUG/ACCOUNTS.F", "type": "user" }
   ],
   "userSpeed": 75,
   "compSpeed": 90,
@@ -141,6 +161,7 @@
     "difficulty": "Average",
     "attempts": 4,
     "maxAttempts": 4,
+    "header": "ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL",
     "difficulties": [
       { "name": "Very Easy", "wordCount": [8, 10], "length": [4, 5] },
       { "name": "Easy", "wordCount": [10, 12], "length": [6, 7] },

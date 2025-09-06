@@ -565,6 +565,19 @@ function restoreInput(){
   }
 }
 
+function centerHeader(){
+  const termStyle=getComputedStyle(terminal);
+  const padLeft=parseFloat(termStyle.paddingLeft);
+  const padRight=parseFloat(termStyle.paddingRight);
+  header.style.marginLeft=`${(padLeft-padRight)/-2}px`;
+  header.style.textAlign='center';
+}
+
+function leftAlignHeader(){
+  header.style.marginLeft='';
+  header.style.textAlign='left';
+}
+
 function applyScreenStyle(style){
   const t=style&&style.textColor?style.textColor:baseStyle.textColor;
   const b=style&&style.backgroundColor?style.backgroundColor:baseStyle.backgroundColor;
@@ -816,10 +829,9 @@ async function renderHackScreen(){
   typing=true;
   header.innerHTML='';
   content.innerHTML='';
-  header.style.marginLeft='';
-  header.style.textAlign='';
   header.classList.add('hack-header');
   content.classList.add('hack-content');
+  leftAlignHeader();
   const title=document.createElement('div');
   title.id='hack-title';
   header.appendChild(title);
@@ -1474,8 +1486,7 @@ async function showLockedBoot(){
   content.innerHTML='';
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
-  header.style.marginLeft='-2ch';
-  header.style.textAlign='left';
+  leftAlignHeader();
 
   startScrollSound();
   const l1=document.createElement('div');
@@ -1543,8 +1554,7 @@ async function showBoot(){
   content.innerHTML='';
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
-  header.style.marginLeft='-2ch';
-  header.style.textAlign='left';
+  leftAlignHeader();
   startScrollSound();
   const line1=document.createElement('div');
   header.appendChild(line1);
@@ -1585,11 +1595,7 @@ async function showIntro(){
   content.innerHTML='';
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
-  const termStyle=getComputedStyle(terminal);
-  const padLeft=parseFloat(termStyle.paddingLeft);
-  const padRight=parseFloat(termStyle.paddingRight);
-  header.style.marginLeft=`${(padLeft-padRight)/-2}px`;
-  header.style.textAlign='center';
+  centerHeader();
   for(const line of titleLines){
     const div=document.createElement('div');
     header.appendChild(div);
@@ -1609,6 +1615,7 @@ async function showIntro(){
 
 async function showScreen(name){
   restoreInput();
+  centerHeader();
   clearResponses();
   screenHistory.push(name);
   inputText='';

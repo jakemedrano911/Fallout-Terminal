@@ -1021,66 +1021,97 @@ function insertHackBox(box){
   trimHackMessages();
 }
 
-function processGuess(guess,playSound=true){
-  if(!hackingActive) return;
-  guess=guess.trim().toUpperCase();
-  const override=guess==='ADMIN OVERRIDE';
-  const allowances=guess==='ADMIN ALLOWANCES';
-  const len=hackingData.password.length;
-  const box=document.createElement('div');
-  box.className='hack-message';
-  const guessLine=document.createElement('div');
-  guessLine.textContent=`>${override?'ADMIN OVERRIDE':allowances?'ADMIN ALLOWANCES':guess}`;
-  box.appendChild(guessLine);
-  if(playSound) playEnterCharSound();
-  if(allowances){
-    hackingData.attempts=99;
-    hackingData.maxAttempts=99;
-    updateAttempts();
-    const ok=document.createElement('div');
-    ok.textContent='Allowances set to 99.';
-    box.appendChild(ok);
-    insertHackBox(box);
-  }else if(override || guess===hackingData.password){
-    const likeLine=document.createElement('div');
-    likeLine.textContent=`${len}/${len} correct`;
-    box.appendChild(likeLine);
-    const ok=document.createElement('div');
-    ok.textContent='Access granted.';
-    box.appendChild(ok);
-    insertHackBox(box);
-    hackingActive=false;
-    hackingData.promptEl.textContent='';
-    hackingData.warningEl.textContent='';
-    hackingData.attemptsEl.textContent='';
-    playPasswordResult(true);
-    hackedPasswordLength=hackingData.password.length;
-    hasHacked=true;
-    setTrackedTimeout(()=>showIntro(),500);
-  }else{
-    let like=0;
-    for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
-    const denied=document.createElement('div');
-    denied.textContent='Entry denied';
-    box.appendChild(denied);
-    const likeLine=document.createElement('div');
-    likeLine.textContent=`${like}/${len} correct`;
-    box.appendChild(likeLine);
-    insertHackBox(box);
-    hackingData.attempts--;
-    updateAttempts();
-    playPasswordResult(false);
-    if(hackingData.attempts<=0){
-      lockTerminal();
+  function processGuess(guess,playSound=true){
+    if(!hackingActive) return;
+    guess=guess.trim().toUpperCase();
+    const len=hackingData.password.length;
+    const box=document.createElement('div');
+    box.className='hack-message';
+    const guessLine=document.createElement('div');
+    guessLine.textContent=`>${guess}`;
+    box.appendChild(guessLine);
+    if(playSound) playEnterCharSound();
+    if(guess===hackingData.password){
+      const likeLine=document.createElement('div');
+      likeLine.textContent=`${len}/${len} correct`;
+      box.appendChild(likeLine);
+      const ok=document.createElement('div');
+      ok.textContent='Access granted.';
+      box.appendChild(ok);
+      insertHackBox(box);
+      hackingActive=false;
+      hackingData.promptEl.textContent='';
+      hackingData.warningEl.textContent='';
+      hackingData.attemptsEl.textContent='';
+      playPasswordResult(true);
+      hackedPasswordLength=hackingData.password.length;
+      hasHacked=true;
+      setTrackedTimeout(()=>showIntro(),500);
+    }else{
+      let like=0;
+      for(let i=0;i<len;i++) if(guess[i]===hackingData.password[i]) like++;
+      const denied=document.createElement('div');
+      denied.textContent='Entry denied';
+      box.appendChild(denied);
+      const likeLine=document.createElement('div');
+      likeLine.textContent=`${like}/${len} correct`;
+      box.appendChild(likeLine);
+      insertHackBox(box);
+      hackingData.attempts--;
+      updateAttempts();
+      playPasswordResult(false);
+      if(hackingData.attempts<=0){
+        lockTerminal();
+      }
     }
-  }
   input.textContent='';
   inputText='';
   updateInput();
   focusInput();
+  }
+
+function commandAdminAllowances(rawCmd, msg='Allowances set to 99.'){
+  const box=document.createElement('div');
+  box.className='hack-message';
+  const guessLine=document.createElement('div');
+  guessLine.textContent=`>${rawCmd.toUpperCase()}`;
+  box.appendChild(guessLine);
+  playEnterCharSound();
+  hackingData.attempts=99;
+  hackingData.maxAttempts=99;
+  updateAttempts();
+  const ok=document.createElement('div');
+  ok.textContent=msg;
+  box.appendChild(ok);
+  insertHackBox(box);
 }
 
-function addHackMessage(text){
+function commandAdminOverride(rawCmd, msg='Access granted.'){
+  const len=hackingData.password.length;
+  const box=document.createElement('div');
+  box.className='hack-message';
+  const guessLine=document.createElement('div');
+  guessLine.textContent=`>${rawCmd.toUpperCase()}`;
+  box.appendChild(guessLine);
+  playEnterCharSound();
+  const likeLine=document.createElement('div');
+  likeLine.textContent=`${len}/${len} correct`;
+  box.appendChild(likeLine);
+  const ok=document.createElement('div');
+  ok.textContent=msg;
+  box.appendChild(ok);
+  insertHackBox(box);
+  hackingActive=false;
+  hackingData.promptEl.textContent='';
+  hackingData.warningEl.textContent='';
+  hackingData.attemptsEl.textContent='';
+  playPasswordResult(true);
+  hackedPasswordLength=hackingData.password.length;
+  hasHacked=true;
+  setTrackedTimeout(()=>showIntro(),500);
+}
+
+  function addHackMessage(text){
   const box=document.createElement('div');
   box.className='hack-message';
   const line=document.createElement('div');
@@ -1163,6 +1194,53 @@ async function executeCustomCommand(info){
   }
 }
 
+async function executeCommand(info, rawCmd){
+  if(info.action){
+    switch(info.action){
+      case 'syntaxhelper':
+        if(hackingActive){
+          hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
+          setTrackedTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+        }else if(info.command){
+          displayMessage(info.command);
+        }else{
+          displayMessage('command unknown');
+        }
+        break;
+      case 'back':
+        goBack();
+        if(info.command) displayMessage(info.command);
+        break;
+      case 'help':
+        await showScreen(info.screen || 'help');
+        if(info.command) displayMessage(info.command);
+        break;
+      case 'adminoverride':
+        if(hackingActive){
+          commandAdminOverride(rawCmd, info.command);
+        }else if(info.command){
+          displayMessage(info.command);
+        }else{
+          displayMessage('command unknown');
+        }
+        break;
+      case 'adminallowances':
+        if(hackingActive){
+          commandAdminAllowances(rawCmd, info.command);
+        }else if(info.command){
+          displayMessage(info.command);
+        }else{
+          displayMessage('command unknown');
+        }
+        break;
+      default:
+        await executeCustomCommand(info);
+    }
+  }else{
+    await executeCustomCommand(info);
+  }
+}
+
 async function handleCommand(cmd){
   if(typing) return;
   playEnterCharSound();
@@ -1173,40 +1251,28 @@ async function handleCommand(cmd){
     updateInput();
     return;
   }
-  const command=cmd.trim().toLowerCase();
-  if(command==='syntaxhelper'){
-    if(hackingActive){
-      hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.add('highlight'));
-      setTrackedTimeout(()=>hackingData.grid.querySelectorAll('.bracket').forEach(span=>span.classList.remove('highlight')),1000);
+  const raw=cmd.trim();
+  const command=raw.toLowerCase();
+  const custom=commands[command];
+  if(hackingActive){
+    if(custom && custom.hacking){
+      await executeCommand(custom, raw);
+    }else{
+      processGuess(raw.toUpperCase().slice(0,20),false);
+    }
+  }else if(custom){
+    await executeCommand(custom, raw);
+  }else{
+    const match=currentOptions.find(o=>{
+      const text=o.textContent.trim().toLowerCase().replace(/^> ?/, '');
+      return text===command;
+    });
+    if(match){
+      match.click();
+    }else if(screens[command]){
+      await showScreen(command);
     }else{
       displayMessage('command unknown');
-    }
-  }else{
-    const custom=commands[command];
-    if(hackingActive){
-      if(custom && custom.hacking){
-        await executeCustomCommand(custom);
-      }else{
-        processGuess(cmd.trim().toUpperCase().slice(0,20),false);
-      }
-    }else if(custom){
-      await executeCustomCommand(custom);
-    }else if(command==='back'){
-      goBack();
-    }else if(command==='?'||command==='help'){
-      await showScreen('help');
-    }else{
-      const match=currentOptions.find(o=>{
-        const text=o.textContent.trim().toLowerCase().replace(/^> ?/, '');
-        return text===command;
-      });
-      if(match){
-        match.click();
-      }else if(screens[command]){
-        await showScreen(command);
-      }else{
-        displayMessage('command unknown');
-      }
     }
   }
   input.textContent='';

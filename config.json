@@ -143,6 +143,12 @@
     ]
   },
   "commands": {
+    "back": { "action": "back" },
+    "help": { "action": "help", "help": true },
+    "?": { "action": "help", "help": true },
+    "syntaxhelper": { "action": "syntaxhelper", "hacking": true },
+    "ADMIN OVERRIDE": { "action": "adminoverride", "command": "Access granted.", "hacking": true },
+    "ADMIN ALLOWANCES": { "action": "adminallowances", "command": "Allowances set to 99.", "hacking": true },
     "diagnostics": { "command": "Running system diagnostics...", "help": true },
     "exit": { "screen": "menu", "help": true, "hacking": true }
   },

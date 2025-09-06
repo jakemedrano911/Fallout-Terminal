@@ -88,18 +88,18 @@
     align-items:center;
     justify-content:flex-end;
   }
-  #power-container, #config-container, #pref-container{
+  #power-container, #config-container, #pref-container, #builder-container{
     position:relative;
     display:flex;
     flex-direction:column;
     align-items:center;
   }
   #controls-container span{color:var(--text-color);}
-  #pref-container{
+  #pref-container, #builder-container{
     display:flex;
     margin-bottom:calc(10px * var(--scale));
   }
-  #pref-container span{
+  #pref-container span, #builder-container span{
     margin-top:calc(5px * var(--scale));
   }
   #pref-menu{
@@ -162,7 +162,7 @@
     left:50%;
     transform:translateX(-50%);
   }
-  #power-button, #config-button, #pref-button{
+  #power-button, #config-button, #pref-button, #builder-button{
     background:#b3410e;
     color:var(--text-color);
     border:calc(2px * var(--scale)) solid var(--border-color);
@@ -174,6 +174,9 @@
   }
   #config-button{
     background:#b8b20d;
+  }
+  #builder-button{
+    background:#0d8f0d;
   }
   #config-file{display:none;}
   #terminal::before,
@@ -314,6 +317,10 @@
     </div>
   </div>
   <div id="controls-container">
+    <div id="builder-container">
+      <a id="builder-button" href="builder.html" aria-label="Builder">&#x1F527;</a>
+      <span>Builder</span>
+    </div>
     <div id="pref-container">
       <button id="pref-button" aria-label="Preferences">&#9881;</button>
       <span>Prefs</span>

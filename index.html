@@ -377,18 +377,39 @@ window.addEventListener('resize',()=>{
   }
 });
 updateScale(prevWidth,prevHeight);
-const defaultBootLines=[
-  'Initializing Robco Industries (TM) MF Boot Agent v2.3.0',
-  'RETROS BIOS',
-  'RBIOS-4.02.08.00 52EE5.E7.E8',
-  'Copyright 2201-2203 Robco Ind.',
-  'Uppermem: 64 KB',
-  'Root (5A8)',
-  'Maintenance Mode'
+const defaultBootSequence=[
+  {type:'terminal',text:'Welcome to RobCo Industries (TM) Termlink'},
+  {type:'terminal',text:''},
+  {type:'user',text:'Logon Admin'},
+  {type:'terminal',text:''},
+  {type:'terminal',text:'Enter Password'},
+  {type:'terminal',text:''},
+  {type:'user',text:'********'}
+];
+const defaultLockedBootSequence=[
+  {type:'terminal',text:'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK'},
+  {type:'terminal',text:''},
+  {type:'user',text:'SET TERMINAL/INQUIRE'},
+  {type:'terminal',text:''},
+  {type:'terminal',text:'RIT-V300'},
+  {type:'terminal',text:''},
+  {type:'user',text:'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F'},
+  {type:'user',text:'SET HALT RESTART/MAINT'},
+  {type:'terminal',text:''},
+  {type:'terminal',text:'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'},
+  {type:'terminal',text:'RETROS BIOS'},
+  {type:'terminal',text:'RBIOS-4.02.08.00 52EE5.E7.E8'},
+  {type:'terminal',text:'Copyright 2201-2203 Robco Ind.'},
+  {type:'terminal',text:'Uppermem: 64 KB'},
+  {type:'terminal',text:'Root (5A8)'},
+  {type:'terminal',text:'Maintenance Mode'},
+  {type:'terminal',text:''},
+  {type:'user',text:'RUN DEBUG/ACCOUNTS.F'}
 ];
 let titleLines=[];
 let headerLines=[];
-let bootLines=defaultBootLines;
+let bootSequence=defaultBootSequence;
+let lockedBootSequence=defaultLockedBootSequence;
 let screens={};
 let hacking={};
 let commands={};
@@ -444,7 +465,8 @@ async function loadConfig(cycle=currentCycle){
   if(cycle!==currentCycle) return;
   titleLines=cfg.titleLines;
   headerLines=cfg.headerLines;
-  bootLines = Array.isArray(cfg.bootLines) && cfg.bootLines.length ? cfg.bootLines : defaultBootLines;
+  bootSequence = Array.isArray(cfg.bootSequence) && cfg.bootSequence.length ? cfg.bootSequence : defaultBootSequence;
+  lockedBootSequence = Array.isArray(cfg.lockedBootSequence) && cfg.lockedBootSequence.length ? cfg.lockedBootSequence : defaultLockedBootSequence;
   screens=cfg.screens || {};
   hacking = cfg.hacking || {};
   commands={};
@@ -864,7 +886,8 @@ async function renderHackScreen(){
   prompt.textContent='';
   attempts.textContent='';
   warning.textContent='';
-  await typeText(title,'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL');
+  const hackHeader=hacking.header || 'ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL';
+  await typeText(title,hackHeader);
   title.textContent=title.textContent.trimEnd();
   await typeText(prompt,promptText);
   prompt.textContent=prompt.textContent.trimEnd();
@@ -1478,6 +1501,27 @@ async function init(cycle=currentCycle){
   }
 }
 
+async function playBootSequence(seq){
+  for(const step of seq){
+    if(step.text===''){
+      const br=document.createElement('br');
+      header.appendChild(br);
+      continue;
+    }
+    const div=document.createElement('div');
+    header.appendChild(div);
+    if(step.type==='user'){
+      div.textContent='>';
+      if(userSpeed<100) await sleep(1500);
+      await typeUserInput(div,step.text);
+    }else{
+      startScrollSound();
+      await typeText(div,step.text);
+      stopScrollSound();
+    }
+  }
+}
+
 async function showLockedBoot(){
   typing=true;
   resetSpeeds();
@@ -1487,62 +1531,7 @@ async function showLockedBoot(){
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
   leftAlignHeader();
-
-  startScrollSound();
-  const l1=document.createElement('div');
-  header.appendChild(l1);
-  await typeText(l1,'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK');
-  stopScrollSound();
-
-  const br0=document.createElement('br');
-  header.appendChild(br0);
-
-  const l2=document.createElement('div');
-  l2.textContent='>';
-  header.appendChild(l2);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(l2,'SET TERMINAL/INQUIRE');
-  const br1=document.createElement('br');
-  header.appendChild(br1);
-  startScrollSound();
-  const l3=document.createElement('div');
-  header.appendChild(l3);
-  await typeText(l3,'RIT-V300');
-  stopScrollSound();
-
-  const br2=document.createElement('br');
-  header.appendChild(br2);
-
-  const l4=document.createElement('div');
-  l4.textContent='>';
-  header.appendChild(l4);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(l4,'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F');
-
-  const l5=document.createElement('div');
-  l5.textContent='>';
-  header.appendChild(l5);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(l5,'SET HALT RESTART/MAINT');
-  const br3=document.createElement('br');
-  header.appendChild(br3);
-  startScrollSound();
-  for(const text of bootLines){
-    const div=document.createElement('div');
-    header.appendChild(div);
-    await typeText(div,text);
-  }
-  stopScrollSound();
-
-  const br4=document.createElement('br');
-  header.appendChild(br4);
-
-  const lEnd=document.createElement('div');
-  lEnd.textContent='>';
-  header.appendChild(lEnd);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(lEnd,'RUN DEBUG/ACCOUNTS.F');
-
+  await playBootSequence(lockedBootSequence);
   typing=false;
 }
 
@@ -1555,32 +1544,7 @@ async function showBoot(){
   header.classList.remove('hack-header');
   content.classList.remove('hack-content');
   leftAlignHeader();
-  startScrollSound();
-  const line1=document.createElement('div');
-  header.appendChild(line1);
-  await typeText(line1,'Welcome to RobCo Industries (TM) Termlink');
-  stopScrollSound();
-  const brBoot1=document.createElement('br');
-  header.appendChild(brBoot1);
-  const line2=document.createElement('div');
-  line2.textContent='>';
-  header.appendChild(line2);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(line2,'Logon Admin');
-  const brBoot=document.createElement('br');
-  header.appendChild(brBoot);
-  const line3=document.createElement('div');
-  header.appendChild(line3);
-  startScrollSound();
-  await typeText(line3,'Enter Password');
-  stopScrollSound();
-  const brBoot2=document.createElement('br');
-  header.appendChild(brBoot2);
-  const line4=document.createElement('div');
-  line4.textContent='>';
-  header.appendChild(line4);
-  if(userSpeed<100) await sleep(1500);
-  await typeUserInput(line4,'*'.repeat(hackedPasswordLength));
+  await playBootSequence(bootSequence);
   if(userSpeed<100) await sleep(500);
   typing=false;
   await showIntro();

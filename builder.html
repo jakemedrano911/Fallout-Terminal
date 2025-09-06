@@ -140,6 +140,7 @@
 <form id="builder-form">
     <div class="mb-4 flex gap-2 border-b border-gray-300 dark:border-gray-700">
       <button type="button" @click="activeTab='content'" :class="['tab-btn', activeTab==='content' ? 'tab-btn-active' : '']">Terminal Content</button>
+      <button type="button" @click="activeTab='boot'" :class="['tab-btn', activeTab==='boot' ? 'tab-btn-active' : '']">Boot</button>
       <button type="button" @click="activeTab='commands'" :class="['tab-btn', activeTab==='commands' ? 'tab-btn-active' : '']">Commands</button>
       <button type="button" @click="activeTab='hacking'" :class="['tab-btn', activeTab==='hacking' ? 'tab-btn-active' : '']">Hacking</button>
       <button type="button" @click="activeTab='prefs'" :class="['tab-btn', activeTab==='prefs' ? 'tab-btn-active' : '']">Preferences</button>
@@ -152,10 +153,6 @@
     <fieldset class="p-4 border rounded-lg shadow" title="Enter header text shown beneath the title. Each line becomes its own header line. Example: 'Welcome to the RobCo Engineering Division Database!'.">
       <legend class="flex items-center gap-1">Headers</legend>
       <textarea id="headers" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a header line" title="Each line becomes a header line such as 'Welcome to the RobCo Engineering Division Database!'"></textarea>
-    </fieldset>
-    <fieldset class="p-4 border rounded-lg shadow" title="Lines shown during the boot sequence before titles appear. Each line becomes its own boot animation line. Example: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0'.">
-      <legend class="flex items-center gap-1">Boot Animation Text</legend>
-      <textarea id="boot-lines" rows="4" cols="50" class="w-full p-2 border rounded" placeholder="Each line becomes a boot line" title="Boot sequence lines such as 'RETROS BIOS' or 'Uppermem: 64 KB'"></textarea>
     </fieldset>
     <fieldset class="p-4 border rounded-lg shadow" title="Define screens and their menu options. Use screen IDs to link options to other screens or leave blank for plain text. Example: a 'help' screen with a RETURN option.">
       <legend class="flex items-center gap-1">Screens</legend>
@@ -206,6 +203,36 @@
       </div>
     </fieldset>
   </div>
+  <div v-show="activeTab==='boot'" class="space-y-4">
+    <fieldset class="p-4 border rounded-lg shadow">
+      <legend class="flex items-center gap-1">Boot Sequence</legend>
+      <div v-for="(line, idx) in bootSeq" :key="line.uid" class="mb-2 flex items-center gap-1">
+        <textarea v-model="line.text" rows="2" class="flex-1 border rounded p-1" placeholder="Boot line"></textarea>
+        <select v-model="line.type" class="border rounded p-1">
+          <option value="terminal">Terminal</option>
+          <option value="user">User</option>
+        </select>
+        <button type="button" @click="moveBootUp(idx)" :disabled="idx===0" class="action-btn">▲</button>
+        <button type="button" @click="moveBootDown(idx)" :disabled="idx===bootSeq.length-1" class="action-btn">▼</button>
+        <button type="button" @click="removeBoot(idx)" class="action-btn"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
+      </div>
+      <button type="button" @click="addBootLine" class="mt-2 action-btn">Add Line</button>
+    </fieldset>
+    <fieldset class="p-4 border rounded-lg shadow">
+      <legend class="flex items-center gap-1">Locked Boot Sequence</legend>
+      <div v-for="(line, idx) in lockedBootSeq" :key="line.uid" class="mb-2 flex items-center gap-1">
+        <textarea v-model="line.text" rows="2" class="flex-1 border rounded p-1" placeholder="Boot line"></textarea>
+        <select v-model="line.type" class="border rounded p-1">
+          <option value="terminal">Terminal</option>
+          <option value="user">User</option>
+        </select>
+        <button type="button" @click="moveLockedBootUp(idx)" :disabled="idx===0" class="action-btn">▲</button>
+        <button type="button" @click="moveLockedBootDown(idx)" :disabled="idx===lockedBootSeq.length-1" class="action-btn">▼</button>
+        <button type="button" @click="removeLockedBoot(idx)" class="action-btn"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
+      </div>
+      <button type="button" @click="addLockedBootLine" class="mt-2 action-btn">Add Line</button>
+    </fieldset>
+  </div>
   <div v-show="activeTab==='commands'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow">
       <legend class="flex items-center gap-1">Built-in Commands</legend>
@@ -239,6 +266,9 @@
       <label class="block" title="Maximum number of attempts allowed.">Max Attempts: <input type="number" id="max-attempts" min="1" value="4" class="ml-2 border rounded p-1 w-20"></label>
       <label class="block" title="Password needed to unlock the terminal after hacking, e.g., HARDWARE.">Password: <input type="text" id="password" class="ml-2 border rounded p-1"></label>
       <label class="block" title="Comma-separated words that will be removed as duds during hacking, e.g., RESEARCH, SCIENTIST.">Dud Words: <input type="text" id="dud-words" placeholder="WORD1, WORD2" class="ml-2 border rounded p-1"></label>
+      <label class="block" title="Text shown at the top of the hacking interface.">Hacking Header:
+        <input type="text" id="hack-header" class="ml-2 border rounded p-1 w-full" placeholder="ROBCO INDUSTRIES (TM) TERMLINK PROTOCOL">
+      </label>
       <label class="block">Hacking Text Color:
         <input type="color" id="hack-text-color" class="ml-2" v-model="hackTextColor">
         <input type="text" id="hack-text-color-hex" class="ml-2 border rounded p-1 w-24" v-model="hackTextColor">
@@ -304,6 +334,37 @@ const DEFAULT_BG_COLOR = '#041204';
 const DEFAULT_BORDER_COLOR = '#008800';
 const BASE_SCREEN_COLOR = '#0c2c5f';
 
+const DEFAULT_BOOT_SEQUENCE = [
+  { text: 'Welcome to RobCo Industries (TM) Termlink', type: 'terminal' },
+  { text: '', type: 'terminal' },
+  { text: 'Logon Admin', type: 'user' },
+  { text: '', type: 'terminal' },
+  { text: 'Enter Password', type: 'terminal' },
+  { text: '', type: 'terminal' },
+  { text: '********', type: 'user' }
+];
+
+const DEFAULT_LOCKED_BOOT_SEQUENCE = [
+  { text: 'WELCOME TO ROBCO INDUSTRIES (TM) TERMLINK', type: 'terminal' },
+  { text: '', type: 'terminal' },
+  { text: 'SET TERMINAL/INQUIRE', type: 'user' },
+  { text: '', type: 'terminal' },
+  { text: 'RIT-V300', type: 'terminal' },
+  { text: '', type: 'terminal' },
+  { text: 'SET FILE/PROTECTION=OWNER:RWED ACCOUNTS.F', type: 'user' },
+  { text: 'SET HALT RESTART/MAINT', type: 'user' },
+  { text: '', type: 'terminal' },
+  { text: 'Initializing Robco Industries (TM) MF Boot Agent v2.3.0', type: 'terminal' },
+  { text: 'RETROS BIOS', type: 'terminal' },
+  { text: 'RBIOS-4.02.08.00 52EE5.E7.E8', type: 'terminal' },
+  { text: 'Copyright 2201-2203 Robco Ind.', type: 'terminal' },
+  { text: 'Uppermem: 64 KB', type: 'terminal' },
+  { text: 'Root (5A8)', type: 'terminal' },
+  { text: 'Maintenance Mode', type: 'terminal' },
+  { text: '', type: 'terminal' },
+  { text: 'RUN DEBUG/ACCOUNTS.F', type: 'user' }
+];
+
 // Adjust the base color by a given amount and introduce a slight random
 // variation in each channel so that successive screens are easier to
 // differentiate.
@@ -334,7 +395,9 @@ const app = Vue.createApp({
         borderColor: DEFAULT_BORDER_COLOR,
         hackTextColor: DEFAULT_TEXT_COLOR,
         hackBgColor: DEFAULT_BG_COLOR,
-        hackBorderColor: DEFAULT_BORDER_COLOR
+        hackBorderColor: DEFAULT_BORDER_COLOR,
+        bootSeq: DEFAULT_BOOT_SEQUENCE.map(l=>({...l, uid:crypto.randomUUID?crypto.randomUUID():Math.random()})),
+        lockedBootSeq: DEFAULT_LOCKED_BOOT_SEQUENCE.map(l=>({...l, uid:crypto.randomUUID?crypto.randomUUID():Math.random()}))
       };
     },
   computed: {
@@ -374,6 +437,38 @@ const app = Vue.createApp({
       },
       removeCommand(idx) {
         this.commands.splice(idx,1);
+      },
+      addBootLine(line={text:'',type:'terminal'}) {
+        this.bootSeq.push({...line, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+      },
+      removeBoot(idx) {
+        this.bootSeq.splice(idx,1);
+      },
+      moveBootUp(idx) {
+        if (idx <= 0) return;
+        const arr = this.bootSeq;
+        [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+      },
+      moveBootDown(idx) {
+        if (idx >= this.bootSeq.length - 1) return;
+        const arr = this.bootSeq;
+        [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+      },
+      addLockedBootLine(line={text:'',type:'terminal'}) {
+        this.lockedBootSeq.push({...line, uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+      },
+      removeLockedBoot(idx) {
+        this.lockedBootSeq.splice(idx,1);
+      },
+      moveLockedBootUp(idx) {
+        if (idx <= 0) return;
+        const arr = this.lockedBootSeq;
+        [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+      },
+      moveLockedBootDown(idx) {
+        if (idx >= this.lockedBootSeq.length - 1) return;
+        const arr = this.lockedBootSeq;
+        [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
       },
       addMenuItem(screen) {
         screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
@@ -420,7 +515,10 @@ const app = Vue.createApp({
       loadConfig(config) {
         document.getElementById('titles').value = (config.titleLines || []).join('\n');
         document.getElementById('headers').value = (config.headerLines || []).join('\n');
-        document.getElementById('boot-lines').value = (config.bootLines || []).join('\n');
+        this.bootSeq = (Array.isArray(config.boot) && config.boot.length ? config.boot : DEFAULT_BOOT_SEQUENCE)
+          .map(l=>({...l, uid:crypto.randomUUID?crypto.randomUUID():Math.random()}));
+        this.lockedBootSeq = (Array.isArray(config.lockedBoot) && config.lockedBoot.length ? config.lockedBoot : DEFAULT_LOCKED_BOOT_SEQUENCE)
+          .map(l=>({...l, uid:crypto.randomUUID?crypto.randomUUID():Math.random()}));
         this.screens = [];
         this.commands = [];
         const style = config.style || {};
@@ -434,6 +532,7 @@ const app = Vue.createApp({
         this.hackTextColor = hackingStyle.textColor || globalText;
         this.hackBgColor = hackingStyle.backgroundColor || globalBg;
         this.hackBorderColor = hackingStyle.borderColor || globalBorder;
+        document.getElementById('hack-header').value = config.hacking?.header || '';
         Object.entries(config.screens || {}).forEach(([id, data]) => {
           const screen = {id, color:'#0c2c5f', items:[], open:true, uid:crypto.randomUUID?crypto.randomUUID():Math.random(), textColor:globalText, bgColor:globalBg, borderColor:globalBorder};
           const items = Array.isArray(data) ? data : (data.items || []);
@@ -487,8 +586,8 @@ const app = Vue.createApp({
       const titles = rawTitles.length === 1 && rawTitles[0] === '' ? [] : rawTitles;
       const rawHeaders = document.getElementById('headers').value.split('\n');
       const headers = rawHeaders.length === 1 && rawHeaders[0] === '' ? [] : rawHeaders;
-      const rawBoot = document.getElementById('boot-lines').value.split('\n');
-      const bootLines = rawBoot.length === 1 && rawBoot[0] === '' ? [] : rawBoot;
+      const boot = this.bootSeq.map(l=>({text:(l.text||'').trimEnd(), type:l.type}));
+      const lockedBoot = this.lockedBootSeq.map(l=>({text:(l.text||'').trimEnd(), type:l.type}));
       const textColor = this.textColor || DEFAULT_TEXT_COLOR;
       const backgroundColor = this.bgColor || DEFAULT_BG_COLOR;
       const borderColor = this.borderColor || DEFAULT_BORDER_COLOR;
@@ -543,6 +642,8 @@ const app = Vue.createApp({
         borderColor: hackBorderColor
       };
       const hacking = { difficulties: this.difficulties.map(({name, wordCount, length})=>({name, wordCount, length})) };
+      const hackHeader = document.getElementById('hack-header').value.trim();
+      if (hackHeader) hacking.header = hackHeader;
       if (difficulty) hacking.difficulty = difficulty;
       if (!isNaN(attempts) && attempts !== 4) hacking.attempts = attempts;
       if (!isNaN(maxAttempts) && maxAttempts !== 4) hacking.maxAttempts = maxAttempts;
@@ -551,7 +652,8 @@ const app = Vue.createApp({
       const config = {
         titleLines: titles,
         headerLines: headers,
-        bootLines,
+        boot,
+        lockedBoot,
         screens: screensObj,
         style,
         hackingStyle,

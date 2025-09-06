@@ -171,6 +171,9 @@
     border-radius:0;
     font-size:calc(20px * var(--scale) * 0.9);
     cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
   }
   #config-button{
     background:#b8b20d;
@@ -1765,7 +1768,11 @@ document.addEventListener('keydown',e=>{
 });
 
 powerButton.addEventListener('click',async()=>{
-  await audioCtx.resume();
+  try{
+    await audioCtx.resume();
+  }catch(e){
+    console.warn('Audio context resume failed',e);
+  }
   if(!powered){
     currentCycle++;
     const cycle=currentCycle;

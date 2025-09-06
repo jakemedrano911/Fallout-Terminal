@@ -235,20 +235,16 @@
   </div>
   <div v-show="activeTab==='commands'" class="space-y-4">
     <fieldset class="p-4 border rounded-lg shadow">
-      <legend class="flex items-center gap-1">Built-in Commands</legend>
-      <ul class="list-disc ml-5">
-        <li v-for="c in builtIns" :key="c">{{ c }}</li>
-      </ul>
-    </fieldset>
-    <fieldset class="p-4 border rounded-lg shadow">
-      <legend class="flex items-center gap-1">Custom Commands</legend>
+      <legend class="flex items-center gap-1">Commands</legend>
       <div v-for="(cmd,idx) in commands" :key="cmd.uid" class="flex items-center flex-wrap gap-2 mb-2">
         <input v-model="cmd.name" class="border rounded p-1 w-32" placeholder="Command">
         <input v-model="cmd.screen" class="border rounded p-1 w-32" placeholder="Screen ID">
         <input v-model="cmd.command" class="border rounded p-1 flex-1" placeholder="Response">
         <label class="flex items-center gap-1"><input type="checkbox" v-model="cmd.help">Help</label>
         <label class="flex items-center gap-1"><input type="checkbox" v-model="cmd.hacking">Hacking</label>
-        <button type="button" @click="removeCommand(idx)" class="action-btn">Delete</button>
+        <button type="button" @click="moveCommandUp(idx)" :disabled="idx===0" class="mr-1 action-btn" title="Move up">▲</button>
+        <button type="button" @click="moveCommandDown(idx)" :disabled="idx===commands.length-1" class="mr-1 action-btn" title="Move down">▼</button>
+        <button type="button" @click="removeCommand(idx)" class="action-btn" title="Remove command"><span class="w-4 h-4 flex items-center justify-center text-black dark:text-white">&times;</span></button>
       </div>
       <button type="button" @click="addCommand" class="mt-2 action-btn">Add Command</button>
     </fieldset>
@@ -354,8 +350,14 @@ const app = Vue.createApp({
         screens: [],
         bootSequence:[{text:'',type:'terminal',uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
         lockedBootSequence:[{text:'',type:'terminal',uid:crypto.randomUUID?crypto.randomUUID():Math.random()}],
-        commands: [],
-        builtIns:['back','help','?','syntaxhelper'],
+        commands: [
+          {name:'back',screen:'',command:'',help:false,hacking:false,action:'back',uid:crypto.randomUUID?crypto.randomUUID():Math.random()},
+          {name:'help',screen:'',command:'',help:true,hacking:false,action:'help',uid:crypto.randomUUID?crypto.randomUUID():Math.random()},
+          {name:'?',screen:'',command:'',help:true,hacking:false,action:'help',uid:crypto.randomUUID?crypto.randomUUID():Math.random()},
+          {name:'syntaxhelper',screen:'',command:'',help:false,hacking:true,action:'syntaxhelper',uid:crypto.randomUUID?crypto.randomUUID():Math.random()},
+          {name:'ADMIN OVERRIDE',screen:'',command:'Access granted.',help:false,hacking:true,action:'adminoverride',uid:crypto.randomUUID?crypto.randomUUID():Math.random()},
+          {name:'ADMIN ALLOWANCES',screen:'',command:'Allowances set to 99.',help:false,hacking:true,action:'adminallowances',uid:crypto.randomUUID?crypto.randomUUID():Math.random()}
+        ],
         difficulties: [],
         difficultyChoice: 'Average',
         showDifficulties: false,
@@ -401,10 +403,20 @@ const app = Vue.createApp({
         this.$nextTick(this.initSortables);
       },
       addCommand() {
-        this.commands.push({name:'',screen:'',command:'',help:false,hacking:false,uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
+        this.commands.push({name:'',screen:'',command:'',help:false,hacking:false,action:'',uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
       },
       removeCommand(idx) {
         this.commands.splice(idx,1);
+      },
+      moveCommandUp(idx) {
+        if (idx <= 0) return;
+        const arr = this.commands;
+        [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+      },
+      moveCommandDown(idx) {
+        if (idx >= this.commands.length - 1) return;
+        const arr = this.commands;
+        [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
       },
       addMenuItem(screen) {
         screen.items.push({text:'', screen:'', command:'', uid:crypto.randomUUID?crypto.randomUUID():Math.random()});
@@ -517,6 +529,7 @@ const app = Vue.createApp({
             command: info.command || '',
             help: !!info.help,
             hacking: !!info.hacking,
+            action: info.action || '',
             uid: crypto.randomUUID?crypto.randomUUID():Math.random()
           });
         });
@@ -575,9 +588,11 @@ const app = Vue.createApp({
         if(!name) return;
         const screen=(c.screen||'').trim();
         const message=(c.command||'').trim();
+        const action=(c.action||'').trim();
         const obj={};
         if(screen) obj.screen=screen;
         if(message) obj.command=message;
+        if(action) obj.action=action;
         if(c.help) obj.help=true;
         if(c.hacking) obj.hacking=true;
         if(Object.keys(obj).length) commandsObj[name]=obj;
